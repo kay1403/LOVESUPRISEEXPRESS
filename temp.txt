@@ -1,0 +1,1 @@
+<div><label className="block text-sm font-medium text-gray-700 mb-2">Telephone du destinataire</label><input type="tel" name="destPhone" value={formData.destPhone} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="0788 987 654" /></div>

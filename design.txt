@@ -1,0 +1,692 @@
+==> components/ContactForm.tsx <==
+'use client'
+
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+
+interface FormData {
+  clientName: string
+  clientPhone: string
+  clientEmail: string
+  destName: string
+  destPhone: string
+  destAddress: string
+  destAge: string
+  eventType: string
+  eventDate: string
+  eventTime: string
+  eventLocation: string
+  budget: string
+  services: string[]
+  message: string
+  specialInstructions: string
+  isDiscreet: boolean
+  needsPersonPresent: boolean
+  additionalNotes: string
+}
+
+export default function ContactForm() {
+  const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  
+  const [formData, setFormData] = useState<FormData>({
+    clientName: '',
+    clientPhone: '',
+    clientEmail: '',
+    destName: '',
+    destPhone: '',
+    destAddress: '',
+    destAge: '',
+    eventType: 'Birthday',
+    eventDate: '',
+    eventTime: '',
+    eventLocation: '',
+    budget: '',
+    services: [],
+    message: '',
+    specialInstructions: '',
+    isDiscreet: false,
+    needsPersonPresent: false,
+    additionalNotes: ''
+  })
+
+  const eventTypes = ['Birthday', 'Proposal', 'Anniversary', 'Baby Shower', 'Bridal Shower', 'Welcome Back Party', 'Other']
+
+  const serviceOptions = ['Balloons & Helium', 'Party Decoration', 'Surprise Planner', 'Teddy Bear', 'Flower Bouquet', 'Gift Basket', 'General Printing']
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target
+    if (type === 'checkbox') {
+      const checkbox = e.target as HTMLInputElement
+      if (checkbox.checked) {
+        setFormData({ ...formData, services: [...formData.services, value] })
+      } else {
+        setFormData({ ...formData, services: formData.services.filter(s => s !== value) })
+      }
+    } else {
+      setFormData({ ...formData, [name]: value })
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+    
+    try {
+      const response = await fetch('/api/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      
+      if (response.ok) {
+        setIsSubmitted(true)
+        setTimeout(() => {
+          setStep(1)
+          setIsSubmitted(false)
+          setFormData({
+            clientName: '', clientPhone: '', clientEmail: '',
+            destName: '', destPhone: '', destAddress: '', destAge: '',
+            eventType: 'Birthday', eventDate: '', eventTime: '', eventLocation: '',
+            budget: '', services: [], message: '', specialInstructions: '',
+            isDiscreet: false, needsPersonPresent: false, additionalNotes: ''
+          })
+        }, 3000)
+      }
+    } catch (error) {
+      console.error('Error:', error)
+      alert('Une erreur est survenue. Veuillez réessayer.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const nextStep = () => setStep(step + 1)
+  const prevStep = () => setStep(step - 1)
+
+  if (isSubmitted) {
+    return (
+      <section id="contact" className="py-24 bg-white">
+        <div className="container-custom">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto text-center p-12 bg-green-50 rounded-2xl">
+            <div className="text-6xl mb-4">✓</div>
+            <h3 className="text-2xl font-bold text-dark mb-2">Demande envoyée !</h3>
+            <p className="text-gray-600">Merci pour votre confiance. Nous vous répondrons dans les 30 minutes sur WhatsApp.</p>
+          </motion.div>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section id="contact" className="py-24 bg-white">
+      <div className="container-custom">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="text-center mb-12">
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">Plan Your Surprise</h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">Remplissez ce formulaire et nous nous occupons de tout</p>
+        </motion.div>
+
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8">
+            <div className="flex justify-between mb-2 text-sm text-gray-500">
+              <span>Etape {step} / 7</span>
+              <span>{Math.round((step / 7) * 100)}%</span>
+            </div>
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div className="h-full bg-primary" initial={{ width: `${((step - 1) / 7) * 100}%` }} animate={{ width: `${((step - 1) / 7) * 100}%` }} transition={{ duration: 0.3 }} />
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <AnimatePresence mode="wait">
+              {step === 1 && (
+                <motion.div key="step1" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Qui êtes-vous ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom complet *</label><input type="text" name="clientName" value={formData.clientName} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Téléphone WhatsApp *</label><input type="tel" name="clientPhone" value={formData.clientPhone} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Email (optionnel)</label><input type="email" name="clientEmail" value={formData.clientEmail} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" /></div>
+                  <button type="button" onClick={nextStep} className="btn-primary w-full">Suivant →</button>
+                </motion.div>
+              )}
+
+              {step === 2 && (
+                <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Qui recevra la surprise ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom du destinataire *</label><input type="text" name="destName" value={formData.destName} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Adresse de livraison *</label><input type="text" name="destAddress" value={formData.destAddress} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Quel événement ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Type d'événement *</label><select name="eventType" value={formData.eventType} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">{eventTypes.map(type => <option key={type} value={type}>{type}</option>)}</select></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Date *</label><input type="date" name="eventDate" value={formData.eventDate} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Budget</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Budget (RWF) *</label><input type="text" name="budget" value={formData.budget} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="150 000 RWF" /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 5 && (
+                <motion.div key="step5" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Services souhaités</h3>
+                  <div className="space-y-3">{serviceOptions.map(service => (<label key={service} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer"><input type="checkbox" value={service} checked={formData.services.includes(service)} onChange={handleChange} className="w-5 h-5 text-primary" /><span>{service}</span></label>))}</div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Message pour la carte</label><textarea name="message" value={formData.message} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Joyeux anniversaire !" /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 6 && (
+                <motion.div key="step6" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Instructions spéciales</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Détails importants</label><textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange} rows={4} className="w-full px-4 py-3 border rounded-lg" placeholder="Theme, couleurs, preferences..." /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 7 && (
+                <motion.div key="step7" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Confirmation</h3>
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer"><input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5" /><span>Livraison discrète</span></label>
+                  <div className="bg-primaryLight p-4 rounded-lg"><p className="font-semibold mb-2">Recapitulatif :</p><ul className="text-sm space-y-1"><li>Client: {formData.clientName}</li><li>Evenement: {formData.eventType}</li><li>Budget: {formData.budget} RWF</li></ul></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="submit" disabled={isSubmitting} className="btn-primary flex-1">{isSubmitting ? 'Envoi...' : 'Envoyer ✓'}</button></div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </form>
+        </div>
+    </div>
+    </section>
+  )
+}
+
+==> components/Footer.tsx <==
+'use client'
+
+import { motion } from 'framer-motion'
+
+export default function Footer() {
+  const currentYear = new Date().getFullYear()
+
+  return (
+    <footer className="bg-dark text-white py-12">
+      <div className="container-custom">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="font-display text-2xl font-bold text-primary mb-4">
+              LoveExpress
+            </h3>
+            <p className="text-gray-400 text-sm">
+              We deliver love and kindness. Créons ensemble des moments inoubliables.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-4">Contact</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              <li>📞 +250 799 366 007</li>
+              <li>📞 +250 737 769 092</li>
+              <li>📍 Kigali, Rwanda</li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-4">Services</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              <li>Balloons & Helium</li>
+              <li>Party Decoration</li>
+              <li>Surprise Planner</li>
+              <li>Gift Baskets</li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-4">Horaires</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              <li>Lundi - Samedi: 9h - 19h</li>
+              <li>Dimanche: Sur rendez-vous</li>
+              <li>Livraison 24/24 sur demande</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
+          <p>&copy; {currentYear} LoveExpress. Tous droits réservés.</p>
+          <p className="mt-2">We deliver love and kindness ❤️</p>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+==> components/Gallery.tsx <==
+'use client'
+
+import { motion } from 'framer-motion'
+import { useState } from 'react'
+
+const galleryImages = [
+  {
+    url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',
+    title: 'Demande en mariage surprise',
+    category: 'Proposal'
+  },
+  {
+    url: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
+    title: 'Décoration anniversaire',
+    category: 'Birthday'
+  },
+  {
+    url: 'https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg',
+    title: 'Ballons personnalisés',
+    category: 'Decoration'
+  },
+  {
+    url: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
+    title: 'Gift basket anniversaire',
+    category: 'Gift Basket'
+  },
+  {
+    url: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg',
+    title: 'Teddy bear géant',
+    category: 'Teddy Bear'
+  },
+  {
+    url: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg',
+    title: 'Bouquet de fleurs',
+    category: 'Flowers'
+  }
+]
+
+export default function Gallery() {
+  const [selectedImage, setSelectedImage] = useState<typeof galleryImages[0] | null>(null)
+
+  return (
+    <section className="py-24 bg-white">
+      <div className="container-custom">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+            Our Creations
+          </h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            Découvrez nos dernières réalisations
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {galleryImages.map((image, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.1 }}
+              viewport={{ once: true }}
+              whileHover={{ scale: 1.02 }}
+              className="cursor-pointer group"
+              onClick={() => setSelectedImage(image)}
+            >
+              <div className="relative overflow-hidden rounded-2xl">
+                <img
+                  src={image.url}
+                  alt={image.title}
+                  className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <p className="text-white font-semibold text-lg">{image.title}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Modal */}
+        {selectedImage && (
+          <div 
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
+            onClick={() => setSelectedImage(null)}
+          >
+            <div className="max-w-4xl w-full">
+              <img 
+                src={selectedImage.url} 
+                alt={selectedImage.title}
+                className="w-full h-auto rounded-2xl"
+              />
+              <p className="text-white text-center mt-4 text-lg">{selectedImage.title}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+==> components/GiftBaskets.tsx <==
+'use client'
+
+import { motion } from 'framer-motion'
+
+const giftBaskets = [
+  {
+    name: 'Birthday Gift Basket',
+    description: 'Perfect for birthday celebrations',
+    price: 'From 50,000 RWF',
+    image: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg'
+  },
+  {
+    name: 'Romantic Gift Basket',
+    description: 'For your special someone',
+    price: 'From 75,000 RWF',
+    image: 'https://images.pexels.com/photos/6521976/pexels-photo-6521976.jpeg',
+    popular: true
+  },
+  {
+    name: 'New Baby Gift Basket',
+    description: 'Welcome the little one',
+    price: 'From 45,000 RWF',
+    image: 'https://images.pexels.com/photos/6521977/pexels-photo-6521977.jpeg'
+  },
+  {
+    name: 'Gourmet Gift Basket',
+    description: 'For food lovers',
+    price: 'From 65,000 RWF',
+    image: 'https://images.pexels.com/photos/6521978/pexels-photo-6521978.jpeg'
+  },
+  {
+    name: 'Wellness Gift Basket',
+    description: 'Relaxation and self-care',
+    price: 'From 55,000 RWF',
+    image: 'https://images.pexels.com/photos/6521979/pexels-photo-6521979.jpeg'
+  }
+]
+
+export default function GiftBaskets() {
+  return (
+    <section className="py-24 bg-primaryLight">
+      <div className="container-custom">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+            Our Gift Baskets
+          </h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            Carefully curated gifts for every occasion
+          </p>
+        </motion.div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {giftBaskets.map((basket, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -10 }}
+              className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer relative"
+            >
+              {basket.popular && (
+                <div className="absolute top-4 right-4 bg-accent text-dark px-3 py-1 rounded-full text-sm font-semibold z-10">
+                  Popular
+                </div>
+              )}
+              <div className="h-64 overflow-hidden">
+                <img 
+                  src={basket.image} 
+                  alt={basket.name}
+                  className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-dark mb-2">{basket.name}</h3>
+                <p className="text-gray-500 mb-4">{basket.description}</p>
+                <div className="flex justify-between items-center">
+                  <span className="text-primary font-bold">{basket.price}</span>
+                  <button className="text-primary font-semibold hover:text-accent transition">
+                    Order →
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+==> components/Hero.tsx <==
+'use client'
+
+import { motion } from 'framer-motion'
+
+export default function Hero() {
+  return (
+    <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-primaryLight via-white to-primaryLight">
+      <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg')] bg-cover bg-center opacity-10" />
+      
+      <div className="container-custom text-center relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <h1 className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary mb-6">
+            LoveExpress
+          </h1>
+          <p className="text-xl md:text-2xl text-gray-600 mb-4 max-w-2xl mx-auto">
+            We create unforgettable surprise moments
+          </p>
+          <p className="text-lg text-gray-500 mb-12 max-w-xl mx-auto">
+            Distribution in all kind of party things · Balloon accessories · Helium gas · Surprise planner
+          </p>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="btn-primary text-lg"
+            onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+          >
+            Plan your surprise
+          </motion.button>
+        </motion.div>
+        
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-20 flex justify-center gap-8 text-sm text-gray-400"
+        >
+          <span>✓ +250 surprises organisées</span>
+          <span>✓ Livraison à Kigali</span>
+          <span>✓ Devis gratuit</span>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+==> components/Services.tsx <==
+'use client'
+
+import { motion } from 'framer-motion'
+
+const services = [
+  {
+    title: 'Balloons & Helium',
+    description: 'Balloon accessories and helium gas for all events',
+    image: 'https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg'
+  },
+  {
+    title: 'Party Decoration',
+    description: 'Complete decoration for birthdays, weddings, and more',
+    image: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg'
+  },
+  {
+    title: 'Surprise Planner',
+    description: 'We organize everything for the perfect surprise',
+    image: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg'
+  },
+  {
+    title: 'Teddy Bear',
+    description: 'Giant personalized teddy bears',
+    image: 'https://images.pexels.com/photos/603919/pexels-photo-603919.jpeg'
+  },
+  {
+    title: 'Flower Bouquet',
+    description: 'Fresh and elegant flower arrangements',
+    image: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg'
+  },
+  {
+    title: 'General Printing',
+    description: 'Custom printing for all your party needs',
+    image: 'https://images.pexels.com/photos/164340/pexels-photo-164340.jpeg'
+  }
+]
+
+export default function Services() {
+  return (
+    <section className="py-24 bg-white">
+      <div className="container-custom">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+            Our Services
+          </h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            Everything you need to create the perfect surprise moment
+          </p>
+        </motion.div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {services.map((service, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -10 }}
+              className="glass-card rounded-2xl overflow-hidden cursor-pointer group"
+            >
+              <div className="h-48 overflow-hidden">
+                <img 
+                  src={service.image} 
+                  alt={service.title}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-dark mb-2">{service.title}</h3>
+                <p className="text-gray-500">{service.description}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+==> app/globals.css <==
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white text-dark;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-xl;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-white px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:shadow-lg hover:scale-105;
+  }
+  
+  .btn-secondary {
+    @apply border-2 border-primary text-primary px-8 py-3 rounded-full font-semibold transition-all duration-300 hover:bg-primary hover:text-white;
+  }
+  
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+==> tailwind.config.ts <==
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#FF4D6D',
+        primaryLight: '#FFF0F3',
+        accent: '#FFD700',
+        dark: '#1A1A1A',
+        gray: '#6B7280',
+        lightGray: '#F9FAFB',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Playfair Display', 'serif'],
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.8s ease-out',
+        'slide-up': 'slideUp 0.6s ease-out',
+        'float': 'float 3s ease-in-out infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+      },
+    },
+  },
+  plugins: [],
+}
+export default config
