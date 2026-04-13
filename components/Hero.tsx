@@ -2,10 +2,11 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Heart, ArrowRight, Sparkles } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Heart, ChevronDown } from 'lucide-react'
+import Image from 'next/image'
 import LanguageSelector from './LanguageSelector'
 
-// Services data - Adapté à LoveExpress
+// Services data
 const services = [
   {
     id: 1,
@@ -14,8 +15,7 @@ const services = [
     badge: "Service Premium",
     description: "Des ballons personnalisés pour tous vos événements. Créez une atmosphère féérique avec nos ballons à l'hélium, disponibles dans toutes les couleurs et formes imaginables.",
     features: ["+50 modèles disponibles", "Livraison sur place", "Installation offerte"],
-    image: "https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg",
-    cta: "Découvrir",
+    image: "https://images.pexels.com/photos/6629599/pexels-photo-6629599.jpeg",
     bgColor: "#FF4D6D",
     bgLight: "#FFF0F3"
   },
@@ -26,8 +26,7 @@ const services = [
     badge: "Art & Élégance",
     description: "Transformez n'importe quel espace en un lieu magique. Nos décorations sur mesure créent l'ambiance parfaite pour vos célébrations les plus importantes.",
     features: ["Thèmes personnalisés", "Installation complète", "Démontage inclus"],
-    image: "https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg",
-    cta: "Explorer",
+    image: "https://images.pexels.com/photos/17417854/pexels-photo-17417854.jpeg",
     bgColor: "#FF4D6D",
     bgLight: "#FFF0F3"
   },
@@ -38,8 +37,7 @@ const services = [
     badge: "Expert en émotions",
     description: "Vous avez l'idée, nous l'exécutons. Une organisation sans faille pour des moments de surprise parfaitement orchestrés et totalement inoubliables.",
     features: ["Planification complète", "Discrétion absolue", "Coordination totale"],
-    image: "https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg",
-    cta: "Planifier",
+    image: "https://images.pexels.com/photos/30319620/pexels-photo-30319620.jpeg",
     bgColor: "#FF4D6D",
     bgLight: "#FFF0F3"
   },
@@ -50,38 +48,211 @@ const services = [
     badge: "Luxe & Douceur",
     description: "Des paniers cadeaux luxueux soigneusement composés selon les goûts et l'occasion. Un cadeau qui marque les esprits et réchauffe les cœurs.",
     features: ["Personnalisation totale", "Produits premium", "Emballage cadeau"],
-    image: "https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg",
-    cta: "Composer",
+    image: "https://images.pexels.com/photos/27393960/pexels-photo-27393960.jpeg",
     bgColor: "#FF4D6D",
     bgLight: "#FFF0F3"
   }
 ]
 
-// Composant CTA circulaire avec effet glassmorphism
-const CircularCTA = ({ label, title, variant, onClick }: { 
-  label: string; 
-  title: string; 
-  variant: 'light' | 'dark';
-  onClick: () => void;
-}) => (
-  <motion.div 
-    whileHover={{ scale: 1.05 }}
-    className="flex flex-col items-center cursor-pointer group"
-    onClick={onClick}
-  >
-    <div className={`
-      relative h-28 w-28 md:h-36 md:w-36 rounded-full flex flex-col items-center justify-center p-4 text-center transition-all duration-300 group-hover:shadow-2xl
-      ${variant === 'light' ? 'bg-white/90 backdrop-blur-sm text-dark' : 'bg-dark/80 backdrop-blur-sm text-white'}
-    `}>
-      <span className="text-[8px] md:text-[10px] tracking-[0.2em] uppercase mb-1 opacity-60">{label}</span>
-      <span className="text-xs md:text-sm font-bold leading-tight">{title}</span>
-      
-      <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-primary h-7 w-7 md:h-8 md:w-8 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-        <ArrowRight size={14} className="text-white" />
-      </div>
+// Cœurs flottants - VISIBLES
+const FloatingHearts = () => {
+  const hearts = [
+    { id: 1, x: "8%", y: "15%", size: 18, duration: 10, delay: 0 },
+    { id: 2, x: "15%", y: "45%", size: 24, duration: 12, delay: 2 },
+    { id: 3, x: "5%", y: "70%", size: 14, duration: 8, delay: 4 },
+    { id: 4, x: "25%", y: "25%", size: 20, duration: 14, delay: 1 },
+    { id: 5, x: "12%", y: "85%", size: 16, duration: 11, delay: 3 },
+    { id: 6, x: "20%", y: "55%", size: 22, duration: 9, delay: 5 },
+    { id: 7, x: "3%", y: "35%", size: 12, duration: 13, delay: 2.5 },
+    { id: 8, x: "28%", y: "10%", size: 26, duration: 15, delay: 1.5 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {hearts.map((heart) => (
+        <motion.div
+          key={heart.id}
+          className="absolute"
+          style={{ left: heart.x, top: heart.y }}
+          animate={{
+            y: [0, -40, -80, -40, 0],
+            x: [0, 15, 0, -15, 0],
+            opacity: [0.2, 0.5, 0.3, 0.5, 0.2],
+            scale: [1, 1.1, 1, 0.9, 1]
+          }}
+          transition={{
+            duration: heart.duration,
+            repeat: Infinity,
+            delay: heart.delay,
+            ease: "easeInOut"
+          }}
+        >
+          <Heart size={heart.size} className="text-primary/40" fill="#FF4D6D" fillOpacity={0.2} />
+        </motion.div>
+      ))}
     </div>
-  </motion.div>
-)
+  )
+}
+
+// Étoiles filantes - VISIBLES
+const ShootingStars = () => {
+  const stars = [
+    { id: 1, top: "8%", left: "-5%", duration: 2.5, delay: 0 },
+    { id: 2, top: "30%", left: "-10%", duration: 3, delay: 4 },
+    { id: 3, top: "55%", left: "-8%", duration: 2.8, delay: 8 },
+    { id: 4, top: "75%", left: "-15%", duration: 3.2, delay: 12 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {stars.map((star) => (
+        <motion.div
+          key={star.id}
+          className="absolute"
+          style={{ top: star.top, left: star.left }}
+          animate={{
+            x: ["0%", "100%"],
+            opacity: [0, 0.8, 0],
+          }}
+          transition={{
+            duration: star.duration,
+            repeat: Infinity,
+            delay: star.delay,
+            ease: "linear"
+          }}
+        >
+          <div className="relative">
+            <div className="w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(255,77,109,0.8)]" />
+            <div className="absolute -top-0.5 left-1 w-14 h-px bg-gradient-to-r from-primary to-transparent" />
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+// Confettis - VISIBLES
+const Confetti = () => {
+  const confettis = [
+    { id: 1, x: "10%", y: "20%", width: 6, height: 3, color: "#FF4D6D", duration: 6, delay: 0 },
+    { id: 2, x: "18%", y: "50%", width: 5, height: 2, color: "#FFD700", duration: 7, delay: 2 },
+    { id: 3, x: "7%", y: "75%", width: 4, height: 3, color: "#FF8BA8", duration: 5, delay: 4 },
+    { id: 4, x: "22%", y: "35%", width: 7, height: 2, color: "#FF6B8A", duration: 8, delay: 1 },
+    { id: 5, x: "14%", y: "65%", width: 5, height: 3, color: "#FF4D6D", duration: 6.5, delay: 3 },
+    { id: 6, x: "30%", y: "15%", width: 4, height: 2, color: "#FFD700", duration: 7.5, delay: 5 },
+    { id: 7, x: "25%", y: "80%", width: 6, height: 2, color: "#FF8BA8", duration: 5.5, delay: 1.5 },
+    { id: 8, x: "3%", y: "40%", width: 5, height: 3, color: "#FF4D6D", duration: 9, delay: 3.5 },
+    { id: 9, x: "32%", y: "60%", width: 4, height: 2, color: "#FFD700", duration: 6, delay: 2.5 },
+    { id: 10, x: "20%", y: "10%", width: 6, height: 3, color: "#FF6B8A", duration: 8.5, delay: 4.5 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {confettis.map((conf) => (
+        <motion.div
+          key={conf.id}
+          className="absolute"
+          style={{
+            left: conf.x,
+            top: conf.y,
+            width: conf.width,
+            height: conf.height,
+            backgroundColor: conf.color,
+          }}
+          animate={{
+            y: [0, -50, -100, -50, 0],
+            x: [0, 20, 0, -20, 0],
+            rotate: [0, 180, 360, 180, 0],
+            opacity: [0.3, 0.6, 0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: conf.duration,
+            repeat: Infinity,
+            delay: conf.delay,
+            ease: "easeOut"
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Rubans flottants - VISIBLES
+const FloatingRibbons = () => {
+  const ribbons = [
+    { id: 1, x: "5%", y: "18%", duration: 11, delay: 0 },
+    { id: 2, x: "28%", y: "68%", duration: 13, delay: 3 },
+    { id: 3, x: "12%", y: "82%", duration: 9, delay: 6 },
+    { id: 4, x: "18%", y: "38%", duration: 15, delay: 1.5 },
+    { id: 5, x: "32%", y: "52%", duration: 12, delay: 4.5 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {ribbons.map((ribbon) => (
+        <motion.div
+          key={ribbon.id}
+          className="absolute"
+          style={{ left: ribbon.x, top: ribbon.y }}
+          animate={{
+            y: [0, -20, 0, 20, 0],
+            x: [0, 15, 0, -15, 0],
+            rotate: [0, 15, 0, -15, 0],
+            opacity: [0.2, 0.4, 0.2, 0.4, 0.2]
+          }}
+          transition={{
+            duration: ribbon.duration,
+            repeat: Infinity,
+            delay: ribbon.delay,
+            ease: "easeInOut"
+          }}
+        >
+          <svg width="40" height="55" viewBox="0 0 40 55" fill="none">
+            <path d="M20 0 L24 14 L38 17 L24 24 L28 38 L20 30 L12 38 L16 24 L2 17 L16 14 Z" fill="#FF4D6D" fillOpacity="0.25" stroke="#FF4D6D" strokeWidth="0.8" strokeOpacity="0.4"/>
+            <path d="M20 30 L20 55" stroke="#FF4D6D" strokeWidth="0.8" strokeOpacity="0.3"/>
+          </svg>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+// Ballons flottants - VISIBLES
+const FloatingBalloons = () => {
+  const balloons = [
+    { id: 1, x: "45%", y: "5%", size: 38, color: "#FF4D6D", duration: 16, delay: 0 },
+    { id: 2, x: "52%", y: "48%", size: 32, color: "#FFD700", duration: 20, delay: 5 },
+    { id: 3, x: "38%", y: "30%", size: 35, color: "#FF8BA8", duration: 14, delay: 2 },
+    { id: 4, x: "55%", y: "70%", size: 28, color: "#FF6B8A", duration: 18, delay: 8 },
+    { id: 5, x: "42%", y: "85%", size: 42, color: "#FF4D6D", duration: 22, delay: 3 },
+    { id: 6, x: "60%", y: "20%", size: 30, color: "#FFD700", duration: 15, delay: 6 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {balloons.map((balloon) => (
+        <motion.div
+          key={balloon.id}
+          className="absolute"
+          style={{ left: balloon.x, top: balloon.y }}
+          animate={{
+            y: [0, -25, -50, -25, 0],
+            x: [0, 12, 0, -12, 0],
+            rotate: [0, 5, -5, 5, 0],
+            opacity: [0.2, 0.4, 0.2, 0.4, 0.2]
+          }}
+          transition={{
+            duration: balloon.duration,
+            repeat: Infinity,
+            delay: balloon.delay,
+            ease: "easeInOut"
+          }}
+        >
+          <svg width={balloon.size} height={balloon.size * 1.2} viewBox="0 0 40 50" fill="none">
+            <ellipse cx="20" cy="20" rx="14" ry="18" fill={balloon.color} fillOpacity="0.15" stroke={balloon.color} strokeWidth="1" strokeOpacity="0.4"/>
+            <line x1="20" y1="38" x2="20" y2="48" stroke={balloon.color} strokeWidth="1" strokeOpacity="0.3"/>
+            <polygon points="16,48 24,48 20,44" fill={balloon.color} fillOpacity="0.2"/>
+          </svg>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
 
 export default function Hero() {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -90,7 +261,6 @@ export default function Hero() {
   
   const currentService = services[currentIndex]
 
-  // Auto-play avec barre de progression
   useEffect(() => {
     if (isHovering) return
     
@@ -135,7 +305,6 @@ export default function Hero() {
     setCurrentIndex(index)
   }
 
-  // Variants d'animation pour le texte "reveal"
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -153,7 +322,6 @@ export default function Hero() {
     }
   }
 
-  // Nouveau variant avec flou entrant
   const featureVariants = {
     hidden: (i: number) => ({
       x: -20,
@@ -174,18 +342,18 @@ export default function Hero() {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* Language selector - avec effet glassmorphism */}
-      <div className="absolute top-6 right-6 z-30">
+      {/* Language selector */}
+      <div className="absolute top-6 right-6 z-50">
         <LanguageSelector />
       </div>
 
-      {/* OVERLAY COLORÉ DYNAMIQUE (fond gauche) */}
+      {/* OVERLAY COLORÉ DYNAMIQUE */}
       <div 
         className="absolute inset-0 z-0 transition-colors duration-700"
         style={{ backgroundColor: currentService.bgLight }}
       />
 
-      {/* L'IMAGE DE FOND (Partie droite) - avec zoom et parallaxe */}
+      {/* IMAGE DE FOND */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
@@ -209,40 +377,65 @@ export default function Hero() {
         </AnimatePresence>
       </div>
 
-      {/* LE MASQUE EN ARC DE CERCLE (Partie gauche) */}
+      {/* MASQUE EN ARC DE CERCLE - plus transparent */}
       <motion.div 
-        className="absolute inset-0 z-10 bg-white/95 backdrop-blur-sm"
-        style={{
-          clipPath: 'ellipse(90% 120% at -10% 50%)'
-        }}
-        initial={{ clipPath: 'ellipse(70% 120% at -15% 50%)' }}
-        animate={{ clipPath: 'ellipse(90% 120% at -10% 50%)' }}
+        className="absolute inset-0 z-10 bg-white/85 backdrop-blur-sm"
+        style={{ clipPath: 'ellipse(80% 120% at -15% 50%)' }}
+        initial={{ clipPath: 'ellipse(60% 120% at -20% 50%)' }}
+        animate={{ clipPath: 'ellipse(80% 120% at -15% 50%)' }}
         transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       />
 
-      {/* Logo en haut à gauche - avec mix-blend-mode pour effet ultra-moderne */}
+      {/* ÉLÉMENTS DÉCORATIFS - z-index 25 (PAR-DESSUS le masque) */}
+      <FloatingHearts />
+      <ShootingStars />
+      <Confetti />
+      <FloatingRibbons />
+      <FloatingBalloons />
+
+      {/* LOGO */}
       <div className="absolute top-6 left-6 z-30">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex items-center gap-2"
+          className="relative w-10 h-10"
         >
-          <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg">
-            <Heart size={18} className="text-white fill-white" />
-          </div>
-          <span className="font-display text-xl font-bold text-primary mix-blend-multiply lg:mix-blend-normal">LoveExpress</span>
+          <Image
+            src="/images/logoCreator_imagetologo-3.jpg"
+            alt="Love Surprise Express Logo"
+            width={40}
+            height={40}
+            className="rounded-xl shadow-lg object-cover"
+          />
         </motion.div>
       </div>
 
-      {/* Barre de progression interactive */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 flex gap-1.5">
+      {/* LOVE SURPRISE EXPRESS - TRÈS GRAND */}
+      <div className="absolute top-20 left-6 z-30">
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="flex flex-col"
+        >
+          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight leading-[1.1]">
+            Love Surprise
+          </span>
+          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-gray-700 tracking-tight leading-[1.1]">
+            Express
+          </span>
+        </motion.div>
+      </div>
+
+      {/* BARRE DE PROGRESSION */}
+      <div className="absolute top-48 left-6 z-30 flex gap-1.5">
         {services.map((_, idx) => (
           <button
             key={idx}
             onClick={() => goToSlide(idx)}
             className="group relative h-0.5 rounded-full overflow-hidden transition-all duration-300"
-            style={{ width: idx === currentIndex ? '60px' : '30px' }}
+            style={{ width: idx === currentIndex ? '50px' : '25px' }}
           >
             <div className={`h-full w-full rounded-full transition-all duration-300 ${idx === currentIndex ? 'bg-primary' : 'bg-gray-300 group-hover:bg-gray-400'}`} />
             {idx === currentIndex && (
@@ -258,8 +451,8 @@ export default function Hero() {
       </div>
 
       {/* CONTENU PRINCIPAL */}
-      <div className="relative z-20 flex h-full items-center px-6 lg:px-16">
-        <div className="max-w-xl">
+      <div className="relative z-30 flex h-full items-center px-6 lg:px-16 pt-64">
+        <div className="max-w-xl text-left">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
@@ -267,25 +460,19 @@ export default function Hero() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
-              className="space-y-6"
+              className="space-y-5"
             >
-              {/* Badge avec point animé */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
                 className="inline-flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full"
               >
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
-                </span>
                 <span className="text-xs font-medium text-primary uppercase tracking-wider">
                   {currentService.badge}
                 </span>
               </motion.div>
 
-              {/* Titre avec effet "reveal" */}
               <div className="space-y-1">
                 <div className="overflow-hidden">
                   <motion.div
@@ -294,7 +481,7 @@ export default function Hero() {
                     animate="visible"
                     key={currentIndex}
                   >
-                    <h1 className="font-display text-6xl md:text-7xl lg:text-8xl font-bold leading-[1.1]">
+                    <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.2]">
                       {currentService.title.split(' ').map((word, i) => (
                         <span key={i} className="block overflow-hidden">
                           <motion.span
@@ -313,24 +500,22 @@ export default function Hero() {
                           {currentService.subtitle}
                         </motion.span>
                       </span>
-                    </h1>
+                    </h2>
                   </motion.div>
                 </div>
               </div>
 
-              {/* Description */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
-                className="text-gray-500 text-base leading-relaxed max-w-md"
+                className="text-gray-500 text-sm leading-relaxed max-w-md"
               >
                 {currentService.description}
               </motion.p>
 
-              {/* Points forts avec animation flou entrant + staggered */}
               <motion.div 
-                className="space-y-2"
+                className="space-y-1.5"
                 initial="hidden"
                 animate="visible"
               >
@@ -341,93 +526,21 @@ export default function Hero() {
                     variants={featureVariants}
                     className="flex items-center gap-2"
                   >
-                    <div className="w-4 h-px bg-primary" />
-                    <span className="text-gray-600 text-sm">{feature}</span>
+                    <div className="w-3 h-px bg-primary" />
+                    <span className="text-gray-600 text-xs">{feature}</span>
                   </motion.div>
                 ))}
               </motion.div>
-
-              {/* CTA PRINCIPAL avec effet "glow" */}
-              <motion.button
-                whileHover={{ scale: 1.03, x: 3 }}
-                whileTap={{ scale: 0.97 }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
-                onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-                className="group relative flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
-              >
-                <span className="relative z-10">{currentService.cta}</span>
-                <ChevronRight size={16} className="relative z-10 group-hover:translate-x-1 transition" />
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                  initial={false}
-                  animate={false}
-                />
-              </motion.button>
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
 
-      {/* BOUTONS CIRCULAIRES CTA (en bas) */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-4">
-        <CircularCTA 
-          label="SURPRENDRE"
-          title="Offrir un moment unique"
-          variant="light"
-          onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-        />
-        <CircularCTA 
-          label="ORGANISER"
-          title="Créer un événement"
-          variant="dark"
-          onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-        />
-      </div>
-
-      {/* Navigation par boutons ronds */}
-      <div className="absolute bottom-6 left-6 z-30 flex gap-2">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={prevSlide}
-          className="w-9 h-9 rounded-full bg-white shadow-lg border border-gray-100 flex items-center justify-center hover:shadow-xl transition-all duration-300"
-        >
-          <ChevronLeft size={16} className="text-primary" />
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={nextSlide}
-          className="w-9 h-9 rounded-full bg-primary shadow-lg flex items-center justify-center hover:shadow-xl transition-all duration-300"
-        >
-          <ChevronRight size={16} className="text-white" />
-        </motion.button>
-      </div>
-
-      {/* Compteur de slide */}
-      <div className="absolute bottom-6 right-6 z-30">
-        <div className="text-right">
-          <p className="text-[8px] text-gray-400 uppercase tracking-[0.2em]">Actuel</p>
-          <p className="text-xl font-bold text-primary">
-            {String(currentIndex + 1).padStart(2, '0')}
-            <span className="text-gray-300 text-base">/{String(services.length).padStart(2, '0')}</span>
-          </p>
-        </div>
-      </div>
-
-      {/* Scroll indicator avec animation fluide */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1 }}
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 hidden lg:block translate-y-12"
-      >
+      {/* FLÈCHE CLIGNOTANTE SEULE */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 cursor-pointer">
         <motion.div
-          animate={{ y: [0, 6, 0] }}
+          animate={{ y: [0, 10, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center gap-1 cursor-pointer"
           onClick={() => {
             const servicesSection = document.getElementById('services')
             if (servicesSection) {
@@ -435,16 +548,40 @@ export default function Hero() {
             }
           }}
         >
-          <span className="text-[7px] text-gray-400 uppercase tracking-[0.2em]">Scroll</span>
-          <div className="w-3.5 h-5 border border-gray-300 rounded-full flex justify-center">
-            <motion.div
-              animate={{ y: [0, 6, 0] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="w-1 h-1 bg-primary rounded-full mt-1"
-            />
-          </div>
+          <ChevronDown size={28} className="text-primary/60 animate-pulse" strokeWidth={1.5} />
         </motion.div>
-      </motion.div>
+      </div>
+
+      {/* NAVIGATION */}
+      <div className="absolute bottom-6 left-6 z-30 flex gap-2">
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={prevSlide}
+          className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-md border border-gray-100 flex items-center justify-center hover:bg-white transition-all duration-300"
+        >
+          <ChevronLeft size={12} className="text-primary" />
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={nextSlide}
+          className="w-7 h-7 rounded-full bg-primary/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-primary transition-all duration-300"
+        >
+          <ChevronRight size={12} className="text-white" />
+        </motion.button>
+      </div>
+
+      {/* COMPTEUR */}
+      <div className="absolute bottom-6 right-6 z-30">
+        <div className="text-right">
+          <p className="text-[8px] text-gray-400 uppercase tracking-[0.2em]">Actuel</p>
+          <p className="text-base font-bold text-primary">
+            {String(currentIndex + 1).padStart(2, '0')}
+            <span className="text-gray-300 text-xs">/{String(services.length).padStart(2, '0')}</span>
+          </p>
+        </div>
+      </div>
     </section>
   )
 }
