@@ -1,10 +1,16 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import LanguageSelector from './LanguageSelector'
 
 export default function Hero() {
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-primaryLight via-white to-primaryLight">
+      {/* Language selector - position absolute */}
+      <div className="absolute top-6 right-6 z-20">
+        <LanguageSelector />
+      </div>
+
       <div className="absolute inset-0 bg-[url('https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg')] bg-cover bg-center opacity-10" />
       
       <div className="container-custom text-center relative z-10">

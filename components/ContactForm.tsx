@@ -16,6 +16,7 @@ interface FormData {
   eventTime: string
   eventLocation: string
   budget: string
+  deliveryMethod: string
   services: string[]
   message: string
   specialInstructions: string
@@ -28,6 +29,7 @@ export default function ContactForm() {
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [budgetValue, setBudgetValue] = useState(100000)
   
   const [formData, setFormData] = useState<FormData>({
     clientName: '',
@@ -41,7 +43,8 @@ export default function ContactForm() {
     eventDate: '',
     eventTime: '',
     eventLocation: '',
-    budget: '',
+    budget: '100000',
+    deliveryMethod: 'delivery',
     services: [],
     message: '',
     specialInstructions: '',
@@ -52,7 +55,7 @@ export default function ContactForm() {
 
   const eventTypes = ['Birthday', 'Proposal', 'Anniversary', 'Baby Shower', 'Bridal Shower', 'Welcome Back Party', 'Other']
 
-  const serviceOptions = ['Balloons & Helium', 'Party Decoration', 'Surprise Planner', 'Teddy Bear', 'Flower Bouquet', 'Gift Basket', 'General Printing']
+  const serviceOptions = ['Balloons & Helium', 'Party Decoration', 'Surprise Planner', 'Custom Website', 'Flower Bouquet', 'Gift Basket']
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -66,6 +69,12 @@ export default function ContactForm() {
     } else {
       setFormData({ ...formData, [name]: value })
     }
+  }
+
+  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setBudgetValue(parseInt(value))
+    setFormData({ ...formData, budget: value })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,9 +97,11 @@ export default function ContactForm() {
             clientName: '', clientPhone: '', clientEmail: '',
             destName: '', destPhone: '', destAddress: '', destAge: '',
             eventType: 'Birthday', eventDate: '', eventTime: '', eventLocation: '',
-            budget: '', services: [], message: '', specialInstructions: '',
+            budget: '100000', deliveryMethod: 'delivery',
+            services: [], message: '', specialInstructions: '',
             isDiscreet: false, needsPersonPresent: false, additionalNotes: ''
           })
+          setBudgetValue(100000)
         }, 3000)
       }
     } catch (error) {
@@ -116,6 +127,13 @@ export default function ContactForm() {
         </div>
       </section>
     )
+  }
+
+  const getBudgetRange = () => {
+    if (budgetValue < 50000) return 'Petit budget : Idéal pour un petit bouquet ou des ballons'
+    if (budgetValue < 100000) return 'Budget moyen : Parfait pour un gift basket ou une décoration simple'
+    if (budgetValue < 200000) return 'Bon budget : Décoration complète + surprise planner'
+    return 'Budget premium : Organisation complète haut de gamme'
   }
 
   return (
@@ -152,9 +170,9 @@ export default function ContactForm() {
               {step === 2 && (
                 <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Qui recevra la surprise ?</h3>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom du destinataire *</label><input type="text" name="destName" value={formData.destName} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom du destinataire *</label><input type="text" name="destName" value={formData.destName} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Téléphone du destinataire</label><input type="tel" name="destPhone" value={formData.destPhone} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="0788 987 654" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Adresse de livraison *</label><input type="text" name="destAddress" value={formData.destAddress} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Adresse de livraison *</label><input type="text" name="destAddress" value={formData.destAddress} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Âge (si anniversaire)</label><input type="text" name="destAge" value={formData.destAge} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="30 ans" /></div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
                 </motion.div>
@@ -163,7 +181,7 @@ export default function ContactForm() {
               {step === 3 && (
                 <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Quel événement ?</h3>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Type d'événement *</label><select name="eventType" value={formData.eventType} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">{eventTypes.map(type => <option key={type} value={type}>{type}</option>)}</select></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Type d'événement *</label><select name="eventType" value={formData.eventType} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg">{eventTypes.map(type => <option key={type} value={type}>{type}</option>)}</select></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Date de l'événement *</label><input type="date" name="eventDate" value={formData.eventDate} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Heure de livraison souhaitée *</label><input type="time" name="eventTime" value={formData.eventTime} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Lieu exact *</label><input type="text" name="eventLocation" value={formData.eventLocation} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="Chez Jean, maison verte" /></div>
@@ -174,8 +192,20 @@ export default function ContactForm() {
               {step === 4 && (
                 <motion.div key="step4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Budget</h3>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Budget total estimé (RWF) *</label><input type="text" name="budget" value={formData.budget} onChange={handleChange} required className="w-full px-4 py-3 border border-gray-300 rounded-lg" placeholder="150 000 RWF" /></div>
-                  <div className="bg-gray-50 p-4 rounded-lg"><p className="text-sm text-gray-600">Nos services commencent à partir de 30 000 RWF. Nous vous ferons un devis personnalisé.</p></div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Budget estimé : {budgetValue.toLocaleString()} RWF</label>
+                    <input type="range" min="30000" max="500000" step="10000" value={budgetValue} onChange={handleBudgetChange} className="w-full h-2 bg-pink-200 rounded-lg appearance-none cursor-pointer accent-primary" />
+                    <div className="flex justify-between text-xs text-gray-500 mt-2">
+                      <span>30k</span>
+                      <span>100k</span>
+                      <span>200k</span>
+                      <span>300k</span>
+                      <span>500k</span>
+                    </div>
+                  </div>
+                  <div className="bg-primaryLight p-4 rounded-lg">
+                    <p className="text-sm text-gray-700">{getBudgetRange()}</p>
+                  </div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
                 </motion.div>
               )}
@@ -191,9 +221,23 @@ export default function ContactForm() {
 
               {step === 6 && (
                 <motion.div key="step6" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
-                  <h3 className="text-2xl font-bold text-dark mb-6">Instructions spéciales</h3>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Instructions pour l'événement</label><textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange} rows={4} className="w-full px-4 py-3 border rounded-lg" placeholder="Theme, couleurs, preferences..." /></div>
-                  <div className="bg-primaryLight p-4 rounded-lg"><p className="text-sm text-gray-700">Selon votre type d'événement ({formData.eventType}), nous prendrons en compte tous les détails importants.</p></div>
+                  <h3 className="text-2xl font-bold text-dark mb-6">Livraison & Instructions</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Mode de livraison</label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition ${formData.deliveryMethod === 'delivery' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                          <input type="radio" name="deliveryMethod" value="delivery" checked={formData.deliveryMethod === 'delivery'} onChange={handleChange} className="w-4 h-4 text-primary" />
+                          <div><span className="font-semibold block">Livraison à domicile</span><span className="text-xs text-gray-500">+5 000 RWF</span></div>
+                        </label>
+                        <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer transition ${formData.deliveryMethod === 'pickup' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                          <input type="radio" name="deliveryMethod" value="pickup" checked={formData.deliveryMethod === 'pickup'} onChange={handleChange} className="w-4 h-4 text-primary" />
+                          <div><span className="font-semibold block">Retrait au bureau</span><span className="text-xs text-gray-500">Gratuit</span></div>
+                        </label>
+                      </div>
+                    </div>
+                    <div><label className="block text-sm font-medium text-gray-700 mb-2">Instructions spéciales</label><textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Theme, couleurs, preferences..." /></div>
+                  </div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
                 </motion.div>
               )}
@@ -204,7 +248,17 @@ export default function ContactForm() {
                   <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer"><input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5" /><span>La surprise doit être discrète (ne pas révéler qui l'envoie)</span></label>
                   <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer"><input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5" /><span>La personne surprise doit être présente lors de la livraison</span></label>
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Notes supplémentaires</label><textarea name="additionalNotes" value={formData.additionalNotes} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Toute information importante..." /></div>
-                  <div className="bg-primaryLight p-4 rounded-lg"><p className="font-semibold mb-2">Récapitulatif :</p><ul className="text-sm space-y-1"><li>Client: {formData.clientName || 'Non renseigné'}</li><li>Destinataire: {formData.destName || 'Non renseigné'}</li><li>Événement: {formData.eventType}</li><li>Date: {formData.eventDate || 'Non renseignée'}</li><li>Budget: {formData.budget || 'Non renseigné'} RWF</li></ul></div>
+                  <div className="bg-primaryLight p-4 rounded-lg">
+                    <p className="font-semibold mb-2">Récapitulatif :</p>
+                    <ul className="text-sm space-y-1">
+                      <li>Client: {formData.clientName || 'Non renseigné'}</li>
+                      <li>Destinataire: {formData.destName || 'Non renseigné'}</li>
+                      <li>Événement: {formData.eventType}</li>
+                      <li>Date: {formData.eventDate || 'Non renseignée'}</li>
+                      <li>Budget: {parseInt(formData.budget).toLocaleString()} RWF</li>
+                      <li>Livraison: {formData.deliveryMethod === 'delivery' ? 'À domicile (+5 000 RWF)' : 'Retrait au bureau'}</li>
+                    </ul>
+                  </div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="submit" disabled={isSubmitting} className="btn-primary flex-1">{isSubmitting ? 'Envoi...' : 'Envoyer ma demande'}</button></div>
                 </motion.div>
               )}
