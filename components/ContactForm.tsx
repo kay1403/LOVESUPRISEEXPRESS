@@ -29,7 +29,7 @@ export default function ContactForm() {
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
-  const [budgetValue, setBudgetValue] = useState(100000)
+  const [budgetValue, setBudgetValue] = useState(15000)
   
   const [formData, setFormData] = useState<FormData>({
     clientName: '',
@@ -43,7 +43,7 @@ export default function ContactForm() {
     eventDate: '',
     eventTime: '',
     eventLocation: '',
-    budget: '100000',
+    budget: '15000',
     deliveryMethod: 'delivery',
     services: [],
     message: '',
@@ -97,11 +97,11 @@ export default function ContactForm() {
             clientName: '', clientPhone: '', clientEmail: '',
             destName: '', destPhone: '', destAddress: '', destAge: '',
             eventType: 'Birthday', eventDate: '', eventTime: '', eventLocation: '',
-            budget: '100000', deliveryMethod: 'delivery',
+            budget: '15000', deliveryMethod: 'delivery',
             services: [], message: '', specialInstructions: '',
             isDiscreet: false, needsPersonPresent: false, additionalNotes: ''
           })
-          setBudgetValue(100000)
+          setBudgetValue(15000)
         }, 3000)
       }
     } catch (error) {
@@ -130,11 +130,17 @@ export default function ContactForm() {
   }
 
   const getBudgetRange = () => {
-    if (budgetValue < 50000) return 'Petit budget : Idéal pour un petit bouquet ou des ballons'
-    if (budgetValue < 100000) return 'Budget moyen : Parfait pour un gift basket ou une décoration simple'
-    if (budgetValue < 200000) return 'Bon budget : Décoration complète + surprise planner'
-    return 'Budget premium : Organisation complète haut de gamme'
+    if (budgetValue < 30000) return 'Petit budget : Parfait pour un bouquet ou des ballons simples'
+    if (budgetValue < 60000) return 'Budget doux : Idéal pour un gift basket ou des ballons personnalisés'
+    if (budgetValue < 120000) return 'Budget confortable : Décoration complète + petits extras'
+    if (budgetValue < 250000) return 'Budget généreux : Surprise complète avec planification'
+    return 'Budget premium : Organisation haut de gamme, tous les détails soignés'
   }
+
+  // Calcul du pourcentage pour la position du point
+  const minBudget = 15000
+  const maxBudget = 500000
+  const percentage = ((budgetValue - minBudget) / (maxBudget - minBudget)) * 100
 
   return (
     <section id="contact" className="py-24 bg-white">
@@ -193,17 +199,55 @@ export default function ContactForm() {
                 <motion.div key="step4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Budget</h3>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Budget estimé : {budgetValue.toLocaleString()} RWF</label>
-                    <input type="range" min="30000" max="500000" step="10000" value={budgetValue} onChange={handleBudgetChange} className="w-full h-2 bg-pink-200 rounded-lg appearance-none cursor-pointer accent-primary" />
+                    <div className="flex justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">Budget estimé</label>
+                      <span className="text-primary font-bold text-lg">{budgetValue.toLocaleString()} RWF</span>
+                    </div>
+                    <div className="relative pt-2">
+                      <input 
+                        type="range" 
+                        min="15000" 
+                        max="500000" 
+                        step="5000" 
+                        value={budgetValue} 
+                        onChange={handleBudgetChange}
+                        className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                        style={{
+                          background: `linear-gradient(to right, #FF4D6D 0%, #FF4D6D ${percentage}%, #e5e7eb ${percentage}%, #e5e7eb 100%)`
+                        }}
+                      />
+                      {/* Style personnalisé pour le point du slider */}
+                      <style jsx>{`
+                        input[type="range"] {
+                          -webkit-appearance: none;
+                        }
+                        input[type="range"]::-webkit-slider-thumb {
+                          -webkit-appearance: none;
+                          width: 20px;
+                          height: 20px;
+                          border-radius: 50%;
+                          background: white;
+                          border: 2px solid #FF4D6D;
+                          box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+                          cursor: pointer;
+                          transition: all 0.2s;
+                        }
+                        input[type="range"]::-webkit-slider-thumb:hover {
+                          transform: scale(1.2);
+                          background: #FF4D6D;
+                        }
+                      `}</style>
+                    </div>
                     <div className="flex justify-between text-xs text-gray-500 mt-2">
-                      <span>30k</span>
+                      <span>15k</span>
+                      <span>50k</span>
                       <span>100k</span>
                       <span>200k</span>
-                      <span>300k</span>
+                      <span>350k</span>
                       <span>500k</span>
                     </div>
                   </div>
-                  <div className="bg-primaryLight p-4 rounded-lg">
+                  <div className="bg-gradient-to-r from-primary/10 to-primaryLight p-4 rounded-lg border-l-4 border-primary">
                     <p className="text-sm text-gray-700">{getBudgetRange()}</p>
                   </div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
@@ -213,8 +257,8 @@ export default function ContactForm() {
               {step === 5 && (
                 <motion.div key="step5" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Services souhaités</h3>
-                  <div className="space-y-3">{serviceOptions.map(service => (<label key={service} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer"><input type="checkbox" value={service} checked={formData.services.includes(service)} onChange={handleChange} className="w-5 h-5 text-primary" /><span>{service}</span></label>))}</div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Message à écrire sur la carte</label><textarea name="message" value={formData.message} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Joyeux anniversaire mon amour ! Je t'aime" /></div>
+                  <div className="space-y-3">{serviceOptions.map(service => (<label key={service} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-primaryLight transition"><input type="checkbox" value={service} checked={formData.services.includes(service)} onChange={handleChange} className="w-5 h-5 text-primary rounded focus:ring-primary" /><span>{service}</span></label>))}</div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Message à écrire sur la carte</label><textarea name="message" value={formData.message} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" placeholder="Joyeux anniversaire mon amour ! Je t'aime" /></div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
                 </motion.div>
               )}
@@ -236,7 +280,7 @@ export default function ContactForm() {
                         </label>
                       </div>
                     </div>
-                    <div><label className="block text-sm font-medium text-gray-700 mb-2">Instructions spéciales</label><textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Theme, couleurs, preferences..." /></div>
+                    <div><label className="block text-sm font-medium text-gray-700 mb-2">Instructions spéciales</label><textarea name="specialInstructions" value={formData.specialInstructions} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" placeholder="Theme, couleurs, preferences..." /></div>
                   </div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
                 </motion.div>
@@ -245,21 +289,21 @@ export default function ContactForm() {
               {step === 7 && (
                 <motion.div key="step7" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Confirmation</h3>
-                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer"><input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5" /><span>La surprise doit être discrète (ne pas révéler qui l'envoie)</span></label>
-                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer"><input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5" /><span>La personne surprise doit être présente lors de la livraison</span></label>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Notes supplémentaires</label><textarea name="additionalNotes" value={formData.additionalNotes} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Toute information importante..." /></div>
-                  <div className="bg-primaryLight p-4 rounded-lg">
-                    <p className="font-semibold mb-2">Récapitulatif :</p>
-                    <ul className="text-sm space-y-1">
-                      <li>Client: {formData.clientName || 'Non renseigné'}</li>
-                      <li>Destinataire: {formData.destName || 'Non renseigné'}</li>
-                      <li>Événement: {formData.eventType}</li>
-                      <li>Date: {formData.eventDate || 'Non renseignée'}</li>
-                      <li>Budget: {parseInt(formData.budget).toLocaleString()} RWF</li>
-                      <li>Livraison: {formData.deliveryMethod === 'delivery' ? 'À domicile (+5 000 RWF)' : 'Retrait au bureau'}</li>
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight transition"><input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5 text-primary rounded focus:ring-primary" /><span>La surprise doit être discrète (ne pas révéler qui l'envoie)</span></label>
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight transition"><input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5 text-primary rounded focus:ring-primary" /><span>La personne surprise doit être présente lors de la livraison</span></label>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Notes supplémentaires</label><textarea name="additionalNotes" value={formData.additionalNotes} onChange={handleChange} rows={3} className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" placeholder="Toute information importante..." /></div>
+                  <div className="bg-gradient-to-r from-primary/10 to-primaryLight p-4 rounded-lg border-l-4 border-primary">
+                    <p className="font-semibold mb-2 text-dark">Récapitulatif :</p>
+                    <ul className="text-sm space-y-1 text-gray-700">
+                      <li>👤 Client: {formData.clientName || 'Non renseigné'}</li>
+                      <li>🎁 Destinataire: {formData.destName || 'Non renseigné'}</li>
+                      <li>📅 Événement: {formData.eventType}</li>
+                      <li>📆 Date: {formData.eventDate || 'Non renseignée'}</li>
+                      <li>💰 Budget: {parseInt(formData.budget).toLocaleString()} RWF</li>
+                      <li>🚚 Livraison: {formData.deliveryMethod === 'delivery' ? 'À domicile (+5 000 RWF)' : 'Retrait au bureau'}</li>
                     </ul>
                   </div>
-                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="submit" disabled={isSubmitting} className="btn-primary flex-1">{isSubmitting ? 'Envoi...' : 'Envoyer ma demande'}</button></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">← Retour</button><button type="submit" disabled={isSubmitting} className="btn-primary flex-1">{isSubmitting ? 'Envoi...' : 'Envoyer ma demande ✓'}</button></div>
                 </motion.div>
               )}
             </AnimatePresence>

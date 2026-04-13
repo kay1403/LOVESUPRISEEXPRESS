@@ -4,7 +4,8 @@ import { motion } from 'framer-motion'
 import Hero from '@/components/Hero'
 import Services from '@/components/Services'
 import GiftBaskets from '@/components/GiftBaskets'
-import GallerySection from '@/components/GallerySection'
+import Realizations from '@/components/Realizations'
+import Gallery from '@/components/Gallery'
 import About from '@/components/About'
 import ContactForm from '@/components/ContactForm'
 import Footer from '@/components/Footer'
@@ -15,7 +16,8 @@ export default function Home() {
       <Hero />
       <Services />
       <GiftBaskets />
-      <GallerySection />
+      <Realizations />
+      <Gallery />
       <About />
       <ContactForm />
       <Footer />
