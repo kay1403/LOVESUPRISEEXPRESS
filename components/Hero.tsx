@@ -1,8 +1,8 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState, useEffect, useRef } from 'react'
-import { ChevronLeft, ChevronRight, Heart, ArrowRight, Sparkles, Gift, Calendar, Users } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ChevronLeft, ChevronRight, Heart, ArrowRight, Sparkles } from 'lucide-react'
 import LanguageSelector from './LanguageSelector'
 
 // Services data - Adapté à LoveExpress
@@ -57,7 +57,7 @@ const services = [
   }
 ]
 
-// Composant CTA circulaire
+// Composant CTA circulaire avec effet glassmorphism
 const CircularCTA = ({ label, title, variant, onClick }: { 
   label: string; 
   title: string; 
@@ -71,7 +71,7 @@ const CircularCTA = ({ label, title, variant, onClick }: {
   >
     <div className={`
       relative h-28 w-28 md:h-36 md:w-36 rounded-full flex flex-col items-center justify-center p-4 text-center transition-all duration-300 group-hover:shadow-2xl
-      ${variant === 'light' ? 'bg-white text-dark shadow-lg' : 'bg-dark/90 text-white backdrop-blur-sm shadow-lg'}
+      ${variant === 'light' ? 'bg-white/90 backdrop-blur-sm text-dark' : 'bg-dark/80 backdrop-blur-sm text-white'}
     `}>
       <span className="text-[8px] md:text-[10px] tracking-[0.2em] uppercase mb-1 opacity-60">{label}</span>
       <span className="text-xs md:text-sm font-bold leading-tight">{title}</span>
@@ -135,6 +135,7 @@ export default function Hero() {
     setCurrentIndex(index)
   }
 
+  // Variants d'animation pour le texte "reveal"
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -152,12 +153,18 @@ export default function Hero() {
     }
   }
 
+  // Nouveau variant avec flou entrant
   const featureVariants = {
-    hidden: { x: -20, opacity: 0 },
+    hidden: (i: number) => ({
+      x: -20,
+      opacity: 0,
+      filter: "blur(4px)"
+    }),
     visible: (i: number) => ({
       x: 0,
       opacity: 1,
-      transition: { delay: i * 0.1, duration: 0.4 }
+      filter: "blur(0px)",
+      transition: { delay: 0.3 + i * 0.1, duration: 0.5, ease: [0.2, 0.9, 0.3, 1] }
     })
   }
 
@@ -167,7 +174,7 @@ export default function Hero() {
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
     >
-      {/* Language selector */}
+      {/* Language selector - avec effet glassmorphism */}
       <div className="absolute top-6 right-6 z-30">
         <LanguageSelector />
       </div>
@@ -178,7 +185,7 @@ export default function Hero() {
         style={{ backgroundColor: currentService.bgLight }}
       />
 
-      {/* L'IMAGE DE FOND (Partie droite) */}
+      {/* L'IMAGE DE FOND (Partie droite) - avec zoom et parallaxe */}
       <div className="absolute inset-0 z-0 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
@@ -202,7 +209,7 @@ export default function Hero() {
         </AnimatePresence>
       </div>
 
-      {/* LE MASQUE EN ARC DE CERCLE (Partie gauche) - largeur réduite */}
+      {/* LE MASQUE EN ARC DE CERCLE (Partie gauche) */}
       <motion.div 
         className="absolute inset-0 z-10 bg-white/95 backdrop-blur-sm"
         style={{
@@ -210,10 +217,10 @@ export default function Hero() {
         }}
         initial={{ clipPath: 'ellipse(70% 120% at -15% 50%)' }}
         animate={{ clipPath: 'ellipse(90% 120% at -10% 50%)' }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       />
 
-      {/* Logo en haut à gauche */}
+      {/* Logo en haut à gauche - avec mix-blend-mode pour effet ultra-moderne */}
       <div className="absolute top-6 left-6 z-30">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -224,7 +231,7 @@ export default function Hero() {
           <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-xl flex items-center justify-center shadow-lg">
             <Heart size={18} className="text-white fill-white" />
           </div>
-          <span className="font-display text-xl font-bold text-primary">LoveExpress</span>
+          <span className="font-display text-xl font-bold text-primary mix-blend-multiply lg:mix-blend-normal">LoveExpress</span>
         </motion.div>
       </div>
 
@@ -262,14 +269,17 @@ export default function Hero() {
               transition={{ duration: 0.4 }}
               className="space-y-6"
             >
-              {/* Badge */}
+              {/* Badge avec point animé */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
                 className="inline-flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full"
               >
-                <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
+                </span>
                 <span className="text-xs font-medium text-primary uppercase tracking-wider">
                   {currentService.badge}
                 </span>
@@ -318,7 +328,7 @@ export default function Hero() {
                 {currentService.description}
               </motion.p>
 
-              {/* Points forts */}
+              {/* Points forts avec animation flou entrant + staggered */}
               <motion.div 
                 className="space-y-2"
                 initial="hidden"
@@ -337,7 +347,7 @@ export default function Hero() {
                 ))}
               </motion.div>
 
-              {/* CTA PRINCIPAL */}
+              {/* CTA PRINCIPAL avec effet "glow" */}
               <motion.button
                 whileHover={{ scale: 1.03, x: 3 }}
                 whileTap={{ scale: 0.97 }}
@@ -345,17 +355,22 @@ export default function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 }}
                 onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-                className="group flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                className="group relative flex items-center gap-2 bg-primary text-white px-6 py-2.5 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
               >
-                {currentService.cta}
-                <ChevronRight size={16} className="group-hover:translate-x-1 transition" />
+                <span className="relative z-10">{currentService.cta}</span>
+                <ChevronRight size={16} className="relative z-10 group-hover:translate-x-1 transition" />
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-r from-primary to-accent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  initial={false}
+                  animate={false}
+                />
               </motion.button>
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
 
-      {/* BOUTONS CIRCULAIRES CTA */}
+      {/* BOUTONS CIRCULAIRES CTA (en bas) */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-4">
         <CircularCTA 
           label="SURPRENDRE"
@@ -402,7 +417,7 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator avec animation fluide */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
