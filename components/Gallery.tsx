@@ -1,18 +1,20 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { X, Heart, User, Calendar } from 'lucide-react'
+import Link from 'next/link'
+import { X, Heart, User, Calendar, ArrowRight, Star } from 'lucide-react'
 
-// Ici ce sont les PHOTOS DES CLIENTS HEUREUX (preuve sociale)
-const clientGallery = [
+// Témoignages clients (aperçu sur la page d'accueil)
+const testimonials = [
   {
     id: 1,
     url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',
     clientName: 'Marie & Jean',
     event: 'Demande en mariage',
     date: '15 Mars 2026',
-    message: 'Merci LoveExpress pour ce moment magique ! ❤️'
+    message: 'Merci LoveExpress pour ce moment magique !',
+    rating: 5
   },
   {
     id: 2,
@@ -20,7 +22,8 @@ const clientGallery = [
     clientName: 'Sarah',
     event: 'Anniversaire 30 ans',
     date: '2 Avril 2026',
-    message: 'Une décoration magnifique, tout le monde a adoré !'
+    message: 'Une décoration magnifique, tout le monde a adoré !',
+    rating: 5
   },
   {
     id: 3,
@@ -28,135 +31,181 @@ const clientGallery = [
     clientName: 'David',
     event: 'Baby shower',
     date: '20 Mars 2026',
-    message: 'Les ballons étaient parfaits, merci !'
-  },
-  {
-    id: 4,
-    url: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
-    clientName: 'Clarisse',
-    event: 'Anniversaire surprise',
-    date: '10 Avril 2026',
-    message: 'Mon mari a été tellement surpris !'
-  },
-  {
-    id: 5,
-    url: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg',
-    clientName: 'Alice & Thomas',
-    event: 'Demande en mariage',
-    date: '5 Avril 2026',
-    message: 'Le meilleur jour de notre vie !'
-  },
-  {
-    id: 6,
-    url: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg',
-    clientName: 'Maman de Kevin',
-    event: 'Anniversaire 18 ans',
-    date: '25 Mars 2026',
-    message: 'Mon fils a adoré sa surprise !'
+    message: 'Les ballons étaient parfaits, merci !',
+    rating: 5
   }
 ]
 
+// Variants d'animation
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.2, 0.9, 0.3, 1] }
+  }
+}
+
 export default function Gallery() {
-  const [selectedImage, setSelectedImage] = useState<typeof clientGallery[0] | null>(null)
+  const [selectedTestimonial, setSelectedTestimonial] = useState<typeof testimonials[0] | null>(null)
 
   return (
-    <section className="py-24 bg-primaryLight">
-      <div className="container-custom">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <div className="inline-flex items-center gap-2 bg-white/80 px-4 py-2 rounded-full mb-4">
-            <Heart size={16} className="text-primary" />
-            <span className="text-primary font-semibold text-sm">Ils nous ont fait confiance</span>
-          </div>
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-            Galerie Clients
-          </h2>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Découvrez les sourires et la joie de nos clients après leurs surprises
-          </p>
-        </motion.div>
+    <>
+      <section className="py-24 bg-white">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Témoignages</span>
+            </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+              Ils nous ont fait confiance
+            </h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              Découvrez les sourires et la joie de nos clients après leurs surprises
+            </p>
+          </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clientGallery.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5 }}
-              onClick={() => setSelectedImage(item)}
-              className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-xl"
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {testimonials.map((item, index) => (
+              <motion.div
+                key={item.id}
+                variants={itemVariants}
+                whileHover={{ y: -8 }}
+                onClick={() => setSelectedTestimonial(item)}
+                className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
+              >
+                <div className="relative h-64 overflow-hidden">
+                  <img
+                    src={item.url}
+                    alt={item.clientName}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  
+                  {/* Rating */}
+                  <div className="absolute bottom-4 left-4 flex gap-0.5">
+                    {[...Array(item.rating)].map((_, i) => (
+                      <Star key={i} size={14} className="fill-accent text-accent" />
+                    ))}
+                  </div>
+                  
+                  {/* Overlay au hover */}
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <Heart size={48} className="text-white drop-shadow-lg transform scale-0 group-hover:scale-100 transition-transform duration-300" />
+                  </div>
+                </div>
+                
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User size={14} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-dark">{item.clientName}</h3>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar size={12} className="text-gray-400" />
+                    <span className="text-xs text-gray-400">{item.date}</span>
+                    <span className="text-xs text-primary ml-auto">{item.event}</span>
+                  </div>
+                  <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Bouton pour voir toute la galerie */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            viewport={{ once: true }}
+            className="text-center mt-12"
+          >
+            <Link 
+              href="/gallery" 
+              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-6 py-3 rounded-full font-semibold hover:bg-primary hover:text-white transition-all duration-300 group"
             >
-              <div className="relative h-56 overflow-hidden">
-                <img
-                  src={item.url}
-                  alt={item.clientName}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <Heart size={40} className="text-white drop-shadow-lg" />
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <User size={16} className="text-primary" />
-                  <h3 className="font-semibold text-dark">{item.clientName}</h3>
-                </div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar size={14} className="text-gray-400" />
-                  <span className="text-xs text-gray-400">{item.date}</span>
-                  <span className="text-xs text-primary ml-auto">{item.event}</span>
-                </div>
-                <p className="text-gray-600 text-sm italic">"{item.message}"</p>
-              </div>
-            </motion.div>
-          ))}
+              Voir tous les témoignages
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition" />
+            </Link>
+          </motion.div>
         </div>
+      </section>
 
-        {/* Modal */}
-        {selectedImage && (
-          <div 
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
-            onClick={() => setSelectedImage(null)}
+      {/* Modal pour agrandir le témoignage */}
+      <AnimatePresence>
+        {selectedTestimonial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedTestimonial(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative">
                 <img 
-                  src={selectedImage.url} 
-                  alt={selectedImage.clientName}
-                  className="w-full h-96 object-cover"
+                  src={selectedTestimonial.url} 
+                  alt={selectedTestimonial.clientName}
+                  className="w-full h-80 object-cover"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <button 
-                  onClick={() => setSelectedImage(null)}
-                  className="absolute top-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black/70 transition"
+                  onClick={() => setSelectedTestimonial(null)}
+                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
                 >
                   <X size={20} className="text-white" />
                 </button>
+                <div className="absolute bottom-4 left-4 flex gap-0.5">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} size={16} className="fill-accent text-accent" />
+                  ))}
+                </div>
               </div>
               <div className="p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <User size={18} className="text-primary" />
-                  <h3 className="text-xl font-bold text-dark">{selectedImage.clientName}</h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-dark">{selectedTestimonial.clientName}</h3>
+                    <div className="flex items-center gap-2">
+                      <Calendar size={12} className="text-gray-400" />
+                      <span className="text-xs text-gray-500">{selectedTestimonial.date}</span>
+                    </div>
+                  </div>
+                  <span className="ml-auto text-sm text-primary font-medium">{selectedTestimonial.event}</span>
                 </div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Calendar size={14} className="text-gray-400" />
-                  <span className="text-sm text-gray-500">{selectedImage.date}</span>
-                  <span className="text-sm text-primary ml-auto">{selectedImage.event}</span>
-                </div>
-                <p className="text-gray-600 italic">"{selectedImage.message}"</p>
-                <div className="mt-4 pt-4 border-t flex justify-center">
+                <p className="text-gray-600 italic text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
+                <div className="mt-6 pt-4 border-t flex justify-center">
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Heart key={i} size={16} className="fill-primary text-primary" />
@@ -165,9 +214,9 @@ export default function Gallery() {
                 </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
-      </div>
-    </section>
+      </AnimatePresence>
+    </>
   )
 }

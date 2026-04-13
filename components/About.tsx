@@ -1,14 +1,14 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Heart, Sparkles, Calendar, Users, Gift, Star } from 'lucide-react'
+import { Heart, Sparkles, Calendar, Users, Gift, Star, Clock, Award } from 'lucide-react'
 
 export default function About() {
   const stats = [
-    { value: '250+', label: 'Surprises organisées', icon: Gift },
-    { value: '5+', label: "Années d'expérience", icon: Calendar },
     { value: '98%', label: 'Clients satisfaits', icon: Users },
-    { value: '100%', label: 'Passion et dévouement', icon: Heart }
+    { value: '100%', label: 'Passion et dévouement', icon: Heart },
+    { value: '24/7', label: 'Disponibilité', icon: Clock },
+    { value: 'Premium', label: 'Service exclusif', icon: Award }
   ]
 
   const qualities = [
@@ -40,9 +40,9 @@ export default function About() {
             </div>
             <div className="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-xl p-4 z-20">
               <div className="flex items-center gap-2">
-                <Star size={20} className="text-accent fill-accent" />
-                <span className="font-semibold text-dark">Note 5.0</span>
-                <span className="text-gray-400 text-sm">(150+ avis)</span>
+                <Sparkles size={20} className="text-accent" />
+                <span className="font-semibold text-dark">Créations uniques</span>
+                <span className="text-gray-400 text-sm">Sur mesure</span>
               </div>
             </div>
           </motion.div>
