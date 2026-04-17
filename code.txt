@@ -1,35 +1,20 @@
-./app/gallery/page.tsx
-./app/i18nProvider.tsx
-./app/layout.tsx
-./app/page.tsx
-./app/globals.css
-./app/providers.tsx
-./next.config.js
-./components/Gallery.tsx
-./components/Hero.tsx
-./components/GiftBaskets.tsx
-./components/Footer.tsx
-./components/ContactForm.tsx
-./components/LanguageSelector.tsx
-./components/Realizations.tsx
-./components/About.tsx
-./postcss.config.js
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, X, Heart, User, Calendar } from 'lucide-react'
+import { ArrowLeft, X, Heart, User, Calendar, Star } from 'lucide-react'
 
-// Photos des clients heureux (preuve sociale)
-const clientGallery = [
+// Tous les témoignages clients
+const allTestimonials = [
   {
     id: 1,
     url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',
     clientName: 'Marie & Jean',
     event: 'Demande en mariage',
     date: '15 Mars 2026',
-    message: 'Merci LoveExpress pour ce moment magique ! ❤️'
+    message: 'Merci LoveExpress pour ce moment magique !',
+    rating: 5
   },
   {
     id: 2,
@@ -37,7 +22,8 @@ const clientGallery = [
     clientName: 'Sarah',
     event: 'Anniversaire 30 ans',
     date: '2 Avril 2026',
-    message: 'Une décoration magnifique, tout le monde a adoré !'
+    message: 'Une décoration magnifique, tout le monde a adoré !',
+    rating: 5
   },
   {
     id: 3,
@@ -45,7 +31,8 @@ const clientGallery = [
     clientName: 'David',
     event: 'Baby shower',
     date: '20 Mars 2026',
-    message: 'Les ballons étaient parfaits, merci !'
+    message: 'Les ballons étaient parfaits, merci !',
+    rating: 5
   },
   {
     id: 4,
@@ -53,7 +40,8 @@ const clientGallery = [
     clientName: 'Clarisse',
     event: 'Anniversaire surprise',
     date: '10 Avril 2026',
-    message: 'Mon mari a été tellement surpris !'
+    message: 'Mon mari a été tellement surpris !',
+    rating: 5
   },
   {
     id: 5,
@@ -61,7 +49,8 @@ const clientGallery = [
     clientName: 'Alice & Thomas',
     event: 'Demande en mariage',
     date: '5 Avril 2026',
-    message: 'Le meilleur jour de notre vie !'
+    message: 'Le meilleur jour de notre vie !',
+    rating: 5
   },
   {
     id: 6,
@@ -69,7 +58,8 @@ const clientGallery = [
     clientName: 'Maman de Kevin',
     event: 'Anniversaire 18 ans',
     date: '25 Mars 2026',
-    message: 'Mon fils a adoré sa surprise !'
+    message: 'Mon fils a adoré sa surprise !',
+    rating: 5
   },
   {
     id: 7,
@@ -77,7 +67,8 @@ const clientGallery = [
     clientName: 'Paul & Sophie',
     event: 'Demande en mariage',
     date: '12 Avril 2026',
-    message: 'Un moment inoubliable, merci encore !'
+    message: 'Un moment inoubliable, merci encore !',
+    rating: 5
   },
   {
     id: 8,
@@ -85,7 +76,8 @@ const clientGallery = [
     clientName: 'Isabelle',
     event: 'Anniversaire 50 ans',
     date: '8 Avril 2026',
-    message: 'La décoration était magnifique !'
+    message: 'La décoration était magnifique !',
+    rating: 5
   },
   {
     id: 9,
@@ -93,23 +85,41 @@ const clientGallery = [
     clientName: 'Thomas',
     event: 'Fête de fiançailles',
     date: '1 Avril 2026',
-    message: 'Tout était parfait, merci LoveExpress !'
+    message: 'Tout était parfait, merci LoveExpress !',
+    rating: 5
   }
 ]
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.2, 0.9, 0.3, 1] }
+  }
+}
+
 export default function GalleryPage() {
-  const [selectedImage, setSelectedImage] = useState<typeof clientGallery[0] | null>(null)
+  const [selectedTestimonial, setSelectedTestimonial] = useState<typeof allTestimonials[0] | null>(null)
 
   return (
     <main className="min-h-screen bg-primaryLight">
-      {/* Header avec retour à l'accueil */}
+      {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="container-custom py-4">
           <Link 
             href="/" 
             className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition group"
           >
-            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition" />
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition" />
             Retour à l'accueil
           </Link>
         </div>
@@ -123,9 +133,9 @@ export default function GalleryPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <div className="inline-flex items-center gap-2 bg-white/80 px-4 py-2 rounded-full mb-4 shadow-sm">
-              <Heart size={16} className="text-primary" />
-              <span className="text-primary font-semibold text-sm">Ils nous ont fait confiance</span>
+            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-4 shadow-sm">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Ils nous ont fait confiance</span>
             </div>
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-dark mb-4">
               Galerie Clients
@@ -135,16 +145,19 @@ export default function GalleryPage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {clientGallery.map((item, index) => (
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {allTestimonials.map((item) => (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
+                variants={itemVariants}
                 whileHover={{ y: -5 }}
-                onClick={() => setSelectedImage(item)}
-                className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-xl"
+                onClick={() => setSelectedTestimonial(item)}
+                className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl"
               >
                 <div className="relative h-56 overflow-hidden">
                   <img
@@ -152,76 +165,100 @@ export default function GalleryPage() {
                     alt={item.clientName}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                  <div className="absolute bottom-3 left-3 flex gap-0.5">
+                    {[...Array(item.rating)].map((_, i) => (
+                      <Star key={i} size={12} className="fill-accent text-accent" />
+                    ))}
+                  </div>
                   <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     <Heart size={40} className="text-white drop-shadow-lg" />
                   </div>
                 </div>
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-2">
-                    <User size={16} className="text-primary" />
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User size={14} className="text-primary" />
+                    </div>
                     <h3 className="font-semibold text-dark">{item.clientName}</h3>
                   </div>
                   <div className="flex items-center gap-2 mb-3">
-                    <Calendar size={14} className="text-gray-400" />
+                    <Calendar size={12} className="text-gray-400" />
                     <span className="text-xs text-gray-400">{item.date}</span>
-                    <span className="text-xs text-primary ml-auto">{item.event}</span>
+                    <span className="text-xs text-primary ml-auto font-medium">{item.event}</span>
                   </div>
-                  <p className="text-gray-600 text-sm italic">"{item.message}"</p>
+                  <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Modal */}
-      {selectedImage && (
-        <div 
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setSelectedImage(null)}
-        >
+      <AnimatePresence>
+        {selectedTestimonial && (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedTestimonial(null)}
           >
-            <div className="relative">
-              <img 
-                src={selectedImage.url} 
-                alt={selectedImage.clientName}
-                className="w-full h-96 object-cover"
-              />
-              <button 
-                onClick={() => setSelectedImage(null)}
-                className="absolute top-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black/70 transition"
-              >
-                <X size={20} className="text-white" />
-              </button>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center gap-2 mb-2">
-                <User size={18} className="text-primary" />
-                <h3 className="text-xl font-bold text-dark">{selectedImage.clientName}</h3>
-              </div>
-              <div className="flex items-center gap-2 mb-4">
-                <Calendar size={14} className="text-gray-400" />
-                <span className="text-sm text-gray-500">{selectedImage.date}</span>
-                <span className="text-sm text-primary ml-auto">{selectedImage.event}</span>
-              </div>
-              <p className="text-gray-600 italic">"{selectedImage.message}"</p>
-              <div className="mt-4 pt-4 border-t flex justify-center">
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => (
-                    <Heart key={i} size={16} className="fill-primary text-primary" />
+            <motion.div
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative">
+                <img 
+                  src={selectedTestimonial.url} 
+                  alt={selectedTestimonial.clientName}
+                  className="w-full h-80 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <button 
+                  onClick={() => setSelectedTestimonial(null)}
+                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
+                >
+                  <X size={20} className="text-white" />
+                </button>
+                <div className="absolute bottom-4 left-4 flex gap-0.5">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} size={16} className="fill-accent text-accent" />
                   ))}
                 </div>
               </div>
-            </div>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-dark">{selectedTestimonial.clientName}</h3>
+                    <div className="flex items-center gap-2">
+                      <Calendar size={12} className="text-gray-400" />
+                      <span className="text-xs text-gray-500">{selectedTestimonial.date}</span>
+                    </div>
+                  </div>
+                  <span className="ml-auto text-sm text-primary font-medium">{selectedTestimonial.event}</span>
+                </div>
+                <p className="text-gray-600 italic text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
+                <div className="mt-6 pt-4 border-t flex justify-center">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Heart key={i} size={16} className="fill-primary text-primary" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </main>
   )
 }
@@ -279,9 +316,63 @@ export default function RootLayout({
     </html>
   )
 }
+import { NextResponse } from 'next/server';
+import { addToGoogleSheets } from '@/lib/googleSheets';
+
+export async function POST(request: Request) {
+  try {
+    const data = await request.json();
+    
+    // Sauvegarde OBLIGATOIRE dans Google Sheets
+    const saved = await addToGoogleSheets(data);
+    
+    // Message de notification
+    const message = `
+🔔 NOUVELLE DEMANDE SURPRISE !
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 CLIENT
+Nom: ${data.clientName}
+Téléphone: ${data.clientPhone}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎁 DESTINATAIRE
+Nom: ${data.destName}
+Adresse: ${data.destAddress}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 ÉVÉNEMENT
+Type: ${data.eventType}
+Date: ${data.eventDate}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 Budget: ${data.budget} RWF
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Google Sheets: ${saved ? 'OK' : 'ÉCHEC'}
+
+👉 Répondre: ${data.clientPhone}
+    `;
+
+    console.log(message);
+    
+    return NextResponse.json({ 
+      success: true, 
+      googleSheets: saved ? 'saved' : 'failed'
+    });
+    
+  } catch (error) {
+    console.error('Erreur:', error);
+    return NextResponse.json(
+      { success: false, error: 'Erreur serveur' },
+      { status: 500 }
+    );
+  }
+}
 'use client'
 
 import Hero from '@/components/Hero'
+import Services from '@/components/Services'
 import GiftBaskets from '@/components/GiftBaskets'
 import Realizations from '@/components/Realizations'
 import About from '@/components/About'
@@ -292,6 +383,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <Hero />
+      <Services />
       <GiftBaskets />
       <Realizations />
       <About />
@@ -398,21 +490,74 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/basic-features/typescript for more information.
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: '#FF4D6D',
+        primaryLight: '#FFF0F3',
+        accent: '#FFD700',
+        dark: '#1A1A1A',
+        gray: '#6B7280',
+        lightGray: '#F9FAFB',
+      },
+      fontFamily: {
+        sans: ['Poppins', 'system-ui', 'sans-serif'],
+        display: ['Playfair Display', 'serif'],
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.8s ease-out',
+        'slide-up': 'slideUp 0.6s ease-out',
+        'float': 'float 3s ease-in-out infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+      },
+    },
+  },
+  plugins: [],
+}
+export default config
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { X, Heart, User, Calendar } from 'lucide-react'
+import Link from 'next/link'
+import { X, Heart, User, Calendar, ArrowRight, Star } from 'lucide-react'
 
-// Ici ce sont les PHOTOS DES CLIENTS HEUREUX (preuve sociale)
-const clientGallery = [
+// Témoignages clients (aperçu sur la page d'accueil)
+const testimonials = [
   {
     id: 1,
     url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',
     clientName: 'Marie & Jean',
     event: 'Demande en mariage',
     date: '15 Mars 2026',
-    message: 'Merci LoveExpress pour ce moment magique ! ❤️'
+    message: 'Merci LoveExpress pour ce moment magique !',
+    rating: 5
   },
   {
     id: 2,
@@ -420,7 +565,8 @@ const clientGallery = [
     clientName: 'Sarah',
     event: 'Anniversaire 30 ans',
     date: '2 Avril 2026',
-    message: 'Une décoration magnifique, tout le monde a adoré !'
+    message: 'Une décoration magnifique, tout le monde a adoré !',
+    rating: 5
   },
   {
     id: 3,
@@ -428,135 +574,181 @@ const clientGallery = [
     clientName: 'David',
     event: 'Baby shower',
     date: '20 Mars 2026',
-    message: 'Les ballons étaient parfaits, merci !'
-  },
-  {
-    id: 4,
-    url: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
-    clientName: 'Clarisse',
-    event: 'Anniversaire surprise',
-    date: '10 Avril 2026',
-    message: 'Mon mari a été tellement surpris !'
-  },
-  {
-    id: 5,
-    url: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg',
-    clientName: 'Alice & Thomas',
-    event: 'Demande en mariage',
-    date: '5 Avril 2026',
-    message: 'Le meilleur jour de notre vie !'
-  },
-  {
-    id: 6,
-    url: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg',
-    clientName: 'Maman de Kevin',
-    event: 'Anniversaire 18 ans',
-    date: '25 Mars 2026',
-    message: 'Mon fils a adoré sa surprise !'
+    message: 'Les ballons étaient parfaits, merci !',
+    rating: 5
   }
 ]
 
+// Variants d'animation
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.2, 0.9, 0.3, 1] }
+  }
+}
+
 export default function Gallery() {
-  const [selectedImage, setSelectedImage] = useState<typeof clientGallery[0] | null>(null)
+  const [selectedTestimonial, setSelectedTestimonial] = useState<typeof testimonials[0] | null>(null)
 
   return (
-    <section className="py-24 bg-primaryLight">
-      <div className="container-custom">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <div className="inline-flex items-center gap-2 bg-white/80 px-4 py-2 rounded-full mb-4">
-            <Heart size={16} className="text-primary" />
-            <span className="text-primary font-semibold text-sm">Ils nous ont fait confiance</span>
-          </div>
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-            Galerie Clients
-          </h2>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Découvrez les sourires et la joie de nos clients après leurs surprises
-          </p>
-        </motion.div>
+    <>
+      <section className="py-24 bg-white">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Témoignages</span>
+            </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+              Ils nous ont fait confiance
+            </h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              Découvrez les sourires et la joie de nos clients après leurs surprises
+            </p>
+          </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clientGallery.map((item, index) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              transition={{ delay: index * 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5 }}
-              onClick={() => setSelectedImage(item)}
-              className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-xl"
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {testimonials.map((item, index) => (
+              <motion.div
+                key={item.id}
+                variants={itemVariants}
+                whileHover={{ y: -8 }}
+                onClick={() => setSelectedTestimonial(item)}
+                className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
+              >
+                <div className="relative h-64 overflow-hidden">
+                  <img
+                    src={item.url}
+                    alt={item.clientName}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  
+                  {/* Rating */}
+                  <div className="absolute bottom-4 left-4 flex gap-0.5">
+                    {[...Array(item.rating)].map((_, i) => (
+                      <Star key={i} size={14} className="fill-accent text-accent" />
+                    ))}
+                  </div>
+                  
+                  {/* Overlay au hover */}
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <Heart size={48} className="text-white drop-shadow-lg transform scale-0 group-hover:scale-100 transition-transform duration-300" />
+                  </div>
+                </div>
+                
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User size={14} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-dark">{item.clientName}</h3>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar size={12} className="text-gray-400" />
+                    <span className="text-xs text-gray-400">{item.date}</span>
+                    <span className="text-xs text-primary ml-auto">{item.event}</span>
+                  </div>
+                  <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Bouton pour voir toute la galerie */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            viewport={{ once: true }}
+            className="text-center mt-12"
+          >
+            <Link 
+              href="/gallery" 
+              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-6 py-3 rounded-full font-semibold hover:bg-primary hover:text-white transition-all duration-300 group"
             >
-              <div className="relative h-56 overflow-hidden">
-                <img
-                  src={item.url}
-                  alt={item.clientName}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <Heart size={40} className="text-white drop-shadow-lg" />
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-2">
-                  <User size={16} className="text-primary" />
-                  <h3 className="font-semibold text-dark">{item.clientName}</h3>
-                </div>
-                <div className="flex items-center gap-2 mb-3">
-                  <Calendar size={14} className="text-gray-400" />
-                  <span className="text-xs text-gray-400">{item.date}</span>
-                  <span className="text-xs text-primary ml-auto">{item.event}</span>
-                </div>
-                <p className="text-gray-600 text-sm italic">"{item.message}"</p>
-              </div>
-            </motion.div>
-          ))}
+              Voir tous les témoignages
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition" />
+            </Link>
+          </motion.div>
         </div>
+      </section>
 
-        {/* Modal */}
-        {selectedImage && (
-          <div 
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
-            onClick={() => setSelectedImage(null)}
+      {/* Modal pour agrandir le témoignage */}
+      <AnimatePresence>
+        {selectedTestimonial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedTestimonial(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative">
                 <img 
-                  src={selectedImage.url} 
-                  alt={selectedImage.clientName}
-                  className="w-full h-96 object-cover"
+                  src={selectedTestimonial.url} 
+                  alt={selectedTestimonial.clientName}
+                  className="w-full h-80 object-cover"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <button 
-                  onClick={() => setSelectedImage(null)}
-                  className="absolute top-4 right-4 bg-black/50 p-2 rounded-full hover:bg-black/70 transition"
+                  onClick={() => setSelectedTestimonial(null)}
+                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
                 >
                   <X size={20} className="text-white" />
                 </button>
+                <div className="absolute bottom-4 left-4 flex gap-0.5">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} size={16} className="fill-accent text-accent" />
+                  ))}
+                </div>
               </div>
               <div className="p-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <User size={18} className="text-primary" />
-                  <h3 className="text-xl font-bold text-dark">{selectedImage.clientName}</h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-dark">{selectedTestimonial.clientName}</h3>
+                    <div className="flex items-center gap-2">
+                      <Calendar size={12} className="text-gray-400" />
+                      <span className="text-xs text-gray-500">{selectedTestimonial.date}</span>
+                    </div>
+                  </div>
+                  <span className="ml-auto text-sm text-primary font-medium">{selectedTestimonial.event}</span>
                 </div>
-                <div className="flex items-center gap-2 mb-4">
-                  <Calendar size={14} className="text-gray-400" />
-                  <span className="text-sm text-gray-500">{selectedImage.date}</span>
-                  <span className="text-sm text-primary ml-auto">{selectedImage.event}</span>
-                </div>
-                <p className="text-gray-600 italic">"{selectedImage.message}"</p>
-                <div className="mt-4 pt-4 border-t flex justify-center">
+                <p className="text-gray-600 italic text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
+                <div className="mt-6 pt-4 border-t flex justify-center">
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Heart key={i} size={16} className="fill-primary text-primary" />
@@ -565,10 +757,10 @@ export default function Gallery() {
                 </div>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
-      </div>
-    </section>
+      </AnimatePresence>
+    </>
   )
 }
 'use client'
@@ -1160,14 +1352,16 @@ export default function Hero() {
 }
 'use client'
 
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { X, Package, Heart, Baby, Coffee, Flower2, Sparkles } from 'lucide-react'
+import { X, Package, Heart, Baby, Coffee, Flower2, Sparkles, Gift } from 'lucide-react'
 
 const giftBaskets = [
   {
     id: 1,
-    name: 'Birthday Gift Basket',
+    name: 'Birthday',
+    subtitle: 'Gift Basket',
+    badge: 'Anniversaire',
     description: 'Perfect for birthday celebrations',
     longDescription: 'Un panier d\'anniversaire rempli de surprises : douceurs, accessoires de fête et cadeaux personnalisés pour célébrer comme il se doit.',
     price: 50000,
@@ -1178,7 +1372,9 @@ const giftBaskets = [
   },
   {
     id: 2,
-    name: 'Romantic Gift Basket',
+    name: 'Romantic',
+    subtitle: 'Gift Basket',
+    badge: 'Saint-Valentin',
     description: 'For your special someone',
     longDescription: 'Un panier romantique pour déclarer votre flamme ou célébrer votre amour. Bougies parfumées, chocolats fins, et une attention particulière pour chaque détail.',
     price: 75000,
@@ -1190,7 +1386,9 @@ const giftBaskets = [
   },
   {
     id: 3,
-    name: 'New Baby Gift Basket',
+    name: 'New Baby',
+    subtitle: 'Gift Basket',
+    badge: 'Naissance',
     description: 'Welcome the little one',
     longDescription: 'Célébrez l\'arrivée du nouveau-né avec ce panier cadeau rempli d\'articles essentiels pour bébé et des surprises pour les nouveaux parents.',
     price: 45000,
@@ -1201,7 +1399,9 @@ const giftBaskets = [
   },
   {
     id: 4,
-    name: 'Gourmet Gift Basket',
+    name: 'Gourmet',
+    subtitle: 'Gift Basket',
+    badge: 'Gastronomie',
     description: 'For food lovers',
     longDescription: 'Un voyage gustatif pour les amateurs de bonne cuisine. Produits fins, spécialités locales et internationales, le bonheur des papilles.',
     price: 65000,
@@ -1212,7 +1412,9 @@ const giftBaskets = [
   },
   {
     id: 5,
-    name: 'Wellness Gift Basket',
+    name: 'Wellness',
+    subtitle: 'Gift Basket',
+    badge: 'Bien-être',
     description: 'Relaxation and self-care',
     longDescription: 'Offrez un moment de détente avec ce panier bien-être. Produits de soin, huiles essentielles, et accessoires pour une pause relaxante.',
     price: 55000,
@@ -1222,6 +1424,24 @@ const giftBaskets = [
     includes: ['Huiles essentielles', 'Bougies aromatiques', 'Masques de soin', 'Thé relaxant']
   }
 ]
+
+// Variants d'animation
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.2, 0.9, 0.3, 1] }
+  }
+}
 
 export default function GiftBaskets() {
   const [selectedBasket, setSelectedBasket] = useState<typeof giftBaskets[0] | null>(null)
@@ -1237,113 +1457,557 @@ export default function GiftBaskets() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
+            <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
+              <Gift size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Cadeaux sur mesure</span>
+            </div>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-              Our Gift Baskets
+              Nos Panier Cadeaux
             </h2>
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              Carefully curated gifts for every occasion
+              Des cadeaux soigneusement sélectionnés pour chaque occasion
             </p>
           </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
             {giftBaskets.map((basket, index) => (
               <motion.div
                 key={basket.id}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
+                variants={itemVariants}
                 whileHover={{ y: -10 }}
                 onClick={() => setSelectedBasket(basket)}
-                className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer relative transition-all duration-300 hover:shadow-2xl"
+                className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
               >
-                {basket.popular && (
-                  <div className="absolute top-4 right-4 bg-accent text-dark px-3 py-1 rounded-full text-sm font-semibold z-10 flex items-center gap-1">
-                    <Sparkles size={14} /> Popular
-                  </div>
-                )}
-                <div className="h-64 overflow-hidden">
+                {/* Image avec overlay */}
+                <div className="relative h-56 overflow-hidden">
                   <img 
                     src={basket.image} 
                     alt={basket.name}
-                    className="w-full h-full object-cover hover:scale-110 transition-transform duration-500"
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                  
+                  {/* Badge */}
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold text-primary">{basket.badge}</span>
+                  </div>
+                  
+                  {/* Badge Popular */}
+                  {basket.popular && (
+                    <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
+                      <Sparkles size={12} className="text-dark" />
+                      <span className="text-xs font-semibold text-dark">Populaire</span>
+                    </div>
+                  )}
+                  
+                  {/* Overlay au hover */}
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold bg-primary/90 px-4 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                      Voir le panier →
+                    </span>
+                  </div>
                 </div>
+                
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-2">
-                    <basket.icon size={20} className="text-primary" />
-                    <h3 className="text-xl font-bold text-dark">{basket.name}</h3>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <basket.icon size={16} className="text-primary" />
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <h3 className="text-xl font-bold text-dark">{basket.name}</h3>
+                      <span className="text-sm font-light text-gray-400">{basket.subtitle}</span>
+                    </div>
                   </div>
-                  <p className="text-gray-500 mb-4">{basket.description}</p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-primary font-bold">{basket.priceRange}</span>
-                    <button className="text-primary font-semibold hover:text-accent transition flex items-center gap-1">
-                      Voir détails →
+                  <p className="text-gray-500 text-sm mb-4 line-clamp-2">{basket.description}</p>
+                  
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <div>
+                      <p className="text-xs text-gray-400">À partir de</p>
+                      <span className="text-primary font-bold">{basket.priceRange.split(' - ')[0]}</span>
+                    </div>
+                    <button className="text-primary font-semibold text-sm hover:text-accent transition flex items-center gap-1">
+                      Détails →
                     </button>
                   </div>
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Modal Gift Basket */}
-      {selectedBasket && (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setSelectedBasket(null)}>
+      <AnimatePresence>
+        {selectedBasket && (
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="bg-white rounded-2xl max-w-2xl w-full max-h-[85vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => setSelectedBasket(null)}
           >
-            <div className="relative h-56">
-              <img src={selectedBasket.image} alt={selectedBasket.name} className="w-full h-full object-cover rounded-t-2xl" />
-              <button onClick={() => setSelectedBasket(null)} className="absolute top-4 right-4 bg-white/90 p-2 rounded-full">
-                <X size={20} />
-              </button>
-              {selectedBasket.popular && (
-                <div className="absolute top-4 left-4 bg-accent text-dark px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                  <Sparkles size={14} /> Plus populaire
-                </div>
-              )}
-            </div>
-            <div className="p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <selectedBasket.icon size={24} className="text-primary" />
-                <h3 className="text-2xl font-bold text-dark">{selectedBasket.name}</h3>
-              </div>
-              <p className="text-gray-600 mb-4">{selectedBasket.longDescription}</p>
-              <div className="bg-primaryLight p-4 rounded-xl mb-4">
-                <h4 className="font-semibold text-dark mb-2">Contenu du panier :</h4>
-                <ul className="grid grid-cols-2 gap-2">
-                  {selectedBasket.includes.map((item, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-gray-600 text-sm">
-                      <span className="text-primary">✓</span> {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex justify-between items-center pt-4 border-t">
-                <div>
-                  <p className="text-sm text-gray-500">À partir de</p>
-                  <p className="text-2xl font-bold text-primary">{selectedBasket.priceRange}</p>
-                </div>
+            <motion.div
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative h-56">
+                <img src={selectedBasket.image} alt={selectedBasket.name} className="w-full h-full object-cover rounded-t-2xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <button 
-                  onClick={() => {
-                    setSelectedBasket(null)
-                    document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
-                  }}
-                  className="btn-primary"
+                  onClick={() => setSelectedBasket(null)} 
+                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
                 >
-                  Commander
+                  <X size={20} className="text-white" />
                 </button>
+                {selectedBasket.popular && (
+                  <div className="absolute top-4 left-4 bg-accent px-3 py-1 rounded-full flex items-center gap-1">
+                    <Sparkles size={12} className="text-dark" />
+                    <span className="text-xs font-semibold text-dark">Plus populaire</span>
+                  </div>
+                )}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-3">
+                    <selectedBasket.icon size={12} className="text-white" />
+                    <span className="text-xs font-medium text-white uppercase tracking-wider">{selectedBasket.badge}</span>
+                  </div>
+                  <h3 className="text-2xl font-display font-bold text-white">
+                    {selectedBasket.name} {selectedBasket.subtitle}
+                  </h3>
+                  <p className="text-white/80 mt-1">{selectedBasket.priceRange}</p>
+                </div>
               </div>
+              
+              <div className="p-6 space-y-5">
+                <p className="text-gray-600 leading-relaxed">{selectedBasket.longDescription}</p>
+                
+                <div className="bg-primaryLight rounded-xl p-5">
+                  <h4 className="font-semibold text-dark mb-3 flex items-center gap-2">
+                    <Package size={18} className="text-primary" />
+                    Contenu du panier
+                  </h4>
+                  <ul className="grid grid-cols-2 gap-2">
+                    {selectedBasket.includes.map((item, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-gray-600 text-sm">
+                        <span className="text-primary">✓</span> {item}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                  <div>
+                    <p className="text-sm text-gray-500">À partir de</p>
+                    <p className="text-2xl font-bold text-primary">{selectedBasket.priceRange}</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setSelectedBasket(null)
+                      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
+                    }}
+                    className="bg-primary text-white px-6 py-2.5 rounded-full font-semibold hover:bg-primary/90 transition-all duration-300 hover:shadow-lg flex items-center gap-2"
+                  >
+                    Commander <span className="text-lg">→</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import { X, Info, Sparkles, Clock, MapPin, CreditCard, Heart } from 'lucide-react'
+
+const services = [
+  {
+    id: 1,
+    title: "Balloons",
+    subtitle: "& Helium",
+    badge: "Service Premium",
+    description: 'Balloon accessories and helium gas for all events',
+    longDescription: 'Transformez n\'importe quel espace en un lieu magique avec nos ballons personnalisés. Nous proposons une large gamme de ballons de toutes les couleurs, formes et tailles, avec remplissage à l\'hélium pour un effet flottant spectaculaire.',
+    basePrice: 35000,
+    priceRange: '25 000 - 80 000 RWF',
+    image: 'https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg',
+    includes: [
+      'Ballons latex et aluminium',
+      'Remplissage hélium',
+      'Poids pour maintien au sol',
+      'Livraison sur place'
+    ],
+    options: [
+      { name: 'Ballon géant personnalisé', price: 15000 },
+      { name: 'Pack 50 ballons', price: 45000 },
+      { name: 'Ballons à message imprimé', price: 5000 }
+    ],
+    duration: '2-4 heures',
+    coverage: 'Kigali et environs'
+  },
+  {
+    id: 2,
+    title: "Party",
+    subtitle: "Decoration",
+    badge: "Art & Élégance",
+    description: 'Complete decoration for birthdays, weddings, and more',
+    longDescription: 'Une décoration d\'événement complète et personnalisée selon votre thème. Nous prenons en charge l\'installation complète et le démontage après l\'événement.',
+    basePrice: 50000,
+    priceRange: '40 000 - 150 000 RWF',
+    image: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
+    includes: [
+      'Nappes et housses de chaise',
+      'Centres de table',
+      'Guirlandes lumineuses',
+      'Bannières personnalisées'
+    ],
+    options: [
+      { name: 'Fond de scène personnalisé', price: 35000 },
+      { name: 'Ballon arch (entrée)', price: 45000 },
+      { name: 'Pack confettis et serpentins', price: 8000 }
+    ],
+    duration: '4-8 heures',
+    coverage: 'Kigali et environs'
+  },
+  {
+    id: 3,
+    title: "Surprise",
+    subtitle: "Planner",
+    badge: "Expert en émotions",
+    description: 'We organize everything for the perfect surprise',
+    longDescription: 'Vous avez l\'idée, nous exécutons. Notre service de planification de surprise prend en charge TOUS les détails : logistique, coordination, timing, et même la complicité des invités.',
+    basePrice: 75000,
+    priceRange: '65 000 - 250 000 RWF',
+    image: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg',
+    includes: [
+      'Consultation et planification',
+      'Coordination avec tous les prestataires',
+      'Timing et discrétion garantis',
+      'Photo et vidéo (optionnel)'
+    ],
+    options: [
+      { name: 'Photographe professionnel', price: 50000 },
+      { name: 'Violoniste / Musicien', price: 60000 },
+      { name: 'Garde d\'enfants sur place', price: 25000 }
+    ],
+    duration: 'Planification 1-2 semaines',
+    coverage: 'Tout le Rwanda'
+  },
+  {
+    id: 4,
+    title: "Custom",
+    subtitle: "Website",
+    badge: "Digital & Créatif",
+    description: 'Personalized website for your event or business',
+    longDescription: 'Créez un site web personnalisé pour votre événement : site d\'anniversaire surprise, site de mariage avec RSVP, ou site vitrine pour votre commerce. Un cadeau numérique unique et durable.',
+    basePrice: 85000,
+    priceRange: '85 000 - 300 000 RWF',
+    image: 'https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg',
+    includes: [
+      'Design personnalisé',
+      'Hébergement 1 an inclus',
+      'Nom de domaine personnalisé',
+      'Support technique 3 mois'
+    ],
+    options: [
+      { name: 'Page de collecte de photos', price: 20000 },
+      { name: 'Compte à rebours animé', price: 15000 },
+      { name: 'Galerie vidéo', price: 25000 }
+    ],
+    duration: '5-10 jours ouvrés',
+    coverage: '100% en ligne'
+  },
+  {
+    id: 5,
+    title: "Flower",
+    subtitle: "Bouquet",
+    badge: "Frais & Élégant",
+    description: 'Fresh and elegant flower arrangements',
+    longDescription: 'Des bouquets de fleurs fraîches soigneusement sélectionnés et arrangés par nos fleuristes. Parfait pour accompagner toute surprise ou comme cadeau principal.',
+    basePrice: 20000,
+    priceRange: '15 000 - 60 000 RWF',
+    image: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg',
+    includes: [
+      'Fleurs fraîches de saison',
+      'Emballage élégant',
+      'Carte personnalisée',
+      'Livraison offerte en ville'
+    ],
+    options: [
+      { name: 'Bouquet premium roses rouges', price: 25000 },
+      { name: 'Ballon avec bouquet', price: 15000 },
+      { name: 'Livraison express (2h)', price: 5000 }
+    ],
+    duration: '2 heures',
+    coverage: 'Kigali'
+  },
+  {
+    id: 6,
+    title: "Gift",
+    subtitle: "Baskets",
+    badge: "Luxe & Douceur",
+    description: 'Luxury curated gift baskets for all occasions',
+    longDescription: 'Des paniers cadeaux luxueux soigneusement composés selon l\'occasion et les goûts de la personne. Chaque panier est unique et personnalisable.',
+    basePrice: 45000,
+    priceRange: '35 000 - 120 000 RWF',
+    image: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
+    includes: [
+      'Panier premium',
+      'Produits de qualité',
+      'Carte personnalisée',
+      'Emballage cadeau'
+    ],
+    options: [
+      { name: 'Ajout de chocolats belges', price: 12000 },
+      { name: 'Ajout de vin / champagne', price: 25000 },
+      { name: 'Livraison nocturne', price: 8000 }
+    ],
+    duration: '1-2 jours',
+    coverage: 'Tout le Rwanda'
+  }
+]
+
+// Variants d'animation pour l'apparition au scroll
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.6, ease: [0.2, 0.9, 0.3, 1] }
+  }
+}
+
+export default function Services() {
+  const [selectedService, setSelectedService] = useState<typeof services[0] | null>(null)
+
+  return (
+    <>
+      <section id="services" className="py-24 bg-white">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Ce que nous faisons</span>
             </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+              Nos Services
+            </h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              Tout ce dont vous avez besoin pour créer le moment de surprise parfait
+            </p>
+          </motion.div>
+          
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+          >
+            {services.map((service, index) => (
+              <motion.div
+                key={service.id}
+                variants={itemVariants}
+                whileHover={{ y: -10 }}
+                onClick={() => setSelectedService(service)}
+                className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
+              >
+                {/* Image avec overlay gradient */}
+                <div className="relative h-56 overflow-hidden">
+                  <img 
+                    src={service.image} 
+                    alt={service.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  
+                  {/* Badge */}
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold text-primary">{service.badge}</span>
+                  </div>
+                  
+                  {/* Overlay au hover */}
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold bg-primary/90 px-4 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                      Découvrir →
+                    </span>
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <div className="flex items-baseline gap-1 mb-2">
+                    <h3 className="text-xl font-bold text-dark">{service.title}</h3>
+                    <span className="text-lg font-light text-gray-400">{service.subtitle}</span>
+                  </div>
+                  <p className="text-gray-500 text-sm mb-4 line-clamp-2">{service.description}</p>
+                  
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <div>
+                      <p className="text-xs text-gray-400">À partir de</p>
+                      <span className="text-primary font-bold">{service.priceRange.split(' - ')[0]}</span>
+                    </div>
+                    <button className="text-primary font-semibold text-sm hover:text-accent transition flex items-center gap-1">
+                      Détails <Info size={14} />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </motion.div>
         </div>
-      )}
+      </section>
+
+      {/* Modal des détails du service */}
+      <AnimatePresence>
+        {selectedService && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => setSelectedService(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* En-tête du modal */}
+              <div className="relative h-64">
+                <img 
+                  src={selectedService.image} 
+                  alt={selectedService.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <button 
+                  onClick={() => setSelectedService(null)}
+                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
+                >
+                  <X size={20} className="text-white" />
+                </button>
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-3">
+                    <span className="text-xs font-medium text-white uppercase tracking-wider">{selectedService.badge}</span>
+                  </div>
+                  <h3 className="text-3xl font-display font-bold text-white">
+                    {selectedService.title} {selectedService.subtitle}
+                  </h3>
+                  <p className="text-white/80 mt-1">{selectedService.priceRange}</p>
+                </div>
+              </div>
+
+              {/* Contenu du modal */}
+              <div className="p-6 space-y-6">
+                <div>
+                  <h4 className="text-xl font-semibold text-dark mb-3">Description détaillée</h4>
+                  <p className="text-gray-600 leading-relaxed">{selectedService.longDescription}</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-primaryLight rounded-xl p-5">
+                    <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2">
+                      <Sparkles size={20} className="text-primary" />
+                      Ce qui est inclus
+                    </h4>
+                    <ul className="space-y-2">
+                      {selectedService.includes.map((item, idx) => (
+                        <li key={idx} className="flex items-center gap-2 text-gray-600 text-sm">
+                          <span className="text-primary">✓</span> {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="bg-primaryLight rounded-xl p-5">
+                    <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2">
+                      <CreditCard size={20} className="text-primary" />
+                      Options supplémentaires
+                    </h4>
+                    <ul className="space-y-2">
+                      {selectedService.options.map((option, idx) => (
+                        <li key={idx} className="flex justify-between items-center text-gray-600 text-sm">
+                          <span>{option.name}</span>
+                          <span className="text-primary font-semibold">+{option.price.toLocaleString()} RWF</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-r from-primary/5 to-primaryLight rounded-xl">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Clock size={20} className="text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Durée de préparation</p>
+                      <p className="font-semibold text-dark text-sm">{selectedService.duration}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <MapPin size={20} className="text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Zone de couverture</p>
+                      <p className="font-semibold text-dark text-sm">{selectedService.coverage}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 pt-4">
+                  <button 
+                    onClick={() => {
+                      setSelectedService(null)
+                      document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })
+                    }}
+                    className="flex-1 bg-primary text-white px-6 py-3 rounded-full font-semibold hover:bg-primary/90 transition-all duration-300 hover:shadow-lg"
+                  >
+                    Demander un devis
+                  </button>
+                  <button 
+                    onClick={() => setSelectedService(null)}
+                    className="px-6 py-3 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:border-primary hover:text-primary transition-all duration-300"
+                  >
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   )
 }
@@ -1937,14 +2601,14 @@ export default function Realizations() {
 'use client'
 
 import { motion } from 'framer-motion'
-import { Heart, Sparkles, Calendar, Users, Gift, Star } from 'lucide-react'
+import { Heart, Sparkles, Calendar, Users, Gift, Star, Clock, Award } from 'lucide-react'
 
 export default function About() {
   const stats = [
-    { value: '250+', label: 'Surprises organisées', icon: Gift },
-    { value: '5+', label: "Années d'expérience", icon: Calendar },
     { value: '98%', label: 'Clients satisfaits', icon: Users },
-    { value: '100%', label: 'Passion et dévouement', icon: Heart }
+    { value: '100%', label: 'Passion et dévouement', icon: Heart },
+    { value: '24/7', label: 'Disponibilité', icon: Clock },
+    { value: 'Premium', label: 'Service exclusif', icon: Award }
   ]
 
   const qualities = [
@@ -1976,9 +2640,9 @@ export default function About() {
             </div>
             <div className="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-xl p-4 z-20">
               <div className="flex items-center gap-2">
-                <Star size={20} className="text-accent fill-accent" />
-                <span className="font-semibold text-dark">Note 5.0</span>
-                <span className="text-gray-400 text-sm">(150+ avis)</span>
+                <Sparkles size={20} className="text-accent" />
+                <span className="font-semibold text-dark">Créations uniques</span>
+                <span className="text-gray-400 text-sm">Sur mesure</span>
               </div>
             </div>
           </motion.div>
@@ -2039,6 +2703,336 @@ export default function About() {
       </div>
     </section>
   )
+}
+import i18n from 'i18next'
+import { initReactI18next } from 'react-i18next'
+import LanguageDetector from 'i18next-browser-languagedetector'
+
+// Traductions françaises
+const fr = {
+  translation: {
+    hero: {
+      title: 'LoveExpress',
+      subtitle: 'Nous créons des moments de surprise inoubliables',
+      description: 'Distribution de tout type d\'articles de fête · Accessoires pour ballons · Gaz hélium · Planificateur de surprises',
+      cta: 'Planifier votre surprise',
+      stats: {
+        surprises: '+250 surprises organisées',
+        delivery: 'Livraison à Kigali',
+        quote: 'Devis gratuit'
+      }
+    },
+    services: {
+      title: 'Nos Services',
+      subtitle: 'Tout ce dont vous avez besoin pour créer le moment de surprise parfait',
+      balloons: 'Ballons & Hélium',
+      decoration: 'Décoration de fête',
+      planner: 'Planificateur de surprises',
+      website: 'Site web personnalisé',
+      flowers: 'Bouquet de fleurs',
+      giftbasket: 'Paniers cadeaux',
+      learnMore: 'En savoir plus',
+      requestQuote: 'Demander un devis',
+      close: 'Fermer'
+    },
+    giftbaskets: {
+      title: 'Nos Paniers Cadeaux',
+      subtitle: 'Des cadeaux soigneusement sélectionnés pour chaque occasion',
+      birthday: 'Panier Anniversaire',
+      romantic: 'Panier Romantique',
+      newbaby: 'Panier Nouveau-né',
+      gourmet: 'Panier Gourmet',
+      wellness: 'Panier Bien-être',
+      popular: 'Populaire',
+      order: 'Commander',
+      viewDetails: 'Voir détails',
+      includes: 'Contenu du panier'
+    },
+    gallery: {
+      title: 'Nos Réalisations',
+      subtitle: 'Découvrez la magie que nous avons créée pour nos clients',
+      viewAll: 'Voir toute la galerie'
+    },
+    about: {
+      title: 'Derrière chaque surprise, une passionnée',
+      description1: 'Je m\'appelle Grace Uwase, fondatrice de LoveExpress. Depuis 2020, je transforme les moments ordinaires en souvenirs extraordinaires.',
+      description2: 'Ce qui me motive chaque jour : voir l\'étincelle dans les yeux de ceux qui reçoivent une surprise et la joie de ceux qui offrent. Chaque projet est unique, chaque détail compte.',
+      stats: {
+        surprises: 'Surprises organisées',
+        experience: 'Années d\'expérience',
+        satisfaction: 'Clients satisfaits',
+        passion: 'Passion et dévouement'
+      }
+    },
+    contact: {
+      title: 'Planifiez Votre Surprise',
+      subtitle: 'Remplissez ce formulaire et nous nous occupons de tout',
+      step1: 'Qui êtes-vous ?',
+      step2: 'Qui recevra la surprise ?',
+      step3: 'Quel événement ?',
+      step4: 'Budget',
+      step5: 'Services souhaités',
+      step6: 'Livraison & Instructions',
+      step7: 'Confirmation'
+    },
+    footer: {
+      tagline: 'We deliver love and kindness. Créons ensemble des moments inoubliables.',
+      contact: 'Contact',
+      services: 'Services',
+      hours: 'Horaires',
+      hoursDetail: 'Lundi - Samedi: 9h - 19h',
+      sunday: 'Dimanche: Sur rendez-vous',
+      delivery247: 'Livraison 24/24 sur demande',
+      rights: 'Tous droits réservés'
+    }
+  }
+}
+
+// Traductions anglaises
+const en = {
+  translation: {
+    hero: {
+      title: 'LoveExpress',
+      subtitle: 'We create unforgettable surprise moments',
+      description: 'Distribution of all kinds of party items · Balloon accessories · Helium gas · Surprise planner',
+      cta: 'Plan your surprise',
+      stats: {
+        surprises: '+250 surprises organized',
+        delivery: 'Delivery in Kigali',
+        quote: 'Free quote'
+      }
+    },
+    services: {
+      title: 'Our Services',
+      subtitle: 'Everything you need to create the perfect surprise moment',
+      balloons: 'Balloons & Helium',
+      decoration: 'Party Decoration',
+      planner: 'Surprise Planner',
+      website: 'Custom Website',
+      flowers: 'Flower Bouquet',
+      giftbasket: 'Gift Baskets',
+      learnMore: 'Learn more',
+      requestQuote: 'Request a quote',
+      close: 'Close'
+    },
+    giftbaskets: {
+      title: 'Our Gift Baskets',
+      subtitle: 'Carefully curated gifts for every occasion',
+      birthday: 'Birthday Gift Basket',
+      romantic: 'Romantic Gift Basket',
+      newbaby: 'New Baby Gift Basket',
+      gourmet: 'Gourmet Gift Basket',
+      wellness: 'Wellness Gift Basket',
+      popular: 'Popular',
+      order: 'Order',
+      viewDetails: 'View details',
+      includes: 'Basket includes'
+    },
+    gallery: {
+      title: 'Our Realizations',
+      subtitle: 'Discover the magic we created for our clients',
+      viewAll: 'View full gallery'
+    },
+    about: {
+      title: 'Behind every surprise, a passionate person',
+      description1: 'My name is Grace Uwase, founder of LoveExpress. Since 2020, I transform ordinary moments into extraordinary memories.',
+      description2: 'What motivates me every day: seeing the sparkle in the eyes of those who receive a surprise and the joy of those who give. Every project is unique, every detail matters.',
+      stats: {
+        surprises: 'Surprises organized',
+        experience: 'Years of experience',
+        satisfaction: 'Happy clients',
+        passion: 'Passion and dedication'
+      }
+    },
+    contact: {
+      title: 'Plan Your Surprise',
+      subtitle: 'Fill out this form and we take care of everything',
+      step1: 'Who are you?',
+      step2: 'Who will receive the surprise?',
+      step3: 'What event?',
+      step4: 'Budget',
+      step5: 'Services wanted',
+      step6: 'Delivery & Instructions',
+      step7: 'Confirmation'
+    },
+    footer: {
+      tagline: 'We deliver love and kindness. Let\'s create unforgettable moments together.',
+      contact: 'Contact',
+      services: 'Services',
+      hours: 'Hours',
+      hoursDetail: 'Monday - Saturday: 9am - 7pm',
+      sunday: 'Sunday: By appointment',
+      delivery247: '24/7 delivery on request',
+      rights: 'All rights reserved'
+    }
+  }
+}
+
+// Traductions kinyarwanda
+const rw = {
+  translation: {
+    hero: {
+      title: 'LoveExpress',
+      subtitle: 'Dukora ibintu bitangaje bitunguranye',
+      description: 'Ibyo ukenera byose by\'ibirori · Ibikoresho bya baluni · Gazi Helium · Umunyamabanga w\'ibitunguranye',
+      cta: 'Tegura igitangaza cyawe',
+      stats: {
+        surprises: '+250 ibitangaza byateguwe',
+        delivery: 'Iboneza i Kigali',
+        quote: 'Igiciro ku buntu'
+      }
+    },
+    services: {
+      title: 'Serivisi Zacu',
+      subtitle: 'Ibyo ukenera byose kugira ngo ureme igihe gitangaje',
+      balloons: 'Baluni & Helium',
+      decoration: 'Imitako y\'ibirori',
+      planner: 'Umunyamabanga w\'ibitunguranye',
+      website: 'Urubuga rwihariye',
+      flowers: 'Indabyo',
+      giftbasket: 'Ibikapu by\'impano',
+      learnMore: 'Menya byinshi',
+      requestQuote: 'Saba igiciro',
+      close: 'Funga'
+    },
+    giftbaskets: {
+      title: 'Ibikapu By\'impano',
+      subtitle: 'Impano zatoranyijwe neza kuri buri birori',
+      birthday: 'Impano y\'Isabukuru',
+      romantic: 'Impano y\'Urukundo',
+      newbaby: 'Impano y\'Uruhererekane',
+      gourmet: 'Impano y\'Ibiryo Byiza',
+      wellness: 'Impano y\'Ubuzima Bwiza',
+      popular: 'Ibyamamare',
+      order: 'Oda',
+      viewDetails: 'Reba ibirayi',
+      includes: 'Ibiri mu kikapu'
+    },
+    gallery: {
+      title: 'Ibyo Twakoze',
+      subtitle: 'Ongera ubone ibyiza twakoze ku bakiriya bacu',
+      viewAll: 'Reba byose'
+    },
+    about: {
+      title: 'Inyuma y\'igitangaza cyose, hari umuntu ukunda',
+      description1: 'Nitwa Grace Uwase, nashinze LoveExpress. Kuva 2020, ndimo nzahindura ibihe bisanzwe mo ibintu bitangaje.',
+      description2: 'Ibyankunda buri munsi: kubona ibyishimo mu maso y\'abakira igitangaza n\'ibyishimo by\'abatanga. Buri mushinga ni umwe, buri gice kibaye ngombwa.',
+      stats: {
+        surprises: 'Ibitangaza byateguwe',
+        experience: 'Imyaka y\'uburambe',
+        satisfaction: 'Abakiriya banyishimiye',
+        passion: 'Urukundo n\'umurava'
+      }
+    },
+    contact: {
+      title: 'Tegura Igitangaza Cyawe',
+      subtitle: 'Uzuza iyi fomu twebwe turabikurebera',
+      step1: 'Uri nde?',
+      step2: 'Uzakira igitangaza?',
+      step3: 'Iki birori?',
+      step4: 'Ingengo y\'ingengo',
+      step5: 'Serivisi ushaka',
+      step6: 'Iboneza & Amabwiriza',
+      step7: 'Kwemeza'
+    },
+    footer: {
+      tagline: 'Dutanga urukundo n\'ubuntu. Reka dureme hamwe ibihe bitibagirana.',
+      contact: 'Twandikire',
+      services: 'Serivisi',
+      hours: 'Amasaha',
+      hoursDetail: 'Kuwa mbere - Kuwa gatandatu: 9h - 19h',
+      sunday: 'Ku cyumweru: Ku gahunda',
+      delivery247: 'Iboneza buri gihe',
+      rights: 'Uburenganzira bwose burakumwe'
+    }
+  }
+}
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources: {
+      fr: fr,
+      en: en,
+      rw: rw
+    },
+    lng: 'fr',
+    fallbackLng: 'fr',
+    interpolation: {
+      escapeValue: false
+    }
+  })
+
+export default i18n
+import { google } from 'googleapis';
+
+export async function addToGoogleSheets(data: any) {
+  // Mode développement : simulation sans credentials
+  if (process.env.NODE_ENV === 'development' && !process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
+    console.log('🔵 [DEV] Simulation Google Sheets:', {
+      client: data.clientName,
+      event: data.eventType,
+      budget: data.budget
+    });
+    return true;
+  }
+
+  try {
+    const privateKey = process.env.GOOGLE_SHEETS_PRIVATE_KEY?.replace(/\\n/g, '\n');
+    const clientEmail = process.env.GOOGLE_SHEETS_CLIENT_EMAIL;
+    const sheetId = process.env.GOOGLE_SHEETS_SHEET_ID;
+
+    if (!clientEmail || !privateKey || !sheetId) {
+      console.error('❌ Credentials Google Sheets manquantes');
+      return false;
+    }
+
+    const auth = new google.auth.GoogleAuth({
+      credentials: {
+        private_key: privateKey,
+        client_email: clientEmail,
+      },
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    });
+
+    const sheets = google.sheets({ version: 'v4', auth });
+    
+    const values = [[
+      new Date().toISOString(),
+      data.clientName || '',
+      data.clientPhone || '',
+      data.clientEmail || '',
+      data.destName || '',
+      data.destPhone || '',
+      data.destAddress || '',
+      data.destAge || '',
+      data.eventType || '',
+      data.eventDate || '',
+      data.eventTime || '',
+      data.eventLocation || '',
+      data.budget || '',
+      (data.services || []).join(', '),
+      data.message || '',
+      data.specialInstructions || '',
+      data.isDiscreet ? 'Oui' : 'Non',
+      data.needsPersonPresent ? 'Oui' : 'Non',
+      data.additionalNotes || '',
+    ]];
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: sheetId,
+      range: 'Feuille 1!A:S',
+      valueInputOption: 'USER_ENTERED',
+      requestBody: { values },
+    });
+
+    console.log('✅ Sauvegardé dans Google Sheets');
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur Google Sheets:', error);
+    return false;
+  }
 }
 module.exports = {
   plugins: {
