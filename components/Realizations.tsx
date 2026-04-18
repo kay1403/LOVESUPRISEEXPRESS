@@ -99,7 +99,7 @@ export default function Realizations() {
               className="btn-secondary inline-flex items-center gap-2 group"
             >
               <Heart size={18} className="group-hover:fill-primary transition" />
-              Voir la galerie de nos clients
+              Avis Clients
               <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
             </Link>
           </motion.div>

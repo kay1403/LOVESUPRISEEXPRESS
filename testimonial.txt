@@ -1,0 +1,941 @@
+const { saveAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  try {
+    const avis = JSON.parse(event.body);
+    
+    // Sauvegarder l'avis (statut 'pending' par défaut)
+    const savedAvis = await saveAvis(avis);
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        avisId: savedAvis.id,
+        message: "Merci pour votre avis ! Il sera publié après validation."
+      })
+    };
+    
+  } catch (error) {
+    console.error('Erreur:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { moderateAvis, getAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification admin
+  const adminKey = event.headers.authorization;
+  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const { id, status } = JSON.parse(event.body);
+    const updated = await moderateAvis(id, status);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, avis: updated })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { getAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  try {
+    // Récupérer uniquement les avis publiés
+    const published = await getAvis('published');
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, avis: published })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { getAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification admin (clé API)
+  const adminKey = event.headers.authorization;
+  const validKey = process.env.ADMIN_API_KEY || 'loveexpress2024';
+  
+  if (adminKey !== `Bearer ${validKey}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé - Clé API invalide' })
+    };
+  }
+
+  try {
+    // Récupérer TOUS les avis (y compris en attente)
+    const allAvis = await getAvis(null);
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ 
+        success: true, 
+        avis: allAvis,
+        stats: {
+          total: allAvis.length,
+          published: allAvis.filter(a => a.status === 'published').length,
+          pending: allAvis.filter(a => a.status === 'pending').length,
+          rejected: allAvis.filter(a => a.status === 'rejected').length
+        }
+      })
+    };
+  } catch (error) {
+    console.error('Erreur:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+'use client'
+
+import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { Star, Heart, Camera, X } from 'lucide-react'
+
+export default function AvisForm() {
+  const [note, setNote] = useState(5)
+  const [message, setMessage] = useState('')
+  const [nom, setNom] = useState('')
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setPhoto(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removePhoto = () => {
+    setPhoto(null)
+    setPhotoPreview(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!message.trim()) {
+      alert('Veuillez écrire votre témoignage')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      let photoBase64 = null
+      if (photo) {
+        const reader = new FileReader()
+        photoBase64 = await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result)
+          reader.readAsDataURL(photo)
+        })
+      }
+
+      const response = await fetch('/api/submit-testimonial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          note,
+          message,
+          nom: nom.trim() || 'Client LoveExpress',
+          photoBase64,
+          hasPhoto: !!photo
+        })
+      })
+
+      if (response.ok) {
+        setIsSubmitted(true)
+        setNote(5)
+        setMessage('')
+        setNom('')
+        setPhoto(null)
+        setPhotoPreview(null)
+        setTimeout(() => setIsSubmitted(false), 5000)
+      } else {
+        alert('Erreur lors de l\'envoi. Veuillez réessayer.')
+      }
+    } catch (error) {
+      console.error('Erreur:', error)
+      alert('Erreur lors de l\'envoi. Veuillez réessayer.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isSubmitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center"
+      >
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Heart className="w-8 h-8 text-green-600 fill-green-600" />
+        </div>
+        <h3 className="text-xl font-bold text-dark mb-2">Merci pour votre témoignage !</h3>
+        <p className="text-gray-600">
+          Votre avis sera publié après validation par notre équipe (sous 24-48h).
+        </p>
+      </motion.div>
+    )
+  }
+
+  return (
+    <section className="py-24 bg-white">
+      <div className="container-custom">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+            <Star size={14} className="text-primary fill-primary" />
+            <span className="text-xs font-medium text-primary uppercase tracking-wider">Votre avis compte</span>
+          </div>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+            Donnez votre avis
+          </h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            Partagez votre expérience LoveExpress avec la communauté
+          </p>
+        </motion.div>
+
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          viewport={{ once: true }}
+          onSubmit={handleSubmit}
+          className="max-w-2xl mx-auto bg-primaryLight rounded-2xl p-8 shadow-sm"
+        >
+          {/* Note étoiles */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Votre note *
+            </label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setNote(s)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star
+                    size={32}
+                    className={`${s <= note ? 'fill-accent text-accent' : 'text-gray-300'}`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Message */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Votre témoignage *
+            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="J'ai adoré ma surprise, tout était parfait ! Merci LoveExpress ❤️"
+              required
+            />
+          </div>
+
+          {/* Nom (optionnel) */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Votre nom (optionnel)
+            </label>
+            <input
+              type="text"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Marie, Jean, ..."
+            />
+          </div>
+
+          {/* Photo (optionnelle) */}
+          <div className="mb-8">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ajouter une photo (optionnelle)
+            </label>
+            {photoPreview ? (
+              <div className="relative inline-block">
+                <img src={photoPreview} alt="Aperçu" className="w-32 h-32 object-cover rounded-xl" />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary transition">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">Cliquez pour ajouter une photo</p>
+                  <p className="text-xs text-gray-400">JPG, PNG (max 5MB)</p>
+                </div>
+                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
+              </label>
+            )}
+          </div>
+
+          {/* Bouton envoyer */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              'Envoi en cours...'
+            ) : (
+              <>
+                <Heart size={18} />
+                Envoyer mon témoignage
+              </>
+            )}
+          </button>
+
+          <p className="text-center text-xs text-gray-400 mt-4">
+            Votre témoignage sera publié après validation par notre équipe
+          </p>
+        </motion.form>
+      </div>
+    </section>
+  )
+}
+'use client';
+
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  Package, Star, Users, Eye, CheckCircle, Clock, XCircle,
+  Download, Trash2, Upload, Plus, Heart, MessageCircle, Sparkles
+} from 'lucide-react';
+
+export default function AdminDashboard() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminKey, setAdminKey] = useState('');
+  const [activeTab, setActiveTab] = useState('orders');
+  const [orders, setOrders] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const handleLogin = () => {
+    if (adminKey === 'loveexpress2024') {
+      setIsAuthenticated(true);
+      fetchData();
+    } else {
+      alert('Clé admin incorrecte');
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      // Récupérer commandes
+      const ordersRes = await fetch('/api/get-orders', {
+        headers: { 'Authorization': 'Bearer loveexpress2024' }
+      });
+      const ordersData = await ordersRes.json();
+      if (ordersData.success) setOrders(ordersData.commandes || []);
+
+      // Récupérer tous les avis (admin)
+      const avisRes = await fetch('/api/get-all-testimonials', {
+        headers: { 'Authorization': 'Bearer loveexpress2024' }
+      });
+      const avisData = await avisRes.json();
+      if (avisData.success) setTestimonials(avisData.avis || []);
+    } catch (error) {
+      console.error('Erreur chargement:', error);
+    }
+    setLoading(false);
+  };
+
+  const updateOrderStatus = async (id, status) => {
+    const res = await fetch('/api/update-order-status', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer loveexpress2024'
+      },
+      body: JSON.stringify({ id, status })
+    });
+    if (res.ok) fetchData();
+  };
+
+  const moderateTestimonial = async (id, status) => {
+    const res = await fetch('/api/moderate-testimonial', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer loveexpress2024'
+      },
+      body: JSON.stringify({ id, status })
+    });
+    if (res.ok) fetchData();
+  };
+
+  const getStatusBadge = (status) => {
+    const badges = {
+      pending: { label: '⏳ En attente', color: 'bg-yellow-100 text-yellow-700' },
+      confirmed: { label: '✅ Confirmée', color: 'bg-green-100 text-green-700' },
+      delivered: { label: '🚚 Livrée', color: 'bg-blue-100 text-blue-700' },
+      cancelled: { label: '❌ Annulée', color: 'bg-red-100 text-red-700' }
+    };
+    return badges[status] || badges.pending;
+  };
+
+  const stats = {
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
+    confirmedOrders: orders.filter(o => o.status === 'confirmed').length,
+    deliveredOrders: orders.filter(o => o.status === 'delivered').length,
+    totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0),
+    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
+    publishedTestimonials: testimonials.filter(t => t.status === 'published').length
+  };
+
+  if (!isMounted) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <Heart className="w-16 h-16 text-primary mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-dark">Dashboard LoveExpress</h1>
+            <p className="text-gray-500 mt-2">Accès réservé à l'administration</p>
+          </div>
+          <input
+            type="password"
+            placeholder="Clé d'accès"
+            value={adminKey}
+            onChange={(e) => setAdminKey(e.target.value)}
+            className="w-full px-4 py-3 border rounded-lg mb-4"
+            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+          />
+          <button onClick={handleLogin} className="bg-primary text-white w-full py-3 rounded-lg font-semibold hover:bg-primary/90 transition">
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Heart className="w-8 h-8 text-primary" />
+            <div>
+              <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
+              <p className="text-xs text-gray-500">Gérez vos commandes et témoignages</p>
+            </div>
+          </div>
+          <button onClick={() => setIsAuthenticated(false)} className="text-gray-500 hover:text-red-500 text-sm">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <Package className="w-8 h-8 text-primary" />
+            <span className="text-2xl font-bold">{stats.totalOrders}</span>
+          </div>
+          <p className="text-gray-500 text-sm mt-1">Commandes</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <Clock className="w-8 h-8 text-yellow-500" />
+            <span className="text-2xl font-bold">{stats.pendingOrders}</span>
+          </div>
+          <p className="text-gray-500 text-sm mt-1">En attente</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <Star className="w-8 h-8 text-accent" />
+            <span className="text-2xl font-bold">{stats.pendingTestimonials}</span>
+          </div>
+          <p className="text-gray-500 text-sm mt-1">Avis à modérer</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <Sparkles className="w-8 h-8 text-green-500" />
+            <span className="text-2xl font-bold">{stats.totalRevenue.toLocaleString()} RWF</span>
+          </div>
+          <p className="text-gray-500 text-sm mt-1">CA total</p>
+        </div>
+      </div>
+
+      <div className="px-6">
+        <div className="flex gap-2 border-b">
+          <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 font-medium transition ${activeTab === 'orders' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+            📦 Commandes ({stats.totalOrders})
+          </button>
+          <button onClick={() => setActiveTab('testimonials')} className={`px-4 py-2 font-medium transition ${activeTab === 'testimonials' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+            ⭐ Avis clients ({stats.pendingTestimonials} en attente)
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {loading ? (
+          <div className="text-center py-12">Chargement...</div>
+        ) : activeTab === 'orders' ? (
+          <div className="space-y-4">
+            {orders.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
+                <Package className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>Aucune commande pour le moment</p>
+              </div>
+            ) : (
+              orders.map((order) => (
+                <div key={order.id} className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start flex-wrap gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">{order.id}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status).color}`}>
+                          {getStatusBadge(order.status).label}
+                        </span>
+                      </div>
+                      <p className="font-semibold">{order.clientName}</p>
+                      <p className="text-sm text-gray-500">→ {order.destName}</p>
+                      <p className="text-sm text-gray-500">{order.eventType} - {order.eventDate}</p>
+                      <p className="text-primary font-bold mt-1">{parseInt(order.budget).toLocaleString()} RWF</p>
+                    </div>
+                    <select
+                      value={order.status}
+                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                      className="px-3 py-2 text-sm border rounded-lg bg-white"
+                    >
+                      <option value="pending">⏳ En attente</option>
+                      <option value="confirmed">✅ Confirmée</option>
+                      <option value="delivered">🚚 Livrée</option>
+                      <option value="cancelled">❌ Annulée</option>
+                    </select>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {stats.pendingTestimonials > 0 && (
+              <div className="bg-yellow-50 rounded-xl p-4 mb-4">
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Clock size={18} className="text-yellow-600" />
+                  Avis en attente de modération ({stats.pendingTestimonials})
+                </h3>
+              </div>
+            )}
+            {testimonials.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
+                <Star className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                <p>Aucun témoignage pour le moment</p>
+              </div>
+            ) : (
+              testimonials.map((testimonial) => (
+                <div key={testimonial.id} className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start flex-wrap gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <div className="flex gap-0.5">
+                          {[...Array(testimonial.note || 5)].map((_, i) => (
+                            <Star key={i} size={14} className="fill-accent text-accent" />
+                          ))}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${testimonial.status === 'published' ? 'bg-green-100 text-green-700' : testimonial.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {testimonial.status === 'published' ? '✅ Publié' : testimonial.status === 'rejected' ? '❌ Rejeté' : '⏳ En attente'}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 italic">"{testimonial.message}"</p>
+                      <p className="text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
+                      {testimonial.photoUrl && (
+                        <div className="mt-2">
+                          <img src={testimonial.photoUrl} alt="Témoignage" className="w-16 h-16 object-cover rounded-lg" />
+                        </div>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">{new Date(testimonial.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    {testimonial.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">
+                          Publier
+                        </button>
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import Link from 'next/link'
+import { ArrowLeft, X, Heart, User, Calendar, Star } from 'lucide-react'
+
+// Tous les témoignages clients
+const allTestimonials = [
+  {
+    id: 1,
+    url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',
+    clientName: 'Marie & Jean',
+    event: 'Demande en mariage',
+    date: '15 Mars 2026',
+    message: 'Merci LoveExpress pour ce moment magique !',
+    rating: 5
+  },
+  {
+    id: 2,
+    url: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
+    clientName: 'Sarah',
+    event: 'Anniversaire 30 ans',
+    date: '2 Avril 2026',
+    message: 'Une décoration magnifique, tout le monde a adoré !',
+    rating: 5
+  },
+  {
+    id: 3,
+    url: 'https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg',
+    clientName: 'David',
+    event: 'Baby shower',
+    date: '20 Mars 2026',
+    message: 'Les ballons étaient parfaits, merci !',
+    rating: 5
+  },
+  {
+    id: 4,
+    url: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
+    clientName: 'Clarisse',
+    event: 'Anniversaire surprise',
+    date: '10 Avril 2026',
+    message: 'Mon mari a été tellement surpris !',
+    rating: 5
+  },
+  {
+    id: 5,
+    url: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg',
+    clientName: 'Alice & Thomas',
+    event: 'Demande en mariage',
+    date: '5 Avril 2026',
+    message: 'Le meilleur jour de notre vie !',
+    rating: 5
+  },
+  {
+    id: 6,
+    url: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg',
+    clientName: 'Maman de Kevin',
+    event: 'Anniversaire 18 ans',
+    date: '25 Mars 2026',
+    message: 'Mon fils a adoré sa surprise !',
+    rating: 5
+  },
+  {
+    id: 7,
+    url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',
+    clientName: 'Paul & Sophie',
+    event: 'Demande en mariage',
+    date: '12 Avril 2026',
+    message: 'Un moment inoubliable, merci encore !',
+    rating: 5
+  },
+  {
+    id: 8,
+    url: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
+    clientName: 'Isabelle',
+    event: 'Anniversaire 50 ans',
+    date: '8 Avril 2026',
+    message: 'La décoration était magnifique !',
+    rating: 5
+  },
+  {
+    id: 9,
+    url: 'https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg',
+    clientName: 'Thomas',
+    event: 'Fête de fiançailles',
+    date: '1 Avril 2026',
+    message: 'Tout était parfait, merci LoveExpress !',
+    rating: 5
+  }
+]
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.2, 0.9, 0.3, 1] }
+  }
+}
+
+export default function GalleryPage() {
+  const [selectedTestimonial, setSelectedTestimonial] = useState<typeof allTestimonials[0] | null>(null)
+
+  return (
+    <main className="min-h-screen bg-primaryLight">
+      {/* Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="container-custom py-4">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition group"
+          >
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition" />
+            Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+
+      <section className="py-16">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-4 shadow-sm">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Ils nous ont fait confiance</span>
+            </div>
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-dark mb-4">
+              Galerie Clients
+            </h1>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              Découvrez les sourires et la joie de nos clients après leurs surprises
+            </p>
+          </motion.div>
+
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {allTestimonials.map((item) => (
+              <motion.div
+                key={item.id}
+                variants={itemVariants}
+                whileHover={{ y: -5 }}
+                onClick={() => setSelectedTestimonial(item)}
+                className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl"
+              >
+                <div className="relative h-56 overflow-hidden">
+                  <img
+                    src={item.url}
+                    alt={item.clientName}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                  <div className="absolute bottom-3 left-3 flex gap-0.5">
+                    {[...Array(item.rating)].map((_, i) => (
+                      <Star key={i} size={12} className="fill-accent text-accent" />
+                    ))}
+                  </div>
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <Heart size={40} className="text-white drop-shadow-lg" />
+                  </div>
+                </div>
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      <User size={14} className="text-primary" />
+                    </div>
+                    <h3 className="font-semibold text-dark">{item.clientName}</h3>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar size={12} className="text-gray-400" />
+                    <span className="text-xs text-gray-400">{item.date}</span>
+                    <span className="text-xs text-primary ml-auto font-medium">{item.event}</span>
+                  </div>
+                  <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {selectedTestimonial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedTestimonial(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative">
+                <img 
+                  src={selectedTestimonial.url} 
+                  alt={selectedTestimonial.clientName}
+                  className="w-full h-80 object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <button 
+                  onClick={() => setSelectedTestimonial(null)}
+                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
+                >
+                  <X size={20} className="text-white" />
+                </button>
+                <div className="absolute bottom-4 left-4 flex gap-0.5">
+                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
+                    <Star key={i} size={16} className="fill-accent text-accent" />
+                  ))}
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-dark">{selectedTestimonial.clientName}</h3>
+                    <div className="flex items-center gap-2">
+                      <Calendar size={12} className="text-gray-400" />
+                      <span className="text-xs text-gray-500">{selectedTestimonial.date}</span>
+                    </div>
+                  </div>
+                  <span className="ml-auto text-sm text-primary font-medium">{selectedTestimonial.event}</span>
+                </div>
+                <p className="text-gray-600 italic text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
+                <div className="mt-6 pt-4 border-t flex justify-center">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Heart key={i} size={16} className="fill-primary text-primary" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </main>
+  )
+}
