@@ -5,6 +5,8 @@ import Services from '@/components/Services'
 import GiftBaskets from '@/components/GiftBaskets'
 import Realizations from '@/components/Realizations'
 import About from '@/components/About'
+import TestimonialsSection from '@/components/TestimonialsSection'
+import AvisForm from '@/components/AvisForm'
 import ContactForm from '@/components/ContactForm'
 import Footer from '@/components/Footer'
 
@@ -16,6 +18,8 @@ export default function Home() {
       <GiftBaskets />
       <Realizations />
       <About />
+      <TestimonialsSection />
+      <AvisForm />
       <ContactForm />
       <Footer />
     </main>

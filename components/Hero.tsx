@@ -10,12 +10,12 @@ import LanguageSelector from './LanguageSelector'
 const services = [
   {
     id: 1,
-    title: "Ballons",
-    subtitle: "& Hélium",
-    badge: "Service Premium",
-    description: "Des ballons personnalisés pour tous vos événements. Créez une atmosphère féérique avec nos ballons à l'hélium, disponibles dans toutes les couleurs et formes imaginables.",
-    features: ["+50 modèles disponibles", "Livraison sur place", "Installation offerte"],
-    image: "https://images.pexels.com/photos/6629599/pexels-photo-6629599.jpeg",
+    title: "Bouquet",
+    subtitle: "de Fleurs",
+    badge: "Frais & Élégant",
+    description: "Des bouquets de fleurs fraîches pour toutes les occasions. Roses, lys, tournesols ou compositions sur mesure pour exprimer vos sentiments.",
+    features: ["Fleurs fraîches de saison", "Emballage élégant", "Carte personnalisée", "Livraison offerte à Kigali"],
+    image: "https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg",
     bgColor: "#FF4D6D",
     bgLight: "#FFF0F3"
   },

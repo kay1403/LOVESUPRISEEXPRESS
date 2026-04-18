@@ -4,92 +4,84 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { X, Package, Heart, Baby, Coffee, Flower2, Sparkles, Gift } from 'lucide-react'
 
+// Gift Baskets avec les prix réels du client
 const giftBaskets = [
   {
     id: 1,
     name: 'Birthday',
     subtitle: 'Gift Basket',
     badge: 'Anniversaire',
-    description: 'Perfect for birthday celebrations',
-    longDescription: 'Un panier d\'anniversaire rempli de surprises : douceurs, accessoires de fête et cadeaux personnalisés pour célébrer comme il se doit.',
-    price: 50000,
-    priceRange: '50 000 - 80 000 RWF',
+    description: 'Pour un anniversaire inoubliable',
+    longDescription: 'Mini gâteau d\'anniversaire, bougie, carte personnalisée, jus de fruit. Le cadeau parfait pour célébrer un anniversaire.',
+    priceStandard: 15000,
+    pricePremium: 80000,
+    priceRange: '15 000 - 80 000 RWF',
     image: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
+    popular: true,
     icon: Package,
-    includes: ['Gâteau personnalisé', 'Bougies', 'Petits cadeaux', 'Carte d\'anniversaire']
+    includes: ['Mini gâteau anniversaire', 'Bougie', 'Carte personnalisée', 'Jus de fruit']
   },
   {
     id: 2,
     name: 'Romantic',
     subtitle: 'Gift Basket',
     badge: 'Saint-Valentin',
-    description: 'For your special someone',
-    longDescription: 'Un panier romantique pour déclarer votre flamme ou célébrer votre amour. Bougies parfumées, chocolats fins, et une attention particulière pour chaque détail.',
-    price: 75000,
-    priceRange: '75 000 - 120 000 RWF',
-    image: 'https://images.pexels.com/photos/6521976/pexels-photo-6521976.jpeg',
+    description: 'Pour votre moitié',
+    longDescription: 'Chocolat, bougies parfumées, lettre d\'amour, bouquet de fleurs. Un cadeau romantique pour déclarer votre flamme.',
+    priceStandard: 40000,
+    pricePremium: 50000,
+    priceRange: '40 000 - 50 000 RWF',
+    image: 'https://images.pexels.com/photos/713512/pexels-photo-713512.jpeg',
     popular: true,
     icon: Heart,
-    includes: ['Champagne', 'Chocolats belges', 'Bougies parfumées', 'Pétales de roses']
+    includes: ['Chocolat', 'Bougies parfumées', 'Lettre d\'amour', 'Bouquet de fleurs']
   },
   {
     id: 3,
     name: 'New Baby',
     subtitle: 'Gift Basket',
     badge: 'Naissance',
-    description: 'Welcome the little one',
-    longDescription: 'Célébrez l\'arrivée du nouveau-né avec ce panier cadeau rempli d\'articles essentiels pour bébé et des surprises pour les nouveaux parents.',
-    price: 45000,
-    priceRange: '45 000 - 70 000 RWF',
-    image: 'https://images.pexels.com/photos/6521977/pexels-photo-6521977.jpeg',
+    description: 'Bienvenue au nouveau-né',
+    longDescription: 'Vêtements bébé, couches, produits de soin, doudou. Tout ce qu\'il faut pour accueillir le nouveau membre de la famille.',
+    priceStandard: 40000,
+    pricePremium: 80000,
+    priceRange: '40 000 - 80 000 RWF',
+    image: 'https://images.pexels.com/photos/3682830/pexels-photo-3682830.jpeg',
+    popular: false,
     icon: Baby,
-    includes: ['Body et accessoires bébé', 'Peluche', 'Couvertures', 'Carte de félicitations']
+    includes: ['Vêtements bébé', 'Couches', 'Produits de soin', 'Doudou']
   },
   {
     id: 4,
     name: 'Gourmet',
     subtitle: 'Gift Basket',
     badge: 'Gastronomie',
-    description: 'For food lovers',
-    longDescription: 'Un voyage gustatif pour les amateurs de bonne cuisine. Produits fins, spécialités locales et internationales, le bonheur des papilles.',
-    price: 65000,
-    priceRange: '65 000 - 100 000 RWF',
-    image: 'https://images.pexels.com/photos/6521978/pexels-photo-6521978.jpeg',
+    description: 'Pour les gourmands',
+    longDescription: 'Biscuits, fruits, chocolat, jus, bonbons. Un voyage gustatif pour les amateurs de bonne cuisine.',
+    priceStandard: 20000,
+    pricePremium: 70000,
+    priceRange: '15 000 - 80 000 RWF',
+    image: 'https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg',
+    popular: true,
     icon: Coffee,
-    includes: ['Café premium', 'Thé rare', 'Confiseries fines', 'Épices du monde']
+    includes: ['Biscuits', 'Fruits', 'Chocolat', 'Jus', 'Bonbons']
   },
   {
     id: 5,
     name: 'Wellness',
     subtitle: 'Gift Basket',
     badge: 'Bien-être',
-    description: 'Relaxation and self-care',
-    longDescription: 'Offrez un moment de détente avec ce panier bien-être. Produits de soin, huiles essentielles, et accessoires pour une pause relaxante.',
-    price: 55000,
-    priceRange: '55 000 - 85 000 RWF',
-    image: 'https://images.pexels.com/photos/6521979/pexels-photo-6521979.jpeg',
+    description: 'Détente et bien-être',
+    longDescription: 'Thé, huiles essentielles, savon, masques visage, parfum, crème. Offrez un moment de relaxation.',
+    priceStandard: 50000,
+    pricePremium: 100000,
+    priceRange: '50 000 - 100 000 RWF',
+    image: 'https://images.pexels.com/photos/3755706/pexels-photo-3755706.jpeg',
+    popular: false,
     icon: Flower2,
-    includes: ['Huiles essentielles', 'Bougies aromatiques', 'Masques de soin', 'Thé relaxant']
+    includes: ['Thé', 'Huiles essentielles', 'Savon', 'Masques visage', 'Parfum', 'Crème']
   }
 ]
-
-// Variants d'animation
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: [0.2, 0.9, 0.3, 1] }
-  }
-}
 
 export default function GiftBaskets() {
   const [selectedBasket, setSelectedBasket] = useState<typeof giftBaskets[0] | null>(null)
@@ -110,51 +102,37 @@ export default function GiftBaskets() {
               <span className="text-xs font-medium text-primary uppercase tracking-wider">Cadeaux sur mesure</span>
             </div>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-              Nos Panier Cadeaux
+              Nos Paniers Cadeaux
             </h2>
             <p className="text-gray-500 text-lg max-w-2xl mx-auto">
               Des cadeaux soigneusement sélectionnés pour chaque occasion
             </p>
           </motion.div>
           
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {giftBaskets.map((basket, index) => (
               <motion.div
                 key={basket.id}
-                variants={itemVariants}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
                 whileHover={{ y: -10 }}
                 onClick={() => setSelectedBasket(basket)}
                 className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
               >
-                {/* Image avec overlay */}
                 <div className="relative h-56 overflow-hidden">
-                  <img 
-                    src={basket.image} 
-                    alt={basket.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                  />
+                  <img src={basket.image} alt={basket.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-                  
-                  {/* Badge */}
                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
                     <span className="text-xs font-semibold text-primary">{basket.badge}</span>
                   </div>
-                  
-                  {/* Badge Popular */}
                   {basket.popular && (
                     <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
                       <Sparkles size={12} className="text-dark" />
                       <span className="text-xs font-semibold text-dark">Populaire</span>
                     </div>
                   )}
-                  
-                  {/* Overlay au hover */}
                   <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     <span className="text-white text-sm font-semibold bg-primary/90 px-4 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                       Voir le panier →
@@ -172,12 +150,11 @@ export default function GiftBaskets() {
                       <span className="text-sm font-light text-gray-400">{basket.subtitle}</span>
                     </div>
                   </div>
-                  <p className="text-gray-500 text-sm mb-4 line-clamp-2">{basket.description}</p>
-                  
+                  <p className="text-gray-500 text-sm mb-2">{basket.description}</p>
                   <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                     <div>
                       <p className="text-xs text-gray-400">À partir de</p>
-                      <span className="text-primary font-bold">{basket.priceRange.split(' - ')[0]}</span>
+                      <span className="text-primary font-bold">{basket.priceStandard.toLocaleString()} RWF</span>
                     </div>
                     <button className="text-primary font-semibold text-sm hover:text-accent transition flex items-center gap-1">
                       Détails →
@@ -186,11 +163,10 @@ export default function GiftBaskets() {
                 </div>
               </motion.div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* Modal Gift Basket */}
       <AnimatePresence>
         {selectedBasket && (
           <motion.div
@@ -211,10 +187,7 @@ export default function GiftBaskets() {
               <div className="relative h-56">
                 <img src={selectedBasket.image} alt={selectedBasket.name} className="w-full h-full object-cover rounded-t-2xl" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <button 
-                  onClick={() => setSelectedBasket(null)} 
-                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
-                >
+                <button onClick={() => setSelectedBasket(null)} className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition">
                   <X size={20} className="text-white" />
                 </button>
                 {selectedBasket.popular && (
@@ -231,7 +204,6 @@ export default function GiftBaskets() {
                   <h3 className="text-2xl font-display font-bold text-white">
                     {selectedBasket.name} {selectedBasket.subtitle}
                   </h3>
-                  <p className="text-white/80 mt-1">{selectedBasket.priceRange}</p>
                 </div>
               </div>
               
@@ -252,10 +224,21 @@ export default function GiftBaskets() {
                   </ul>
                 </div>
                 
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-xl p-3 text-center">
+                    <p className="text-xs text-gray-500">Standard</p>
+                    <p className="text-xl font-bold text-primary">{selectedBasket.priceStandard.toLocaleString()} RWF</p>
+                  </div>
+                  <div className="border rounded-xl p-3 text-center bg-gradient-to-r from-primary/5 to-primaryLight">
+                    <p className="text-xs text-gray-500">Premium</p>
+                    <p className="text-xl font-bold text-primary">{selectedBasket.pricePremium.toLocaleString()} RWF</p>
+                  </div>
+                </div>
+                
                 <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                   <div>
                     <p className="text-sm text-gray-500">À partir de</p>
-                    <p className="text-2xl font-bold text-primary">{selectedBasket.priceRange}</p>
+                    <p className="text-2xl font-bold text-primary">{selectedBasket.priceStandard.toLocaleString()} RWF</p>
                   </div>
                   <button 
                     onClick={() => {

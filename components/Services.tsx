@@ -2,90 +2,84 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
-import { X, Info, Sparkles, Clock, MapPin, CreditCard, Heart } from 'lucide-react'
+import { X, Info, Sparkles, Clock, MapPin, CreditCard, Heart, Gift, Flower2, Globe, PartyPopper } from 'lucide-react'
 
+// Types pour les options
+type ServiceOption = {
+  name: string
+  price: number
+  note?: string
+}
+
+type ServicePack = {
+  name: string
+  price: number
+  desc: string
+}
+
+// Services avec les données REELLES du client
 const services = [
   {
     id: 1,
-    title: "Balloons",
-    subtitle: "& Helium",
-    badge: "Service Premium",
-    description: 'Balloon accessories and helium gas for all events',
-    longDescription: 'Transformez n\'importe quel espace en un lieu magique avec nos ballons personnalisés. Nous proposons une large gamme de ballons de toutes les couleurs, formes et tailles, avec remplissage à l\'hélium pour un effet flottant spectaculaire.',
-    basePrice: 35000,
-    priceRange: '25 000 - 80 000 RWF',
-    image: 'https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg',
+    title: "Party",
+    subtitle: "Decoration",
+    badge: "Pack Premier Frisson",
+    description: 'The beauty of your events is prepared everyday',
+    longDescription: 'Transformez n\'importe quel espace en un lieu magique. Décoration complète et personnalisée selon votre thème.',
+    basePrice: 60000,
+    priceRange: '60 000 RWF',
+    image: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
+    packs: [
+      { name: 'Pack Premier Frisson', price: 60000, desc: '15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie' },
+      { name: 'Pack Love XL', price: 100000, desc: '25 ballons, lettre/chiffre lumineux, table dressée pour deux, bougie parfumée, playlist personnalisée' },
+      { name: 'Pack ROYAL SURPRISE', price: 200000, desc: 'Rideau de ballons + néon "Marry me" ou "Happy birthday", plateau de fruits + bouteille de vin, photographe 20 min, bouquet de fleurs' }
+    ],
     includes: [
-      'Ballons latex et aluminium',
-      'Remplissage hélium',
-      'Poids pour maintien au sol',
-      'Livraison sur place'
+      'Installation complète',
+      'Décoration sur mesure',
+      'Démontage inclus',
+      'Discrétion garantie'
     ],
-    options: [
-      { name: 'Ballon géant personnalisé', price: 15000 },
-      { name: 'Pack 50 ballons', price: 45000 },
-      { name: 'Ballons à message imprimé', price: 5000 }
-    ],
-    duration: '2-4 heures',
-    coverage: 'Kigali et environs'
+    options: [] as ServiceOption[],
+    duration: '4-8 heures',
+    coverage: 'Kigali et environs',
+    icon: PartyPopper
   },
   {
     id: 2,
-    title: "Party",
-    subtitle: "Decoration",
-    badge: "Art & Élégance",
-    description: 'Complete decoration for birthdays, weddings, and more',
-    longDescription: 'Une décoration d\'événement complète et personnalisée selon votre thème. Nous prenons en charge l\'installation complète et le démontage après l\'événement.',
-    basePrice: 50000,
-    priceRange: '40 000 - 150 000 RWF',
-    image: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
-    includes: [
-      'Nappes et housses de chaise',
-      'Centres de table',
-      'Guirlandes lumineuses',
-      'Bannières personnalisées'
-    ],
-    options: [
-      { name: 'Fond de scène personnalisé', price: 35000 },
-      { name: 'Ballon arch (entrée)', price: 45000 },
-      { name: 'Pack confettis et serpentins', price: 8000 }
-    ],
-    duration: '4-8 heures',
-    coverage: 'Kigali et environs'
-  },
-  {
-    id: 3,
     title: "Surprise",
     subtitle: "Planner",
     badge: "Expert en émotions",
-    description: 'We organize everything for the perfect surprise',
+    description: 'Dites nous l\'occasion et on planifie toute la surprise',
     longDescription: 'Vous avez l\'idée, nous exécutons. Notre service de planification de surprise prend en charge TOUS les détails : logistique, coordination, timing, et même la complicité des invités.',
-    basePrice: 75000,
-    priceRange: '65 000 - 250 000 RWF',
+    basePrice: 200000,
+    priceRange: '200 000 RWF',
     image: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg',
     includes: [
       'Consultation et planification',
       'Coordination avec tous les prestataires',
       'Timing et discrétion garantis',
-      'Photo et vidéo (optionnel)'
+      'Présence sur place (demandes en mariage, grosses annonces)'
     ],
     options: [
+      { name: 'Pack Premier Frisson inclus', price: 0 },
       { name: 'Photographe professionnel', price: 50000 },
-      { name: 'Violoniste / Musicien', price: 60000 },
-      { name: 'Garde d\'enfants sur place', price: 25000 }
-    ],
+      { name: 'Violoniste / Musicien', price: 60000 }
+    ] as ServiceOption[],
     duration: 'Planification 1-2 semaines',
-    coverage: 'Tout le Rwanda'
+    coverage: 'Tout le Rwanda',
+    icon: Sparkles
   },
   {
-    id: 4,
+    id: 3,
     title: "Custom",
     subtitle: "Website",
     badge: "Digital & Créatif",
-    description: 'Personalized website for your event or business',
+    description: 'Site web personnalisé pour votre événement ou entreprise',
     longDescription: 'Créez un site web personnalisé pour votre événement : site d\'anniversaire surprise, site de mariage avec RSVP, ou site vitrine pour votre commerce. Un cadeau numérique unique et durable.',
-    basePrice: 85000,
-    priceRange: '85 000 - 300 000 RWF',
+    basePrice: 25000,
+    pricePremium: 45000,
+    priceRange: '25 000 RWF (simple) / 45 000 RWF (premium)',
     image: 'https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg',
     includes: [
       'Design personnalisé',
@@ -94,22 +88,24 @@ const services = [
       'Support technique 3 mois'
     ],
     options: [
+      { name: 'Site simple (5 pages)', price: 25000 },
+      { name: 'Site premium (illimité + blog)', price: 45000 },
       { name: 'Page de collecte de photos', price: 20000 },
-      { name: 'Compte à rebours animé', price: 15000 },
-      { name: 'Galerie vidéo', price: 25000 }
-    ],
+      { name: 'Compte à rebours animé', price: 15000 }
+    ] as ServiceOption[],
     duration: '5-10 jours ouvrés',
-    coverage: '100% en ligne'
+    coverage: '100% en ligne',
+    icon: Globe
   },
   {
-    id: 5,
+    id: 4,
     title: "Flower",
     subtitle: "Bouquet",
     badge: "Frais & Élégant",
-    description: 'Fresh and elegant flower arrangements',
-    longDescription: 'Des bouquets de fleurs fraîches soigneusement sélectionnés et arrangés par nos fleuristes. Parfait pour accompagner toute surprise ou comme cadeau principal.',
-    basePrice: 20000,
-    priceRange: '15 000 - 60 000 RWF',
+    description: 'Pour tout événement - Bouquet personnalisable',
+    longDescription: 'Des bouquets de fleurs fraîches soigneusement sélectionnés et arrangés par nos fleuristes. Parfait pour accompagner toute surprise ou comme cadeau principal. Le client peut adapter son montant.',
+    basePrice: 15000,
+    priceRange: '15 000 RWF (prix de base, adaptable)',
     image: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg',
     includes: [
       'Fleurs fraîches de saison',
@@ -120,20 +116,22 @@ const services = [
     options: [
       { name: 'Bouquet premium roses rouges', price: 25000 },
       { name: 'Ballon avec bouquet', price: 15000 },
-      { name: 'Livraison express (2h)', price: 5000 }
-    ],
+      { name: 'Livraison express (2h)', price: 5000 },
+      { name: 'Personnalisation du montant', price: 0, note: 'Le client choisit son budget' }
+    ] as ServiceOption[],
     duration: '2 heures',
-    coverage: 'Kigali'
+    coverage: 'Kigali',
+    icon: Flower2
   },
   {
-    id: 6,
+    id: 5,
     title: "Gift",
     subtitle: "Baskets",
     badge: "Luxe & Douceur",
-    description: 'Luxury curated gift baskets for all occasions',
+    description: 'Paniers cadeaux personnalisables pour toutes les occasions',
     longDescription: 'Des paniers cadeaux luxueux soigneusement composés selon l\'occasion et les goûts de la personne. Chaque panier est unique et personnalisable.',
-    basePrice: 45000,
-    priceRange: '35 000 - 120 000 RWF',
+    basePrice: 15000,
+    priceRange: '15 000 - 100 000 RWF',
     image: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
     includes: [
       'Panier premium',
@@ -145,13 +143,13 @@ const services = [
       { name: 'Ajout de chocolats belges', price: 12000 },
       { name: 'Ajout de vin / champagne', price: 25000 },
       { name: 'Livraison nocturne', price: 8000 }
-    ],
+    ] as ServiceOption[],
     duration: '1-2 jours',
-    coverage: 'Tout le Rwanda'
+    coverage: 'Tout le Rwanda',
+    icon: Gift
   }
 ]
 
-// Variants d'animation pour l'apparition au scroll
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -210,7 +208,6 @@ export default function Services() {
                 onClick={() => setSelectedService(service)}
                 className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
               >
-                {/* Image avec overlay gradient */}
                 <div className="relative h-56 overflow-hidden">
                   <img 
                     src={service.image} 
@@ -218,13 +215,9 @@ export default function Services() {
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  
-                  {/* Badge */}
                   <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
                     <span className="text-xs font-semibold text-primary">{service.badge}</span>
                   </div>
-                  
-                  {/* Overlay au hover */}
                   <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                     <span className="text-white text-sm font-semibold bg-primary/90 px-4 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                       Découvrir →
@@ -233,16 +226,23 @@ export default function Services() {
                 </div>
                 
                 <div className="p-6">
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <h3 className="text-xl font-bold text-dark">{service.title}</h3>
-                    <span className="text-lg font-light text-gray-400">{service.subtitle}</span>
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                      {service.icon && <service.icon size={16} className="text-primary" />}
+                    </div>
+                    <div className="flex items-baseline gap-1">
+                      <h3 className="text-xl font-bold text-dark">{service.title}</h3>
+                      <span className="text-sm font-light text-gray-400">{service.subtitle}</span>
+                    </div>
                   </div>
-                  <p className="text-gray-500 text-sm mb-4 line-clamp-2">{service.description}</p>
+                  <p className="text-gray-600 text-sm mb-3 line-clamp-2">{service.description}</p>
                   
                   <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                     <div>
                       <p className="text-xs text-gray-400">À partir de</p>
-                      <span className="text-primary font-bold">{service.priceRange.split(' - ')[0]}</span>
+                      <span className="text-primary font-bold">
+                        {service.priceRange.split(' ')[0]} {service.priceRange.split(' ')[1]}
+                      </span>
                     </div>
                     <button className="text-primary font-semibold text-sm hover:text-accent transition flex items-center gap-1">
                       Détails <Info size={14} />
@@ -273,7 +273,6 @@ export default function Services() {
               className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* En-tête du modal */}
               <div className="relative h-64">
                 <img 
                   src={selectedService.image} 
@@ -298,12 +297,32 @@ export default function Services() {
                 </div>
               </div>
 
-              {/* Contenu du modal */}
               <div className="p-6 space-y-6">
                 <div>
                   <h4 className="text-xl font-semibold text-dark mb-3">Description détaillée</h4>
                   <p className="text-gray-600 leading-relaxed">{selectedService.longDescription}</p>
                 </div>
+
+                {/* Afficher les packs spécialement pour Party Decoration */}
+                {selectedService.packs && selectedService.packs.length > 0 && (
+                  <div className="bg-primaryLight rounded-xl p-5">
+                    <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2">
+                      <Sparkles size={20} className="text-primary" />
+                      Nos Packs Décoration
+                    </h4>
+                    <div className="space-y-3">
+                      {selectedService.packs.map((pack: ServicePack, idx: number) => (
+                        <div key={idx} className="border-b border-white/50 pb-3 last:border-0">
+                          <div className="flex justify-between items-center mb-1">
+                            <span className="font-bold text-dark">{pack.name}</span>
+                            <span className="text-primary font-bold">{pack.price.toLocaleString()} RWF</span>
+                          </div>
+                          <p className="text-sm text-gray-600">{pack.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="bg-primaryLight rounded-xl p-5">
@@ -312,7 +331,7 @@ export default function Services() {
                       Ce qui est inclus
                     </h4>
                     <ul className="space-y-2">
-                      {selectedService.includes.map((item, idx) => (
+                      {selectedService.includes.map((item: string, idx: number) => (
                         <li key={idx} className="flex items-center gap-2 text-gray-600 text-sm">
                           <span className="text-primary">✓</span> {item}
                         </li>
@@ -320,20 +339,28 @@ export default function Services() {
                     </ul>
                   </div>
 
-                  <div className="bg-primaryLight rounded-xl p-5">
-                    <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2">
-                      <CreditCard size={20} className="text-primary" />
-                      Options supplémentaires
-                    </h4>
-                    <ul className="space-y-2">
-                      {selectedService.options.map((option, idx) => (
-                        <li key={idx} className="flex justify-between items-center text-gray-600 text-sm">
-                          <span>{option.name}</span>
-                          <span className="text-primary font-semibold">+{option.price.toLocaleString()} RWF</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                  {selectedService.options && selectedService.options.length > 0 && (
+                    <div className="bg-primaryLight rounded-xl p-5">
+                      <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2">
+                        <CreditCard size={20} className="text-primary" />
+                        Options supplémentaires
+                      </h4>
+                      <ul className="space-y-2">
+                        {selectedService.options.map((option: ServiceOption, idx: number) => (
+                          <li key={idx} className="flex justify-between items-center text-gray-600 text-sm">
+                            <span>{option.name}</span>
+                            {option.price > 0 ? (
+                              <span className="text-primary font-semibold">+{option.price.toLocaleString()} RWF</span>
+                            ) : option.note ? (
+                              <span className="text-xs text-gray-400">{option.note}</span>
+                            ) : (
+                              <span className="text-green-600 text-xs">Inclus</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-r from-primary/5 to-primaryLight rounded-xl">

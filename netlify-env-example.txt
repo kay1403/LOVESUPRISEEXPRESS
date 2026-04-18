@@ -1,0 +1,13 @@
+# Variables d'environnement à configurer sur Netlify
+# Aller dans: Site settings → Environment variables
+
+ADMIN_API_KEY=loveexpress2024
+ENTREPRISE_WHATSAPP=250799366007tesst
+
+# Optionnel: WhatsApp notifications
+CALLMEBOT_API_KEY=votre_cle_api_callmebot
+
+# Optionnel: Google Sheets backup
+GOOGLE_SHEETS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_SHEETS_CLIENT_EMAIL=votre-compte@...gserviceaccount.com
+GOOGLE_SHEETS_SHEET_ID=votre_sheet_id
