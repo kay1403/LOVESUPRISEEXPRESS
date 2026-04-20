@@ -10,7 +10,7 @@ const giftBaskets = [
     description: 'Pour un anniversaire inoubliable',
     longDescription: 'Mini gâteau d\'anniversaire, bougie, carte personnalisée, jus de fruit.',
     priceStandard: 15000, pricePremium: 80000, priceRange: '15 000 - 80 000 RWF',
-    image: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
+    image: 'https://i.pinimg.com/1200x/ec/36/e4/ec36e470b8d41448d810491847893f83.jpg',
     popular: true, icon: Package,
     includes: ['Mini gâteau anniversaire', 'Bougie', 'Carte personnalisée', 'Jus de fruit']
   },
@@ -19,7 +19,7 @@ const giftBaskets = [
     description: 'Pour votre moitié',
     longDescription: 'Chocolat, bougies parfumées, lettre d\'amour, bouquet de fleurs.',
     priceStandard: 40000, pricePremium: 50000, priceRange: '40 000 - 50 000 RWF',
-    image: 'https://images.pexels.com/photos/713512/pexels-photo-713512.jpeg',
+    image: 'https://i.pinimg.com/736x/63/a7/09/63a709e557275506ec67b31b59642c44.jpg',
     popular: true, icon: Heart,
     includes: ['Chocolat', 'Bougies parfumées', 'Lettre d\'amour', 'Bouquet de fleurs']
   },
@@ -28,7 +28,7 @@ const giftBaskets = [
     description: 'Bienvenue au nouveau-né',
     longDescription: 'Vêtements bébé, couches, produits de soin, doudou.',
     priceStandard: 40000, pricePremium: 80000, priceRange: '40 000 - 80 000 RWF',
-    image: 'https://images.pexels.com/photos/3682830/pexels-photo-3682830.jpeg',
+    image: 'https://i.pinimg.com/1200x/48/b0/79/48b07903362683f89724cc49e705a008.jpg',
     popular: false, icon: Baby,
     includes: ['Vêtements bébé', 'Couches', 'Produits de soin', 'Doudou']
   },
@@ -37,7 +37,7 @@ const giftBaskets = [
     description: 'Pour les gourmands',
     longDescription: 'Biscuits, fruits, chocolat, jus, bonbons.',
     priceStandard: 20000, pricePremium: 70000, priceRange: '20 000 - 70 000 RWF',
-    image: 'https://images.pexels.com/photos/1279330/pexels-photo-1279330.jpeg',
+    image: 'https://i.pinimg.com/1200x/5d/1c/43/5d1c43fa44d4ceec1d095ce415241b0a.jpg',
     popular: true, icon: Coffee,
     includes: ['Biscuits', 'Fruits', 'Chocolat', 'Jus', 'Bonbons']
   },
@@ -46,7 +46,7 @@ const giftBaskets = [
     description: 'Détente et bien-être',
     longDescription: 'Thé, huiles essentielles, savon, masques visage, parfum, crème.',
     priceStandard: 50000, pricePremium: 100000, priceRange: '50 000 - 100 000 RWF',
-    image: 'https://images.pexels.com/photos/3755706/pexels-photo-3755706.jpeg',
+    image: 'https://i.pinimg.com/1200x/fe/c3/97/fec397b6fbc634e851457411b107e4c5.jpg',
     popular: false, icon: Flower2,
     includes: ['Thé', 'Huiles essentielles', 'Savon', 'Masques visage', 'Parfum', 'Crème']
   }

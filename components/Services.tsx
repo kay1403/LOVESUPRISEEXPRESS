@@ -26,7 +26,7 @@ const services = [
     longDescription: 'Transformez n\'importe quel espace en un lieu magique. Décoration complète et personnalisée selon votre thème.',
     basePrice: 60000,
     priceRange: '60 000 RWF',
-    image: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
+    image: 'https://images.pexels.com/photos/11474201/pexels-photo-11474201.jpeg',
     packs: [
       { name: 'Pack Premier Frisson', price: 60000, desc: '15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie' },
       { name: 'Pack Love XL', price: 100000, desc: '25 ballons, lettre/chiffre lumineux, table dressée pour deux, bougie parfumée, playlist personnalisée' },
@@ -47,7 +47,8 @@ const services = [
     longDescription: 'Vous avez l\'idée, nous exécutons. Notre service de planification de surprise prend en charge TOUS les détails : logistique, coordination, timing, et même la complicité des invités.',
     basePrice: 200000,
     priceRange: '200 000 RWF',
-    image: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg',
+    //image: 'https://images.pexels.com/photos/36253171/pexels-photo-36253171.jpeg',
+    image: 'https://i.pinimg.com/1200x/44/8c/f2/448cf2102dc4b6f9156ed867f181e985.jpg',
     includes: ['Consultation et planification', 'Coordination avec tous les prestataires', 'Timing et discrétion garantis', 'Présence sur place'],
     options: [
       { name: 'Photographe professionnel', price: 50000 },
@@ -87,7 +88,7 @@ const services = [
     longDescription: 'Des bouquets de fleurs fraîches soigneusement sélectionnés. Parfait pour accompagner toute surprise. Le client peut adapter son montant.',
     basePrice: 15000,
     priceRange: '15 000 RWF',
-    image: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg',
+    image: 'https://images.pexels.com/photos/32356065/pexels-photo-32356065.jpeg',
     includes: ['Fleurs fraîches de saison', 'Emballage élégant', 'Carte personnalisée', 'Livraison offerte'],
     options: [
       { name: 'Bouquet premium roses rouges', price: 25000 },
@@ -107,7 +108,7 @@ const services = [
     longDescription: 'Des paniers cadeaux luxueux soigneusement composés selon l\'occasion et les goûts de la personne. Chaque panier est unique.',
     basePrice: 15000,
     priceRange: '15 000 - 100 000 RWF',
-    image: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
+    image: 'https://i.pinimg.com/1200x/ba/98/c8/ba98c85a1a0864781b15f9f0a823a691.jpg',
     includes: ['Panier premium', 'Produits de qualité', 'Carte personnalisée', 'Emballage cadeau'],
     options: [
       { name: 'Ajout de chocolats belges', price: 12000 },

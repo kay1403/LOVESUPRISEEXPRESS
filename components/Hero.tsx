@@ -15,7 +15,8 @@ const services = [
     badge: "Frais & Élégant",
     description: "Des bouquets de fleurs fraîches pour toutes les occasions. Roses, lys, tournesols ou compositions sur mesure pour exprimer vos sentiments.",
     features: ["Fleurs fraîches de saison", "Emballage élégant", "Carte personnalisée", "Livraison offerte à Kigali"],
-    image: "https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg",
+    image: "https://images.pexels.com/photos/35841488/pexels-photo-35841488.jpeg",
+    //image: "https://images.pexels.com/photos/31162067/pexels-photo-31162067.jpeg",
     bgColor: "#FF4D6D",
     bgLight: "#FFF0F3"
   },
@@ -48,7 +49,7 @@ const services = [
     badge: "Luxe & Douceur",
     description: "Des paniers cadeaux luxueux soigneusement composés selon les goûts et l'occasion. Un cadeau qui marque les esprits et réchauffe les cœurs.",
     features: ["Personnalisation totale", "Produits premium", "Emballage cadeau"],
-    image: "https://images.pexels.com/photos/27393960/pexels-photo-27393960.jpeg",
+    image: "https://i.pinimg.com/1200x/e6/3e/d3/e63ed35a4e166f7830f1ef5cd2839392.jpg",
     bgColor: "#FF4D6D",
     bgLight: "#FFF0F3"
   }
