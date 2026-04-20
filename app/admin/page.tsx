@@ -1,17 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Package, Star, Users, Clock, Heart, Sparkles
-} from 'lucide-react';
 
-export default function AdminDashboard() {
+export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [adminKey, setAdminKey] = useState('');
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleLogin = () => {
     if (adminKey === 'loveexpress2024') {
@@ -67,13 +69,23 @@ export default function AdminDashboard() {
   };
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { label: string; color: string }> = {
-      pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-700' },
-      confirmed: { label: 'Confirmée', color: 'bg-green-100 text-green-700' },
-      delivered: { label: 'Livrée', color: 'bg-blue-100 text-blue-700' },
-      cancelled: { label: 'Annulée', color: 'bg-red-100 text-red-700' }
+    const badges: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-700',
+      confirmed: 'bg-green-100 text-green-700',
+      delivered: 'bg-blue-100 text-blue-700',
+      cancelled: 'bg-red-100 text-red-700'
     };
     return badges[status] || badges.pending;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: 'En attente',
+      confirmed: 'Confirmée',
+      delivered: 'Livrée',
+      cancelled: 'Annulée'
+    };
+    return labels[status] || 'En attente';
   };
 
   const stats = {
@@ -83,12 +95,24 @@ export default function AdminDashboard() {
     totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
   };
 
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">Chargement...</div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
           <div className="text-center mb-6">
-            <Heart className="w-16 h-16 text-primary mx-auto mb-4" />
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
             <h1 className="text-2xl font-bold text-dark">Dashboard LoveExpress</h1>
             <p className="text-gray-500 mt-2">Accès réservé à l'administration</p>
           </div>
@@ -112,13 +136,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-gray-100">
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Heart className="w-8 h-8 text-primary" />
-            <div>
-              <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
-              <p className="text-xs text-gray-500">Gérez vos commandes et témoignages</p>
-            </div>
-          </div>
+          <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
           <button onClick={() => setIsAuthenticated(false)} className="text-gray-500 hover:text-red-500 text-sm">
             Déconnexion
           </button>
@@ -127,41 +145,29 @@ export default function AdminDashboard() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <Package className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold">{stats.totalOrders}</span>
-          </div>
-          <p className="text-gray-500 text-sm mt-1">Commandes</p>
+          <p className="text-2xl font-bold">{stats.totalOrders}</p>
+          <p className="text-gray-500 text-sm">Commandes</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <Clock className="w-8 h-8 text-yellow-500" />
-            <span className="text-2xl font-bold">{stats.pendingOrders}</span>
-          </div>
-          <p className="text-gray-500 text-sm mt-1">En attente</p>
+          <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
+          <p className="text-gray-500 text-sm">En attente</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <Star className="w-8 h-8 text-accent" />
-            <span className="text-2xl font-bold">{stats.pendingTestimonials}</span>
-          </div>
-          <p className="text-gray-500 text-sm mt-1">Avis à modérer</p>
+          <p className="text-2xl font-bold text-accent">{stats.pendingTestimonials}</p>
+          <p className="text-gray-500 text-sm">Avis à modérer</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between">
-            <Sparkles className="w-8 h-8 text-green-500" />
-            <span className="text-2xl font-bold">{stats.totalRevenue.toLocaleString()} RWF</span>
-          </div>
-          <p className="text-gray-500 text-sm mt-1">CA total</p>
+          <p className="text-2xl font-bold text-green-600">{stats.totalRevenue.toLocaleString()} RWF</p>
+          <p className="text-gray-500 text-sm">CA total</p>
         </div>
       </div>
 
       <div className="px-6">
         <div className="flex gap-2 border-b">
-          <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 font-medium transition ${activeTab === 'orders' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+          <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 font-medium ${activeTab === 'orders' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
             Commandes ({stats.totalOrders})
           </button>
-          <button onClick={() => setActiveTab('testimonials')} className={`px-4 py-2 font-medium transition ${activeTab === 'testimonials' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+          <button onClick={() => setActiveTab('testimonials')} className={`px-4 py-2 font-medium ${activeTab === 'testimonials' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
             Avis clients ({stats.pendingTestimonials} en attente)
           </button>
         </div>
@@ -173,22 +179,17 @@ export default function AdminDashboard() {
         ) : activeTab === 'orders' ? (
           <div className="space-y-4">
             {orders.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
-                <p>Aucune commande pour le moment</p>
-              </div>
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucune commande</div>
             ) : (
               orders.map((order) => (
                 <div key={order.id} className="bg-white rounded-xl shadow-sm p-4">
                   <div className="flex justify-between items-start flex-wrap gap-3">
                     <div>
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status).color}`}>
-                          {getStatusBadge(order.status).label}
-                        </span>
-                      </div>
-                      <p className="font-semibold">{order.clientName}</p>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                      <p className="font-semibold mt-2">{order.clientName}</p>
                       <p className="text-sm text-gray-500">→ {order.destName}</p>
-                      <p className="text-sm text-gray-500">{order.eventType} - {order.eventDate}</p>
                       <p className="text-primary font-bold mt-1">{parseInt(order.budget).toLocaleString()} RWF</p>
                     </div>
                     <select
@@ -209,9 +210,7 @@ export default function AdminDashboard() {
         ) : (
           <div className="space-y-4">
             {testimonials.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
-                <p>Aucun témoignage pour le moment</p>
-              </div>
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucun témoignage</div>
             ) : (
               testimonials.map((testimonial) => (
                 <div key={testimonial.id} className="bg-white rounded-xl shadow-sm p-4">
@@ -220,7 +219,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center gap-2 mb-2">
                         <div className="flex gap-0.5">
                           {[...Array(testimonial.note || 5)].map((_, i) => (
-                            <Star key={i} size={14} className="fill-accent text-accent" />
+                            <span key={i} className="text-accent">★</span>
                           ))}
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${testimonial.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
@@ -232,10 +231,10 @@ export default function AdminDashboard() {
                     </div>
                     {testimonial.status === 'pending' && (
                       <div className="flex gap-2">
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm">
                           Publier
                         </button>
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm">
                           Supprimer
                         </button>
                       </div>
