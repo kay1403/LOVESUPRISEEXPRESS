@@ -1,13 +1,13 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { Heart, Sparkles, Calendar, Users, Gift, Star, Clock, Award, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Heart, Sparkles, Users, Clock, Award, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import Image from 'next/image'
 
 export default function About() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
+  const [imagesLoaded, setImagesLoaded] = useState(false)
 
   const images = [
     { src: '/images/IMG-20260417-WA0038.jpg', alt: 'EYEANG Love - Fondatrice LoveExpress' },
@@ -25,6 +25,21 @@ export default function About() {
     
     return () => clearInterval(interval)
   }, [isHovering, images.length])
+
+  // Préchargement des images
+  useEffect(() => {
+    let loadedCount = 0
+    images.forEach((image) => {
+      const img = new Image()
+      img.src = image.src
+      img.onload = () => {
+        loadedCount++
+        if (loadedCount === images.length) {
+          setImagesLoaded(true)
+        }
+      }
+    })
+  }, [images])
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length)
@@ -52,11 +67,29 @@ export default function About() {
     'Attention aux détails'
   ]
 
+  if (!imagesLoaded) {
+    return (
+      <section className="py-24 bg-primaryLight">
+        <div className="container-custom">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[3/4] bg-gray-200 animate-pulse" />
+            <div className="space-y-4">
+              <div className="h-8 bg-gray-200 rounded-full w-32 animate-pulse" />
+              <div className="h-12 bg-gray-200 rounded-lg w-3/4 animate-pulse" />
+              <div className="h-20 bg-gray-200 rounded-lg animate-pulse" />
+              <div className="h-20 bg-gray-200 rounded-lg animate-pulse" />
+            </div>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-24 bg-primaryLight">
       <div className="container-custom">
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Carrousel photo avec effet de fondu */}
+          {/* Carrousel photo avec effet de fondu - version img standard */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -66,7 +99,7 @@ export default function About() {
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
           >
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[3/4]">              
+            <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[3/4] bg-gray-100">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={currentImageIndex}
@@ -76,12 +109,10 @@ export default function About() {
                   transition={{ duration: 0.6, ease: "easeInOut" }}
                   className="absolute inset-0"
                 >
-                  <Image
+                  <img
                     src={images[currentImageIndex].src}
                     alt={images[currentImageIndex].alt}
-                    fill
-                    className="object-cover"
-                    priority
+                    className="w-full h-full object-cover"
                   />
                 </motion.div>
               </AnimatePresence>
