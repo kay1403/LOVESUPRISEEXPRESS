@@ -16,7 +16,6 @@ const services = [
     description: "Des bouquets de fleurs fraîches pour toutes les occasions. Roses, lys, tournesols ou compositions sur mesure pour exprimer vos sentiments.",
     features: ["Fleurs fraîches de saison", "Emballage élégant", "Carte personnalisée", "Livraison offerte à Kigali"],
     image: "https://images.pexels.com/photos/35841488/pexels-photo-35841488.jpeg",
-    //image: "https://images.pexels.com/photos/31162067/pexels-photo-31162067.jpeg",
     bgColor: "#FF4D6D",
     bgLight: "#FFF0F3"
   },
@@ -55,7 +54,7 @@ const services = [
   }
 ]
 
-// Cœurs flottants - VISIBLES
+// Cœurs flottants
 const FloatingHearts = () => {
   const hearts = [
     { id: 1, x: "8%", y: "15%", size: 18, duration: 10, delay: 0 },
@@ -94,7 +93,7 @@ const FloatingHearts = () => {
   )
 }
 
-// Étoiles filantes - VISIBLES
+// Étoiles filantes
 const ShootingStars = () => {
   const stars = [
     { id: 1, top: "8%", left: "-5%", duration: 2.5, delay: 0 },
@@ -130,7 +129,7 @@ const ShootingStars = () => {
   )
 }
 
-// Confettis - VISIBLES
+// Confettis
 const Confetti = () => {
   const confettis = [
     { id: 1, x: "10%", y: "20%", width: 6, height: 3, color: "#FF4D6D", duration: 6, delay: 0 },
@@ -175,7 +174,7 @@ const Confetti = () => {
   )
 }
 
-// Rubans flottants - VISIBLES
+// Rubans flottants
 const FloatingRibbons = () => {
   const ribbons = [
     { id: 1, x: "5%", y: "18%", duration: 11, delay: 0 },
@@ -214,7 +213,7 @@ const FloatingRibbons = () => {
   )
 }
 
-// Ballons flottants - VISIBLES
+// Ballons flottants
 const FloatingBalloons = () => {
   const balloons = [
     { id: 1, x: "45%", y: "5%", size: 38, color: "#FF4D6D", duration: 16, delay: 0 },
@@ -378,7 +377,7 @@ export default function Hero() {
         </AnimatePresence>
       </div>
 
-      {/* MASQUE EN ARC DE CERCLE - plus transparent */}
+      {/* MASQUE EN ARC DE CERCLE */}
       <motion.div 
         className="absolute inset-0 z-10 bg-white/85 backdrop-blur-sm"
         style={{ clipPath: 'ellipse(80% 120% at -15% 50%)' }}
@@ -387,7 +386,7 @@ export default function Hero() {
         transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
       />
 
-      {/* ÉLÉMENTS DÉCORATIFS - z-index 25 (PAR-DESSUS le masque) */}
+      {/* ÉLÉMENTS DÉCORATIFS */}
       <FloatingHearts />
       <ShootingStars />
       <Confetti />
@@ -412,7 +411,7 @@ export default function Hero() {
         </motion.div>
       </div>
 
-      {/* LOVE SURPRISE EXPRESS - TRÈS GRAND */}
+      {/* LOVE SURPRISE EXPRESS */}
       <div className="absolute top-20 left-6 z-30">
         <motion.div
           initial={{ opacity: 0, x: -30 }}
@@ -420,10 +419,10 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="flex flex-col"
         >
-          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight leading-[1.1]">
+          <span className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight leading-[1.1]">
             Love Surprise
           </span>
-          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-gray-700 tracking-tight leading-[1.1]">
+          <span className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-gray-700 tracking-tight leading-[1.1]">
             Express
           </span>
         </motion.div>
@@ -451,9 +450,9 @@ export default function Hero() {
         ))}
       </div>
 
-      {/* CONTENU PRINCIPAL */}
-      <div className="relative z-30 flex h-full items-center px-6 lg:px-16 pt-64">
-        <div className="max-w-xl text-left">
+      {/* CONTENU PRINCIPAL - CORRIGÉ POUR MOBILE */}
+      <div className="relative z-30 flex h-full items-center px-4 sm:px-6 lg:px-16 pt-32 sm:pt-48 md:pt-64">
+        <div className="w-full sm:max-w-xl text-left">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
@@ -461,15 +460,15 @@ export default function Hero() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
-              className="space-y-5"
+              className="space-y-3 sm:space-y-5"
             >
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full"
+                className="inline-flex items-center gap-2 bg-primary/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full"
               >
-                <span className="text-xs font-medium text-primary uppercase tracking-wider">
+                <span className="text-[10px] sm:text-xs font-medium text-primary uppercase tracking-wider">
                   {currentService.badge}
                 </span>
               </motion.div>
@@ -482,7 +481,7 @@ export default function Hero() {
                     animate="visible"
                     key={currentIndex}
                   >
-                    <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.2]">
+                    <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.2]">
                       {currentService.title.split(' ').map((word, i) => (
                         <span key={i} className="block overflow-hidden">
                           <motion.span
@@ -506,11 +505,12 @@ export default function Hero() {
                 </div>
               </div>
 
+              {/* Description responsive - CORRIGÉ */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
-                className="text-gray-500 text-sm leading-relaxed max-w-md"
+                className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md"
               >
                 {currentService.description}
               </motion.p>
@@ -527,17 +527,28 @@ export default function Hero() {
                     variants={featureVariants}
                     className="flex items-center gap-2"
                   >
-                    <div className="w-3 h-px bg-primary" />
-                    <span className="text-gray-600 text-xs">{feature}</span>
+                    <div className="w-2 sm:w-3 h-px bg-primary" />
+                    <span className="text-gray-500 text-[11px] sm:text-xs">{feature}</span>
                   </motion.div>
                 ))}
               </motion.div>
+
+              {/* Bouton CTA responsive */}
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                className="mt-4 px-4 sm:px-6 py-2 sm:py-2.5 bg-primary text-white text-sm sm:text-base rounded-full font-semibold hover:bg-primary/90 transition shadow-md"
+              >
+                Demander un devis gratuit
+              </motion.button>
             </motion.div>
           </AnimatePresence>
         </div>
       </div>
 
-      {/* FLÈCHE CLIGNOTANTE SEULE */}
+      {/* FLÈCHE CLIGNOTANTE */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 cursor-pointer">
         <motion.div
           animate={{ y: [0, 10, 0] }}
@@ -549,7 +560,7 @@ export default function Hero() {
             }
           }}
         >
-          <ChevronDown size={28} className="text-primary/60 animate-pulse" strokeWidth={1.5} />
+          <ChevronDown size={24} className="text-primary/60 animate-pulse" strokeWidth={1.5} />
         </motion.div>
       </div>
 
@@ -559,7 +570,7 @@ export default function Hero() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={prevSlide}
-          className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-md border border-gray-100 flex items-center justify-center hover:bg-white transition-all duration-300"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-md border border-gray-100 flex items-center justify-center hover:bg-white transition"
         >
           <ChevronLeft size={12} className="text-primary" />
         </motion.button>
@@ -567,7 +578,7 @@ export default function Hero() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={nextSlide}
-          className="w-7 h-7 rounded-full bg-primary/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-primary transition-all duration-300"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-primary/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-primary transition"
         >
           <ChevronRight size={12} className="text-white" />
         </motion.button>
@@ -577,9 +588,9 @@ export default function Hero() {
       <div className="absolute bottom-6 right-6 z-30">
         <div className="text-right">
           <p className="text-[8px] text-gray-400 uppercase tracking-[0.2em]">Actuel</p>
-          <p className="text-base font-bold text-primary">
+          <p className="text-sm sm:text-base font-bold text-primary">
             {String(currentIndex + 1).padStart(2, '0')}
-            <span className="text-gray-300 text-xs">/{String(services.length).padStart(2, '0')}</span>
+            <span className="text-gray-300 text-[10px] sm:text-xs">/{String(services.length).padStart(2, '0')}</span>
           </p>
         </div>
       </div>
