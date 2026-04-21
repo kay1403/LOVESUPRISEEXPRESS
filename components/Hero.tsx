@@ -63,8 +63,6 @@ const FloatingHearts = () => {
     { id: 4, x: "25%", y: "25%", size: 20, duration: 14, delay: 1 },
     { id: 5, x: "12%", y: "85%", size: 16, duration: 11, delay: 3 },
     { id: 6, x: "20%", y: "55%", size: 22, duration: 9, delay: 5 },
-    { id: 7, x: "3%", y: "35%", size: 12, duration: 13, delay: 2.5 },
-    { id: 8, x: "28%", y: "10%", size: 26, duration: 15, delay: 1.5 },
   ]
   return (
     <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
@@ -138,10 +136,6 @@ const Confetti = () => {
     { id: 4, x: "22%", y: "35%", width: 7, height: 2, color: "#FF6B8A", duration: 8, delay: 1 },
     { id: 5, x: "14%", y: "65%", width: 5, height: 3, color: "#FF4D6D", duration: 6.5, delay: 3 },
     { id: 6, x: "30%", y: "15%", width: 4, height: 2, color: "#FFD700", duration: 7.5, delay: 5 },
-    { id: 7, x: "25%", y: "80%", width: 6, height: 2, color: "#FF8BA8", duration: 5.5, delay: 1.5 },
-    { id: 8, x: "3%", y: "40%", width: 5, height: 3, color: "#FF4D6D", duration: 9, delay: 3.5 },
-    { id: 9, x: "32%", y: "60%", width: 4, height: 2, color: "#FFD700", duration: 6, delay: 2.5 },
-    { id: 10, x: "20%", y: "10%", width: 6, height: 3, color: "#FF6B8A", duration: 8.5, delay: 4.5 },
   ]
   return (
     <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
@@ -169,86 +163,6 @@ const Confetti = () => {
             ease: "easeOut"
           }}
         />
-      ))}
-    </div>
-  )
-}
-
-// Rubans flottants
-const FloatingRibbons = () => {
-  const ribbons = [
-    { id: 1, x: "5%", y: "18%", duration: 11, delay: 0 },
-    { id: 2, x: "28%", y: "68%", duration: 13, delay: 3 },
-    { id: 3, x: "12%", y: "82%", duration: 9, delay: 6 },
-    { id: 4, x: "18%", y: "38%", duration: 15, delay: 1.5 },
-    { id: 5, x: "32%", y: "52%", duration: 12, delay: 4.5 },
-  ]
-  return (
-    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-      {ribbons.map((ribbon) => (
-        <motion.div
-          key={ribbon.id}
-          className="absolute"
-          style={{ left: ribbon.x, top: ribbon.y }}
-          animate={{
-            y: [0, -20, 0, 20, 0],
-            x: [0, 15, 0, -15, 0],
-            rotate: [0, 15, 0, -15, 0],
-            opacity: [0.2, 0.4, 0.2, 0.4, 0.2]
-          }}
-          transition={{
-            duration: ribbon.duration,
-            repeat: Infinity,
-            delay: ribbon.delay,
-            ease: "easeInOut"
-          }}
-        >
-          <svg width="40" height="55" viewBox="0 0 40 55" fill="none">
-            <path d="M20 0 L24 14 L38 17 L24 24 L28 38 L20 30 L12 38 L16 24 L2 17 L16 14 Z" fill="#FF4D6D" fillOpacity="0.25" stroke="#FF4D6D" strokeWidth="0.8" strokeOpacity="0.4"/>
-            <path d="M20 30 L20 55" stroke="#FF4D6D" strokeWidth="0.8" strokeOpacity="0.3"/>
-          </svg>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-// Ballons flottants
-const FloatingBalloons = () => {
-  const balloons = [
-    { id: 1, x: "45%", y: "5%", size: 38, color: "#FF4D6D", duration: 16, delay: 0 },
-    { id: 2, x: "52%", y: "48%", size: 32, color: "#FFD700", duration: 20, delay: 5 },
-    { id: 3, x: "38%", y: "30%", size: 35, color: "#FF8BA8", duration: 14, delay: 2 },
-    { id: 4, x: "55%", y: "70%", size: 28, color: "#FF6B8A", duration: 18, delay: 8 },
-    { id: 5, x: "42%", y: "85%", size: 42, color: "#FF4D6D", duration: 22, delay: 3 },
-    { id: 6, x: "60%", y: "20%", size: 30, color: "#FFD700", duration: 15, delay: 6 },
-  ]
-  return (
-    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
-      {balloons.map((balloon) => (
-        <motion.div
-          key={balloon.id}
-          className="absolute"
-          style={{ left: balloon.x, top: balloon.y }}
-          animate={{
-            y: [0, -25, -50, -25, 0],
-            x: [0, 12, 0, -12, 0],
-            rotate: [0, 5, -5, 5, 0],
-            opacity: [0.2, 0.4, 0.2, 0.4, 0.2]
-          }}
-          transition={{
-            duration: balloon.duration,
-            repeat: Infinity,
-            delay: balloon.delay,
-            ease: "easeInOut"
-          }}
-        >
-          <svg width={balloon.size} height={balloon.size * 1.2} viewBox="0 0 40 50" fill="none">
-            <ellipse cx="20" cy="20" rx="14" ry="18" fill={balloon.color} fillOpacity="0.15" stroke={balloon.color} strokeWidth="1" strokeOpacity="0.4"/>
-            <line x1="20" y1="38" x2="20" y2="48" stroke={balloon.color} strokeWidth="1" strokeOpacity="0.3"/>
-            <polygon points="16,48 24,48 20,44" fill={balloon.color} fillOpacity="0.2"/>
-          </svg>
-        </motion.div>
       ))}
     </div>
   )
@@ -390,8 +304,6 @@ export default function Hero() {
       <FloatingHearts />
       <ShootingStars />
       <Confetti />
-      <FloatingRibbons />
-      <FloatingBalloons />
 
       {/* LOGO */}
       <div className="absolute top-6 left-6 z-30">
@@ -419,10 +331,10 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="flex flex-col"
         >
-          <span className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight leading-[1.1]">
+          <span className="font-display text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight leading-[1.1]">
             Love Surprise
           </span>
-          <span className="font-display text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-gray-700 tracking-tight leading-[1.1]">
+          <span className="font-display text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-bold text-gray-700 tracking-tight leading-[1.1]">
             Express
           </span>
         </motion.div>
@@ -435,7 +347,7 @@ export default function Hero() {
             key={idx}
             onClick={() => goToSlide(idx)}
             className="group relative h-0.5 rounded-full overflow-hidden transition-all duration-300"
-            style={{ width: idx === currentIndex ? '50px' : '25px' }}
+            style={{ width: idx === currentIndex ? '40px sm:50px' : '20px sm:25px' }}
           >
             <div className={`h-full w-full rounded-full transition-all duration-300 ${idx === currentIndex ? 'bg-primary' : 'bg-gray-300 group-hover:bg-gray-400'}`} />
             {idx === currentIndex && (
@@ -450,9 +362,9 @@ export default function Hero() {
         ))}
       </div>
 
-      {/* CONTENU PRINCIPAL - CORRIGÉ POUR MOBILE */}
+      {/* CONTENU PRINCIPAL - RESPONSIVE */}
       <div className="relative z-30 flex h-full items-center px-4 sm:px-6 lg:px-16 pt-32 sm:pt-48 md:pt-64">
-        <div className="w-full sm:max-w-xl text-left">
+        <div className="w-full max-w-full sm:max-w-lg md:max-w-xl text-left">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
@@ -466,7 +378,7 @@ export default function Hero() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 bg-primary/10 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full"
+                className="inline-flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full"
               >
                 <span className="text-[10px] sm:text-xs font-medium text-primary uppercase tracking-wider">
                   {currentService.badge}
@@ -505,12 +417,12 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Description responsive - CORRIGÉ */}
+              {/* DESCRIPTION RESPONSIVE */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
-                className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-full sm:max-w-md"
+                className="text-gray-500 text-xs sm:text-sm leading-relaxed max-w-full sm:max-w-md break-words"
               >
                 {currentService.description}
               </motion.p>
@@ -527,22 +439,11 @@ export default function Hero() {
                     variants={featureVariants}
                     className="flex items-center gap-2"
                   >
-                    <div className="w-2 sm:w-3 h-px bg-primary" />
-                    <span className="text-gray-500 text-[11px] sm:text-xs">{feature}</span>
+                    <div className="w-3 h-px bg-primary" />
+                    <span className="text-gray-600 text-[10px] sm:text-xs">{feature}</span>
                   </motion.div>
                 ))}
               </motion.div>
-
-              {/* Bouton CTA responsive */}
-              <motion.button
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
-                onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-                className="mt-4 px-4 sm:px-6 py-2 sm:py-2.5 bg-primary text-white text-sm sm:text-base rounded-full font-semibold hover:bg-primary/90 transition shadow-md"
-              >
-                Demander un devis gratuit
-              </motion.button>
             </motion.div>
           </AnimatePresence>
         </div>
@@ -570,7 +471,7 @@ export default function Hero() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={prevSlide}
-          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-md border border-gray-100 flex items-center justify-center hover:bg-white transition"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-md border border-gray-100 flex items-center justify-center hover:bg-white transition-all duration-300"
         >
           <ChevronLeft size={12} className="text-primary" />
         </motion.button>
@@ -578,7 +479,7 @@ export default function Hero() {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={nextSlide}
-          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-primary/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-primary transition"
+          className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-primary/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-primary transition-all duration-300"
         >
           <ChevronRight size={12} className="text-white" />
         </motion.button>
@@ -587,7 +488,7 @@ export default function Hero() {
       {/* COMPTEUR */}
       <div className="absolute bottom-6 right-6 z-30">
         <div className="text-right">
-          <p className="text-[8px] text-gray-400 uppercase tracking-[0.2em]">Actuel</p>
+          <p className="text-[6px] sm:text-[8px] text-gray-400 uppercase tracking-[0.2em]">Actuel</p>
           <p className="text-sm sm:text-base font-bold text-primary">
             {String(currentIndex + 1).padStart(2, '0')}
             <span className="text-gray-300 text-[10px] sm:text-xs">/{String(services.length).padStart(2, '0')}</span>
