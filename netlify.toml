@@ -17,3 +17,15 @@
   from = "/admin/*"
   to = "/admin"
   status = 200
+
+# Redirection pour Netlify Identity callback
+[[redirects]]
+  from = "/.netlify/identity/*"
+  to = "/admin"
+  status = 200
+
+# Redirection de confirmation d'invitation
+[[redirects]]
+  from = "/#invite_token_*"
+  to = "/admin"
+  status = 200

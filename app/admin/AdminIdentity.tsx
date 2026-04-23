@@ -3,24 +3,31 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// Déclaration du type pour éviter l'erreur TypeScript
+declare module 'netlify-identity-widget';
+
 let netlifyIdentity: any = null;
 
 const initIdentity = () => {
   if (typeof window !== 'undefined' && !netlifyIdentity) {
     import('netlify-identity-widget').then((module) => {
       netlifyIdentity = module.default || module;
+      
+      // Configuration importante : le chemin de redirection après confirmation
       netlifyIdentity.init({
         APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+        // Force la redirection vers /admin après login
+        redirectUrl: `${window.location.origin}/admin`,
       });
       
-      // Rediriger vers /admin après connexion réussie
+      // Écouter l'événement de login et rediriger
       netlifyIdentity.on('login', (user: any) => {
-        console.log('User logged in:', user.email);
+        console.log('User logged in:', user?.email);
         window.location.href = '/admin';
       });
       
-      // Rediriger vers /admin après confirmation email
-      netlifyIdentity.on('login', (user: any) => {
+      // Écouter l'événement de logout
+      netlifyIdentity.on('logout', () => {
         window.location.href = '/admin';
       });
     });
@@ -39,23 +46,13 @@ export function useNetlifyAuth() {
       if (netlifyIdentity) {
         clearInterval(checkInterval);
         
-        const handleLogin = (user: any) => {
-          setUser(user);
-          setLoading(false);
-          router.push('/admin');
-        };
-
-        const handleLogout = () => {
-          setUser(null);
-          router.push('/admin');
-        };
-
-        netlifyIdentity.on('login', handleLogin);
-        netlifyIdentity.on('logout', handleLogout);
-
         const currentUser = netlifyIdentity.currentUser();
         if (currentUser) {
           setUser(currentUser);
+          // Si l'utilisateur est connecté mais pas sur /admin, rediriger
+          if (typeof window !== 'undefined' && window.location.pathname !== '/admin') {
+            router.push('/admin');
+          }
         }
         setLoading(false);
       }
@@ -77,8 +74,8 @@ export function useNetlifyAuth() {
   };
 
   const getToken = () => {
-    const user = netlifyIdentity?.currentUser();
-    return user?.token?.access_token;
+    const currentUser = netlifyIdentity?.currentUser();
+    return currentUser?.token?.access_token;
   };
 
   return { user, loading, login, logout, getToken };
@@ -86,14 +83,6 @@ export function useNetlifyAuth() {
 
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, login } = useNetlifyAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Si l'utilisateur est connecté, on reste
-    if (user) {
-      return;
-    }
-  }, [user, router]);
 
   if (loading) {
     return (
