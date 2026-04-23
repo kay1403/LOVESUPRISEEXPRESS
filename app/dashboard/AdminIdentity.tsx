@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 let netlifyIdentity: any = null;
 let isInitialized = false;
@@ -16,14 +15,12 @@ const initIdentity = () => {
     });
     isInitialized = true;
     
-    // Redirection après login
-    netlifyIdentity.on('login', (user: any) => {
-      console.log('✅ Utilisateur connecté:', user?.email);
-      window.location.href = '/admin';
+    netlifyIdentity.on('login', () => {
+      window.location.href = '/dashboard';
     });
     
     netlifyIdentity.on('logout', () => {
-      window.location.href = '/admin';
+      window.location.href = '/dashboard';
     });
   });
 };
@@ -31,7 +28,6 @@ const initIdentity = () => {
 export function useNetlifyAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     initIdentity();
@@ -40,9 +36,7 @@ export function useNetlifyAuth() {
       if (netlifyIdentity) {
         clearInterval(checkUser);
         const currentUser = netlifyIdentity.currentUser();
-        if (currentUser) {
-          setUser(currentUser);
-        }
+        if (currentUser) setUser(currentUser);
         setLoading(false);
       }
     }, 100);
@@ -50,22 +44,9 @@ export function useNetlifyAuth() {
     return () => clearInterval(checkUser);
   }, []);
 
-  const login = () => {
-    if (netlifyIdentity) {
-      netlifyIdentity.open();
-    }
-  };
-
-  const logout = () => {
-    if (netlifyIdentity) {
-      netlifyIdentity.logout();
-    }
-  };
-
-  const getToken = () => {
-    const currentUser = netlifyIdentity?.currentUser();
-    return currentUser?.token?.access_token;
-  };
+  const login = () => netlifyIdentity?.open();
+  const logout = () => netlifyIdentity?.logout();
+  const getToken = () => netlifyIdentity?.currentUser()?.token?.access_token;
 
   return { user, loading, login, logout, getToken };
 }
@@ -95,10 +76,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
           </div>
           <h1 className="text-2xl font-bold text-dark mb-2">Dashboard LoveExpress</h1>
           <p className="text-gray-500 mb-6">Connectez-vous avec votre email</p>
-          <button
-            onClick={login}
-            className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full"
-          >
+          <button onClick={login} className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full">
             Se connecter
           </button>
         </div>

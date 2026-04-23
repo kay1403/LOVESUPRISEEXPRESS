@@ -13,7 +13,6 @@ exports.handler = async (event) => {
 
   try {
     const avis = JSON.parse(event.body);
-    
     const savedAvis = await saveAvis(avis);
     
     return {
@@ -25,9 +24,7 @@ exports.handler = async (event) => {
         message: "Merci pour votre avis ! Il sera publié après validation."
       })
     };
-    
   } catch (error) {
-    console.error('Erreur:', error);
     return {
       statusCode: 500,
       headers,

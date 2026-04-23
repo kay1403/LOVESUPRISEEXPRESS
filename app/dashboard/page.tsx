@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useNetlifyAuth } from './AdminIdentity';
 
-export default function AdminPage() {
+export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
@@ -58,6 +58,13 @@ export default function AdminPage() {
     if (res.ok) fetchData();
   };
 
+  const stats = {
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
+    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
+    totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
+  };
+
   const getStatusBadge = (status: string) => {
     const badges: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-700',
@@ -76,13 +83,6 @@ export default function AdminPage() {
       cancelled: 'Annulée'
     };
     return labels[status] || 'En attente';
-  };
-
-  const stats = {
-    totalOrders: orders.length,
-    pendingOrders: orders.filter(o => o.status === 'pending').length,
-    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
-    totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
   };
 
   if (loading) {
@@ -168,9 +168,7 @@ export default function AdminPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="flex gap-0.5">
-                          {[...Array(testimonial.note || 5)].map((_, i) => (
-                            <span key={i} className="text-accent">★</span>
-                          ))}
+                          {[...Array(testimonial.note || 5)].map((_, i) => <span key={i} className="text-accent">★</span>)}
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${testimonial.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                           {testimonial.status === 'published' ? 'Publié' : 'En attente'}

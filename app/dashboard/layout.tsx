@@ -3,7 +3,7 @@
 import { AdminAuthGuard, useNetlifyAuth } from './AdminIdentity';
 import { Heart } from 'lucide-react';
 
-function AdminHeader() {
+function DashboardHeader() {
   const { user, logout } = useNetlifyAuth();
 
   if (!user) return null;
@@ -17,10 +17,7 @@ function AdminHeader() {
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">{user.email}</span>
-          <button
-            onClick={logout}
-            className="text-gray-500 hover:text-red-500 text-sm transition"
-          >
+          <button onClick={logout} className="text-gray-500 hover:text-red-500 text-sm transition">
             Déconnexion
           </button>
         </div>
@@ -29,15 +26,11 @@ function AdminHeader() {
   );
 }
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <AdminAuthGuard>
       <div className="min-h-screen bg-gray-100">
-        <AdminHeader />
+        <DashboardHeader />
         {children}
       </div>
     </AdminAuthGuard>

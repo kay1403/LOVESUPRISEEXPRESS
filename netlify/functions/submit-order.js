@@ -14,7 +14,6 @@ exports.handler = async (event) => {
 
   try {
     const commande = JSON.parse(event.body);
-    
     const savedCommande = await saveCommand(commande);
     
     let googleSheetsSaved = false;
@@ -22,28 +21,19 @@ exports.handler = async (event) => {
       const { addToGoogleSheets } = require('../../lib/googleSheets.js');
       googleSheetsSaved = await addToGoogleSheets(commande);
     } catch (e) {
-      console.log('Google Sheets non configuré, backup ignoré');
+      console.log('Google Sheets non configuré');
     }
     
     const entreprisePhone = process.env.ENTREPRISE_WHATSAPP || '250799366007';
-    const messageEntreprise = formatCommandeMessage(savedCommande);
-    await sendWhatsApp(entreprisePhone, messageEntreprise);
-    
-    const messageClient = formatConfirmationClient(savedCommande);
-    await sendWhatsApp(commande.clientPhone, messageClient);
+    await sendWhatsApp(entreprisePhone, formatCommandeMessage(savedCommande));
+    await sendWhatsApp(commande.clientPhone, formatConfirmationClient(savedCommande));
     
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({
-        success: true,
-        commandeId: savedCommande.id,
-        googleSheetsBackup: googleSheetsSaved
-      })
+      body: JSON.stringify({ success: true, commandeId: savedCommande.id })
     };
-    
   } catch (error) {
-    console.error('Erreur:', error);
     return {
       statusCode: 500,
       headers,
