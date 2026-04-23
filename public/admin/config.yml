@@ -106,3 +106,30 @@ collections:
       - { label: "Couleur de fond", name: "bgColor", widget: "string", default: "#FF4D6D", required: false }
       - { label: "Couleur claire", name: "bgLight", widget: "string", default: "#FFF0F3", required: false }
       - { label: "Position", name: "order", widget: "number", default: 0 }
+
+  - name: "footer"
+    label: "📋 Footer"
+    folder: "content/footer"
+    create: true
+    slug: "config"
+    format: "json"
+    extension: "json"
+    fields:
+      - { label: "Nom entreprise", name: "companyName", widget: "string", default: "LoveExpress" }
+      - { label: "Slogan", name: "slogan", widget: "text", default: "We deliver love and kindness. Créons ensemble des moments inoubliables." }
+      - { label: "Téléphone 1", name: "phone1", widget: "string", default: "+250 799 366 007" }
+      - { label: "Téléphone 2", name: "phone2", widget: "string", default: "+250 737 769 092" }
+      - { label: "Adresse", name: "address", widget: "string", default: "Kigali, Rwanda" }
+      - label: "Horaires"
+        name: "hours"
+        widget: "list"
+        fields:
+          - { label: "Jour", name: "day", widget: "string" }
+          - { label: "Horaires", name: "time", widget: "string" }
+      - label: "Services liste"
+        name: "services"
+        widget: "list"
+        default: ["Party Decoration", "Surprise Planner", "Flower Bouquet", "Gift Baskets"]
+        field: { label: "Service", name: "service", widget: "string" }
+      - { label: "Copyright", name: "copyright", widget: "string", default: "Tous droits réservés" }
+      - { label: "Année", name: "year", widget: "number", valueType: "int", required: false }
