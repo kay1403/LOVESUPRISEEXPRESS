@@ -11,102 +11,103 @@ declare global {
 export function useNetlifyAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [identityReady, setIdentityReady] = useState(false);
 
-  // Fonction pour initialiser et récupérer l'utilisateur
-  const refreshUser = useCallback(() => {
-    if (typeof window !== 'undefined' && window.netlifyIdentity) {
-      const currentUser = window.netlifyIdentity.currentUser();
-      setUser(currentUser);
-      setLoading(false);
-      return currentUser;
-    }
-    setLoading(false);
-    return null;
-  }, []);
-
-  // Initialisation au chargement
+  // Vérifier la disponibilité du widget
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // Attendre que le widget soit disponible
-    const waitForIdentity = () => {
-      const interval = setInterval(() => {
-        if (window.netlifyIdentity) {
-          clearInterval(interval);
-          
-          const netlifyIdentity = window.netlifyIdentity;
-          
-          // Initialiser uniquement si ce n'est pas déjà fait
-          if (!netlifyIdentity._initialized) {
-            netlifyIdentity.init({
-              APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-            });
-            netlifyIdentity._initialized = true;
-          }
-          
-          refreshUser();
-        }
-      }, 100);
-      
-      return () => clearInterval(interval);
+    const checkIdentity = () => {
+      if ((window as any).netlifyIdentity) {
+        setIdentityReady(true);
+        setLoading(false);
+        return true;
+      }
+      return false;
     };
     
-    waitForIdentity();
-  }, [refreshUser]);
+    // Vérifier immédiatement
+    if (checkIdentity()) return;
+    
+    // Sinon, attendre avec un court délai
+    const interval = setInterval(() => {
+      if (checkIdentity()) {
+        clearInterval(interval);
+      }
+    }, 50);
+    
+    // Timeout de sécurité
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      setLoading(false);
+      console.warn('Netlify Identity non disponible après délai');
+    }, 3000);
+    
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, []);
 
-  // Écouter les événements de login/logout
+  // Récupérer l'utilisateur et écouter les événements
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.netlifyIdentity) return;
-
-    const netlifyIdentity = window.netlifyIdentity;
-
+    if (!identityReady) return;
+    
+    const identity = (window as any).netlifyIdentity;
+    if (!identity) return;
+    
+    // Récupérer l'utilisateur actuel
+    const currentUser = identity.currentUser();
+    setUser(currentUser);
+    
+    // Gestionnaire de login
     const handleLogin = (user: any) => {
       console.log('🔐 Login event');
       setUser(user);
-      // Redirection après login
+      // Rediriger vers dashboard après login
       if (window.location.pathname !== '/dashboard') {
         window.location.href = '/dashboard';
       }
     };
-
+    
+    // Gestionnaire de logout
     const handleLogout = () => {
       console.log('🚪 Logout event');
       setUser(null);
-      // Ne pas rediriger immédiatement, laisser le temps au widget de se réinitialiser
     };
-
-    netlifyIdentity.on('login', handleLogin);
-    netlifyIdentity.on('logout', handleLogout);
-
+    
+    identity.on('login', handleLogin);
+    identity.on('logout', handleLogout);
+    
     return () => {
-      netlifyIdentity.off('login', handleLogin);
-      netlifyIdentity.off('logout', handleLogout);
+      identity.off('login', handleLogin);
+      identity.off('logout', handleLogout);
     };
+  }, [identityReady]);
+
+  const login = useCallback(() => {
+    const identity = (window as any).netlifyIdentity;
+    if (identity) {
+      identity.open();
+    }
   }, []);
 
-  const login = () => {
-    if (typeof window !== 'undefined' && window.netlifyIdentity) {
-      window.netlifyIdentity.open();
-    }
-  };
-
-  const logout = () => {
-    if (typeof window !== 'undefined' && window.netlifyIdentity) {
-      window.netlifyIdentity.logout();
-      // Forcer la réinitialisation de l'état
+  const logout = useCallback(() => {
+    const identity = (window as any).netlifyIdentity;
+    if (identity) {
+      identity.logout();
       setUser(null);
     }
-  };
+  }, []);
 
-  const getToken = () => {
-    if (typeof window !== 'undefined' && window.netlifyIdentity) {
-      const currentUser = window.netlifyIdentity.currentUser();
+  const getToken = useCallback(() => {
+    const identity = (window as any).netlifyIdentity;
+    if (identity) {
+      const currentUser = identity.currentUser();
       return currentUser?.token?.access_token;
     }
     return null;
-  };
+  }, []);
 
-  return { user, loading, login, logout, getToken, refreshUser };
+  return { user, loading, login, logout, getToken };
 }
 
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
@@ -133,7 +134,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-dark mb-2">Dashboard LoveExpress</h1>
-          <p className="text-gray-500 mb-6">Connectez-vous avec votre email pour accéder à l'administration</p>
+          <p className="text-gray-500 mb-6">Connectez-vous avec votre email</p>
           <button 
             onClick={login} 
             className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full"
