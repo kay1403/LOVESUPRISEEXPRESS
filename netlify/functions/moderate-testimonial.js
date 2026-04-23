@@ -22,7 +22,26 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { id, status } = JSON.parse(event.body);
+    const body = JSON.parse(event.body);
+    const { id, status } = body;
+    
+    // Validation des entrées
+    if (!id || typeof id !== 'string') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'ID invalide' })
+      };
+    }
+    
+    if (!status || !['published', 'rejected'].includes(status)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Statut invalide' })
+      };
+    }
+    
     const updated = await moderateAvis(id, status);
     return {
       statusCode: 200,
@@ -30,6 +49,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: true, avis: updated })
     };
   } catch (error) {
+    console.error('Erreur:', error);
     return {
       statusCode: 500,
       headers,

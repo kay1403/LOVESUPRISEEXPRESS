@@ -1,12 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNetlifyAuth } from './AdminIdentity';
+
+interface Order {
+  id: string;
+  clientName: string;
+  destName: string;
+  budget: string;
+  status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
+  createdAt: string;
+}
+
+interface TestimonialItem {
+  id: string;
+  nom: string;
+  note: number;
+  message: string;
+  status: 'pending' | 'published' | 'rejected';
+  createdAt: string;
+}
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('orders');
-  const [orders, setOrders] = useState<any[]>([]);
-  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
   const [loading, setLoading] = useState(true);
   const { getToken } = useNetlifyAuth();
 
@@ -58,12 +76,12 @@ export default function DashboardPage() {
     if (res.ok) fetchData();
   };
 
-  const stats = {
+  const stats = useMemo(() => ({
     totalOrders: orders.length,
     pendingOrders: orders.filter(o => o.status === 'pending').length,
     pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
     totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
-  };
+  }), [orders, testimonials]);
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, string> = {

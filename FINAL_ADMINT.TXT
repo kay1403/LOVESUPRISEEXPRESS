@@ -1,0 +1,1815 @@
+============================================================
+LISTE DES 18 FICHIERS : DASHBOARD, CMS, FUNCTIONS ET CONFIG
+============================================================
+
+
+FILE_START: app/dashboard/page.tsx
+------------------------------------------------------------
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useNetlifyAuth } from './AdminIdentity';
+
+export default function DashboardPage() {
+  const [activeTab, setActiveTab] = useState('orders');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { getToken } = useNetlifyAuth();
+
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const token = getToken();
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const ordersRes = await authFetch('/api/get-orders');
+      const ordersData = await ordersRes.json();
+      if (ordersData.success) setOrders(ordersData.commandes || []);
+
+      const avisRes = await authFetch('/api/get-all-testimonials');
+      const avisData = await avisRes.json();
+      if (avisData.success) setTestimonials(avisData.avis || []);
+    } catch (error) {
+      console.error('Erreur chargement:', error);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const updateOrderStatus = async (id: string, status: string) => {
+    const res = await authFetch('/api/update-order-status', {
+      method: 'POST',
+      body: JSON.stringify({ id, status })
+    });
+    if (res.ok) fetchData();
+  };
+
+  const moderateTestimonial = async (id: string, status: string) => {
+    const res = await authFetch('/api/moderate-testimonial', {
+      method: 'POST',
+      body: JSON.stringify({ id, status })
+    });
+    if (res.ok) fetchData();
+  };
+
+  const stats = {
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
+    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
+    totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
+  };
+
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-700',
+      confirmed: 'bg-green-100 text-green-700',
+      delivered: 'bg-blue-100 text-blue-700',
+      cancelled: 'bg-red-100 text-red-700'
+    };
+    return badges[status] || badges.pending;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: 'En attente',
+      confirmed: 'Confirmée',
+      delivered: 'Livrée',
+      cancelled: 'Annulée'
+    };
+    return labels[status] || 'En attente';
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold">{stats.totalOrders}</p>
+          <p className="text-gray-500 text-sm">Commandes</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
+          <p className="text-gray-500 text-sm">En attente</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-orange-500">{stats.pendingTestimonials}</p>
+          <p className="text-gray-500 text-sm">Avis à modérer</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-green-600">{stats.totalRevenue.toLocaleString()} RWF</p>
+          <p className="text-gray-500 text-sm">CA total</p>
+        </div>
+      </div>
+
+      <div className="px-6">
+        <div className="flex gap-2 border-b">
+          <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 font-medium ${activeTab === 'orders' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+            Commandes ({stats.totalOrders})
+          </button>
+          <button onClick={() => setActiveTab('testimonials')} className={`px-4 py-2 font-medium ${activeTab === 'testimonials' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+            Avis clients ({stats.pendingTestimonials} en attente)
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {activeTab === 'orders' ? (
+          <div className="space-y-4">
+            {orders.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucune commande</div>
+            ) : (
+              orders.map((order) => (
+                <div key={order.id} className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start flex-wrap gap-3">
+                    <div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                      <p className="font-semibold mt-2">{order.clientName}</p>
+                      <p className="text-sm text-gray-500">→ {order.destName}</p>
+                      <p className="text-primary font-bold mt-1">{parseInt(order.budget).toLocaleString()} RWF</p>
+                    </div>
+                    <select
+                      value={order.status}
+                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                      className="px-3 py-2 text-sm border rounded-lg bg-white"
+                    >
+                      <option value="pending">En attente</option>
+                      <option value="confirmed">Confirmée</option>
+                      <option value="delivered">Livrée</option>
+                      <option value="cancelled">Annulée</option>
+                    </select>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {testimonials.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucun témoignage</div>
+            ) : (
+              testimonials.map((testimonial) => (
+                <div key={testimonial.id} className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start flex-wrap gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex gap-0.5">
+                          {[...Array(testimonial.note || 5)].map((_, i) => <span key={i} className="text-accent">★</span>)}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${testimonial.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {testimonial.status === 'published' ? 'Publié' : 'En attente'}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 italic">"{testimonial.message}"</p>
+                      <p className="text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
+                    </div>
+                    {testimonial.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">
+                          Publier
+                        </button>
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+FILE_END: app/dashboard/page.tsx
+
+
+FILE_START: app/dashboard/layout.tsx
+------------------------------------------------------------
+'use client';
+
+import { AdminAuthGuard, useNetlifyAuth } from './AdminIdentity';
+import { Heart } from 'lucide-react';
+
+function DashboardHeader() {
+  const { user, logout } = useNetlifyAuth();
+
+  if (!user) return null;
+
+  return (
+    <div className="bg-white shadow-sm sticky top-0 z-10">
+      <div className="px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <Heart className="w-6 h-6 text-primary" />
+          <h1 className="text-xl font-bold text-dark">LoveExpress Dashboard</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-500">{user.email}</span>
+          <button onClick={logout} className="text-gray-500 hover:text-red-500 text-sm transition">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AdminAuthGuard>
+      <div className="min-h-screen bg-gray-100">
+        <DashboardHeader />
+        {children}
+      </div>
+    </AdminAuthGuard>
+  );
+}
+
+FILE_END: app/dashboard/layout.tsx
+
+
+FILE_START: app/dashboard/AdminIdentity.tsx
+------------------------------------------------------------
+'use client';
+
+import { useEffect, useState } from 'react';
+
+declare global {
+  interface Window {
+    netlifyIdentity: any;
+  }
+}
+
+export function useNetlifyAuth() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Attendre que le script soit chargé
+    const checkIdentity = setInterval(() => {
+      if (window.netlifyIdentity) {
+        clearInterval(checkIdentity);
+        
+        const netlifyIdentity = window.netlifyIdentity;
+        
+        if (!netlifyIdentity.init) {
+          console.error('netlifyIdentity.init is not a function');
+          setLoading(false);
+          return;
+        }
+
+        netlifyIdentity.init({
+          APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+        });
+
+        // Gérer les événements
+        const handleLogin = (user: any) => {
+          setUser(user);
+          window.location.href = '/dashboard';
+        };
+
+        const handleLogout = () => {
+          setUser(null);
+          window.location.href = '/dashboard';
+        };
+
+        netlifyIdentity.on('login', handleLogin);
+        netlifyIdentity.on('logout', handleLogout);
+
+        const currentUser = netlifyIdentity.currentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        }
+        setLoading(false);
+
+        return () => {
+          netlifyIdentity.off('login', handleLogin);
+          netlifyIdentity.off('logout', handleLogout);
+        };
+      }
+    }, 100);
+
+    return () => clearInterval(checkIdentity);
+  }, []);
+
+  const login = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      window.netlifyIdentity.open();
+    }
+  };
+
+  const logout = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      window.netlifyIdentity.logout();
+    }
+  };
+
+  const getToken = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      const user = window.netlifyIdentity.currentUser();
+      return user?.token?.access_token;
+    }
+    return null;
+  };
+
+  return { user, loading, login, logout, getToken };
+}
+
+export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, loading, login } = useNetlifyAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-500">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-dark mb-2">Dashboard LoveExpress</h1>
+          <p className="text-gray-500 mb-6">Connectez-vous avec votre email</p>
+          <button onClick={login} className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full">
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+FILE_END: app/dashboard/AdminIdentity.tsx
+
+
+FILE_START: public/admin/index.html
+------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LoveExpress - CMS Admin</title>
+  </head>
+  <body>
+    <!-- Netlify Identity Widget -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <!-- Netlify CMS -->
+    <script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
+  </body>
+</html>
+
+FILE_END: public/admin/index.html
+
+
+FILE_START: public/admin/config.yml
+------------------------------------------------------------
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "commandes"
+    label: "📦 Commandes"
+    folder: "content/commandes"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Client", name: "clientName", widget: "string" }
+      - { label: "Téléphone", name: "clientPhone", widget: "string" }
+      - { label: "Email", name: "clientEmail", widget: "string", required: false }
+      - { label: "Destinataire", name: "destName", widget: "string" }
+      - { label: "Adresse", name: "destAddress", widget: "string" }
+      - { label: "Type d'événement", name: "eventType", widget: "string" }
+      - { label: "Date événement", name: "eventDate", widget: "date" }
+      - { label: "Budget", name: "budget", widget: "number" }
+      - { label: "Statut", name: "status", widget: "select", options: ["pending", "confirmed", "delivered", "cancelled"], default: "pending" }
+
+  - name: "avis"
+    label: "⭐ Avis clients"
+    folder: "content/avis"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Nom", name: "nom", widget: "string" }
+      - { label: "Note", name: "note", widget: "number", valueType: "int", min: 1, max: 5 }
+      - { label: "Message", name: "message", widget: "text" }
+      - { label: "Photo", name: "photo", widget: "image", required: false }
+      - { label: "Statut", name: "status", widget: "select", options: ["pending", "published", "rejected"], default: "pending" }
+
+  - name: "services"
+    label: "🎈 Services"
+    folder: "content/services"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Titre", name: "title", widget: "string" }
+      - { label: "Sous-titre", name: "subtitle", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Prix", name: "price", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Badge", name: "badge", widget: "string" }
+      - { label: "Caractéristiques", name: "features", widget: "list", field: { label: "Feature", name: "feature", widget: "string" } }
+
+  - name: "gift_baskets"
+    label: "🎁 Paniers cadeaux"
+    folder: "content/gift_baskets"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Nom", name: "name", widget: "string" }
+      - { label: "Sous-titre", name: "subtitle", widget: "string" }
+      - { label: "Badge", name: "badge", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Description longue", name: "longDescription", widget: "text" }
+      - { label: "Prix standard", name: "priceStandard", widget: "number" }
+      - { label: "Prix premium", name: "pricePremium", widget: "number" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Populaire", name: "popular", widget: "boolean", default: false }
+      - { label: "Contenu", name: "includes", widget: "list", field: { label: "Item", name: "item", widget: "string" } }
+
+  - name: "realisations"
+    label: "📸 Réalisations"
+    folder: "content/realisations"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Titre", name: "title", widget: "string" }
+      - { label: "Catégorie", name: "category", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }
+
+FILE_END: public/admin/config.yml
+
+
+FILE_START: netlify/functions/get-orders.js
+------------------------------------------------------------
+const { getCommandes } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  const admin = await isAdmin(event);
+  if (!admin) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const commandes = await getCommandes();
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, commandes })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+
+FILE_END: netlify/functions/get-orders.js
+
+
+FILE_START: netlify/functions/get-all-testimonials.js
+------------------------------------------------------------
+const { getAvis } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  const admin = await isAdmin(event);
+  if (!admin) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const allAvis = await getAvis(null);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ 
+        success: true, 
+        avis: allAvis,
+        stats: {
+          total: allAvis.length,
+          published: allAvis.filter(a => a.status === 'published').length,
+          pending: allAvis.filter(a => a.status === 'pending').length,
+          rejected: allAvis.filter(a => a.status === 'rejected').length
+        }
+      })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+
+FILE_END: netlify/functions/get-all-testimonials.js
+
+
+FILE_START: netlify/functions/moderate-testimonial.js
+------------------------------------------------------------
+const { moderateAvis } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  const admin = await isAdmin(event);
+  if (!admin) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const { id, status } = JSON.parse(event.body);
+    const updated = await moderateAvis(id, status);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, avis: updated })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+
+FILE_END: netlify/functions/moderate-testimonial.js
+
+
+FILE_START: netlify/functions/update-order-status.js
+------------------------------------------------------------
+const { updateCommandeStatus } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  const admin = await isAdmin(event);
+  if (!admin) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const { id, status } = JSON.parse(event.body);
+    const updated = await updateCommandeStatus(id, status);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, commande: updated })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+
+FILE_END: netlify/functions/update-order-status.js
+
+
+FILE_START: app/page.tsx
+------------------------------------------------------------
+'use client'
+
+import Hero from '@/components/Hero'
+import Services from '@/components/Services'
+import GiftBaskets from '@/components/GiftBaskets'
+import Realizations from '@/components/Realizations'
+import About from '@/components/About'
+import AvisForm from '@/components/AvisForm'
+import ContactForm from '@/components/ContactForm'
+import Footer from '@/components/Footer'
+
+export default function Home() {
+  return (
+    <main className="min-h-screen">
+      <Hero />
+      <Services />
+      <GiftBaskets />
+      <Realizations />
+      <About />
+      <AvisForm />
+      <ContactForm />
+      <Footer />
+    </main>
+  )
+}
+
+FILE_END: app/page.tsx
+
+
+FILE_START: components/ContactForm.tsx
+------------------------------------------------------------
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Download, CheckCircle, Heart, ChevronRight, ChevronLeft, Eye, AlertCircle, Package, Sparkles, Globe, Flower2, Gift, PartyPopper, Baby, Coffee } from 'lucide-react'
+
+interface FormData {
+  clientName: string
+  clientPhone: string
+  clientEmail: string
+  destName: string
+  destPhone: string
+  destAddress: string
+  destAge: string
+  eventType: string
+  eventDate: string
+  eventTime: string
+  eventLocation: string
+  selectedServices: number[]
+  selectedPacks: number[]
+  selectedBaskets: { id: number; version: 'standard' | 'premium' }[]
+  budget: number
+  deliveryMethod: 'delivery' | 'pickup'
+  message: string
+  specialInstructions: string
+  isDiscreet: boolean
+  needsPersonPresent: boolean
+  additionalNotes: string
+}
+
+const servicesData = [
+  { id: 1, name: 'Party Decoration', icon: PartyPopper, packs: [
+    { id: 1, name: 'Pack Premier Frisson', price: 60000, desc: '15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie' },
+    { id: 2, name: 'Pack Love XL', price: 100000, desc: '25 ballons, lettre/chiffre lumineux, table dressée pour deux, bougie parfumée, playlist personnalisée' },
+    { id: 3, name: 'Pack ROYAL SURPRISE', price: 200000, desc: 'Rideau de ballons + néon personnalisé, plateau de fruits + vin, photographe 20 min, bouquet de fleurs' }
+  ] },
+  { id: 2, name: 'Surprise Planner', icon: Sparkles, price: 200000, desc: 'Dites nous l\'occasion et on planifie toute la surprise' },
+  { id: 3, name: 'Custom Website', icon: Globe, priceMin: 25000, priceMax: 45000, desc: 'Site web personnalisé pour votre événement' },
+  { id: 4, name: 'Flower Bouquet', icon: Flower2, price: 15000, desc: 'Bouquet de fleurs fraîches pour toute occasion' }
+]
+
+const basketsData = [
+  { id: 1, name: 'Birthday', icon: Gift, standard: 15000, premium: 80000, desc: 'Mini gâteau, bougie, carte, jus de fruit' },
+  { id: 2, name: 'Romantic', icon: Heart, standard: 40000, premium: 50000, desc: 'Chocolat, bougies, lettre, fleurs' },
+  { id: 3, name: 'New Baby', icon: Baby, standard: 40000, premium: 80000, desc: 'Vêtements, couches, soin, doudou' },
+  { id: 4, name: 'Gourmet', icon: Coffee, standard: 20000, premium: 70000, desc: 'Biscuits, fruits, chocolat, jus, bonbons' },
+  { id: 5, name: 'Wellness', icon: Flower2, standard: 50000, premium: 100000, desc: 'Thé, huiles, savon, masques, parfum, crème' }
+]
+
+const eventTypes = ['Birthday', 'Proposal', 'Anniversary', 'Baby Shower', 'Bridal Shower', 'Welcome Back Party', 'Other']
+
+export default function ContactForm() {
+  const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [budgetError, setBudgetError] = useState('')
+  const reviewRef = useRef<HTMLDivElement>(null)
+
+  const [formData, setFormData] = useState<FormData>({
+    clientName: '', clientPhone: '', clientEmail: '',
+    destName: '', destPhone: '', destAddress: '', destAge: '',
+    eventType: 'Birthday', eventDate: '', eventTime: '', eventLocation: '',
+    selectedServices: [], selectedPacks: [], selectedBaskets: [],
+    budget: 0, deliveryMethod: 'delivery',
+    message: '', specialInstructions: '', isDiscreet: false, needsPersonPresent: false, additionalNotes: ''
+  })
+
+  useEffect(() => { setIsMounted(true) }, [])
+
+  const calculateTotalPrice = (): number => {
+    let total = 0
+
+    // Party Decoration packs
+    formData.selectedPacks.forEach(packId => {
+      const pack = servicesData[0].packs.find(p => p.id === packId)
+      if (pack) total += pack.price
+    })
+
+    // Surprise Planner
+    if (formData.selectedServices.includes(2)) total += 200000
+
+    // Custom Website
+    if (formData.selectedServices.includes(3)) total += 35000
+
+    // Flower Bouquet
+    if (formData.selectedServices.includes(4)) total += 15000
+
+    // Gift Baskets
+    formData.selectedBaskets.forEach(basket => {
+      const b = basketsData.find(bk => bk.id === basket.id)
+      if (b) total += basket.version === 'standard' ? b.standard : b.premium
+    })
+
+    // Livraison
+    if (formData.deliveryMethod === 'delivery') total += 5000
+
+    return total
+  }
+
+  const totalPrice = calculateTotalPrice()
+  const hasValidSelection = totalPrice > 0
+
+  const handlePackToggle = (packId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedPacks: prev.selectedPacks.includes(packId)
+        ? prev.selectedPacks.filter(id => id !== packId)
+        : [...prev.selectedPacks, packId]
+    }))
+  }
+
+  const handleServiceToggle = (serviceId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedServices: prev.selectedServices.includes(serviceId)
+        ? prev.selectedServices.filter(id => id !== serviceId)
+        : [...prev.selectedServices, serviceId]
+    }))
+  }
+
+  const handleBasketToggle = (basketId: number, version: 'standard' | 'premium') => {
+    setFormData(prev => {
+      const exists = prev.selectedBaskets.find(b => b.id === basketId)
+      if (exists) {
+        return { ...prev, selectedBaskets: prev.selectedBaskets.filter(b => b.id !== basketId) }
+      } else {
+        return { ...prev, selectedBaskets: [...prev.selectedBaskets, { id: basketId, version }] }
+      }
+    })
+  }
+
+  const updateBasketVersion = (basketId: number, version: 'standard' | 'premium') => {
+    setFormData(prev => ({
+      ...prev,
+      selectedBaskets: prev.selectedBaskets.map(b => b.id === basketId ? { ...b, version } : b)
+    }))
+  }
+
+  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0
+    setFormData(prev => ({ ...prev, budget: value }))
+    if (value < totalPrice) {
+      setBudgetError(`Budget minimum requis : ${totalPrice.toLocaleString()} RWF`)
+    } else {
+      setBudgetError('')
+    }
+  }
+
+  const downloadPDF = async () => {
+    if (!isMounted || !reviewRef.current) return
+    const html2pdf = (await import('html2pdf.js')).default
+    const opt = { margin: [10, 10, 10, 10], filename: `commande_${formData.clientName || 'client'}_${Date.now()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }
+    try { await html2pdf().set(opt).from(reviewRef.current).save() } catch (error) { console.error('Erreur PDF:', error) }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!hasValidSelection) { alert('Veuillez sélectionner au moins un service ou un panier cadeau'); return }
+    if (formData.budget > 0 && formData.budget < totalPrice) { alert(`Le budget minimum est de ${totalPrice.toLocaleString()} RWF`); return }
+    
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/submit-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...formData, totalPrice, budget: formData.budget || totalPrice }) })
+      if (response.ok) {
+        setTimeout(() => downloadPDF(), 500)
+        setIsSubmitted(true)
+        setTimeout(() => {
+          setStep(1)
+          setIsSubmitted(false)
+          setFormData({
+            clientName: '', clientPhone: '', clientEmail: '', destName: '', destPhone: '', destAddress: '', destAge: '',
+            eventType: 'Birthday', eventDate: '', eventTime: '', eventLocation: '',
+            selectedServices: [], selectedPacks: [], selectedBaskets: [],
+            budget: 0, deliveryMethod: 'delivery', message: '', specialInstructions: '',
+            isDiscreet: false, needsPersonPresent: false, additionalNotes: ''
+          })
+        }, 5000)
+      } else alert('Erreur lors de l\'envoi')
+    } catch (error) { console.error(error); alert('Erreur') }
+    finally { setIsSubmitting(false) }
+  }
+
+  const nextStep = () => setStep(step + 1)
+  const prevStep = () => setStep(step - 1)
+  const goToStep = (targetStep: number) => setStep(targetStep)
+
+  if (isSubmitted) {
+    return (
+      <section id="contact" className="py-24 bg-white">
+        <div className="container-custom">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto text-center p-12 bg-green-50 rounded-2xl">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><CheckCircle size={32} className="text-green-600" /></div>
+            <h3 className="text-2xl font-bold text-dark mb-2">Demande envoyée !</h3>
+            <p className="text-gray-600 mb-4">Merci pour votre confiance. Nous vous répondrons dans les 30 minutes sur WhatsApp.</p>
+            <p className="text-sm text-gray-500">Votre récapitulatif PDF va être téléchargé automatiquement.</p>
+          </motion.div>
+        </div>
+      </section>
+    )
+  }
+
+  const ReviewContent = () => (
+    <div ref={reviewRef} className="bg-white p-6 rounded-xl space-y-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <div className="text-center border-b pb-4"><h2 className="text-2xl font-bold text-primary">LoveExpress</h2><p className="text-gray-500 text-sm">Récapitulatif de votre commande</p><p className="text-xs text-gray-400 mt-1">Date: {new Date().toLocaleDateString()}</p></div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Informations client</h3><div className="grid grid-cols-2 gap-2 text-sm"><p><span className="text-gray-500">Nom:</span> {formData.clientName || 'Non renseigné'}</p><p><span className="text-gray-500">Téléphone:</span> {formData.clientPhone || 'Non renseigné'}</p></div></div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Informations destinataire</h3><div className="grid grid-cols-2 gap-2 text-sm"><p><span className="text-gray-500">Nom:</span> {formData.destName || 'Non renseigné'}</p><p><span className="text-gray-500">Adresse:</span> {formData.destAddress || 'Non renseignée'}</p></div></div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Informations événement</h3><div className="grid grid-cols-2 gap-2 text-sm"><p><span className="text-gray-500">Type:</span> {formData.eventType}</p><p><span className="text-gray-500">Date:</span> {formData.eventDate || 'Non renseignée'}</p></div></div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Services & Packs</h3>
+        <ul className="text-sm space-y-1">
+          {formData.selectedPacks.map(packId => {
+            const pack = servicesData[0].packs.find(p => p.id === packId)
+            return <li key={packId}>• {pack?.name} : {pack?.price.toLocaleString()} RWF</li>
+          })}
+          {formData.selectedServices.includes(2) && <li>• Surprise Planner : 200 000 RWF</li>}
+          {formData.selectedServices.includes(3) && <li>• Custom Website : 35 000 RWF (estimation)</li>}
+          {formData.selectedServices.includes(4) && <li>• Flower Bouquet : 15 000 RWF</li>}
+          {formData.selectedBaskets.map(b => {
+            const basket = basketsData.find(bk => bk.id === b.id)
+            return <li key={b.id}>• {basket?.name} ({b.version}) : {b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</li>
+          })}
+        </ul>
+      </div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Livraison</h3><p className="text-sm">{formData.deliveryMethod === 'delivery' ? 'Livraison à domicile (+5 000 RWF)' : 'Retrait au bureau'}</p></div>
+      <div className="border-t pt-3"><div className="flex justify-between"><span className="font-semibold">Total :</span><span className="font-bold text-primary text-lg">{totalPrice.toLocaleString()} RWF</span></div></div>
+      {formData.message && (<div className="bg-primaryLight p-3 rounded-lg"><p className="text-sm italic">"{formData.message}"</p></div>)}
+      <div className="text-center text-xs text-gray-400 pt-4 border-t"><p>LoveExpress - Nous livrons l'amour et la gentillesse</p><p>Tel: +250 799 366 007</p></div>
+    </div>
+  )
+
+  return (
+    <section id="contact" className="py-24 bg-white">
+      <div className="container-custom">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4"><Heart size={14} className="text-primary" /><span className="text-xs font-medium text-primary uppercase tracking-wider">Devis gratuit</span></div>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">Planifiez Votre Surprise</h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">Remplissez ce formulaire et nous nous occupons de tout</p>
+        </motion.div>
+
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8"><div className="flex justify-between mb-2 text-sm text-gray-500"><span>Étape {step} / 6</span><span>{Math.round((step / 6) * 100)}%</span></div><div className="h-2 bg-gray-200 rounded-full overflow-hidden"><motion.div className="h-full bg-primary" initial={{ width: `${((step - 1) / 6) * 100}%` }} animate={{ width: `${((step - 1) / 6) * 100}%` }} transition={{ duration: 0.3 }} /></div></div>
+
+          <form onSubmit={handleSubmit}>
+            <AnimatePresence mode="wait">
+              {step === 1 && (
+                <motion.div key="step1" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Qui êtes-vous ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom complet *</label><input type="text" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Téléphone WhatsApp *</label><input type="tel" value={formData.clientPhone} onChange={(e) => setFormData({...formData, clientPhone: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Email (optionnel)</label><input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <button type="button" onClick={nextStep} className="btn-primary w-full">Suivant →</button>
+                </motion.div>
+              )}
+
+              {step === 2 && (
+                <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Qui recevra la surprise ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom du destinataire *</label><input type="text" value={formData.destName} onChange={(e) => setFormData({...formData, destName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label><input type="tel" value={formData.destPhone} onChange={(e) => setFormData({...formData, destPhone: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Adresse de livraison *</label><input type="text" value={formData.destAddress} onChange={(e) => setFormData({...formData, destAddress: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Âge (si anniversaire)</label><input type="text" value={formData.destAge} onChange={(e) => setFormData({...formData, destAge: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Quel événement ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Type *</label><select value={formData.eventType} onChange={(e) => setFormData({...formData, eventType: e.target.value})} className="w-full px-4 py-3 border rounded-lg">{eventTypes.map(t => <option key={t}>{t}</option>)}</select></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Date *</label><input type="date" value={formData.eventDate} onChange={(e) => setFormData({...formData, eventDate: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Heure *</label><input type="time" value={formData.eventTime} onChange={(e) => setFormData({...formData, eventTime: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Lieu exact *</label><input type="text" value={formData.eventLocation} onChange={(e) => setFormData({...formData, eventLocation: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Que souhaitez-vous commander ?</h3>
+                  
+                  {/* Party Decoration */}
+                  <div className="border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3"><PartyPopper size={18} className="text-primary" /><h4 className="font-semibold text-dark">Party Decoration</h4></div>
+                    <div className="space-y-2">
+                      {servicesData[0].packs.map(pack => (
+                        <label key={pack.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition ${formData.selectedPacks.includes(pack.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                          <input type="checkbox" checked={formData.selectedPacks.includes(pack.id)} onChange={() => handlePackToggle(pack.id)} className="w-4 h-4 text-primary rounded" />
+                          <div className="flex-1"><span className="font-medium">{pack.name}</span><p className="text-xs text-gray-500">{pack.desc}</p></div>
+                          <span className="text-primary font-bold">{pack.price.toLocaleString()} RWF</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Surprise Planner */}
+                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(2) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                    <div className="flex items-center gap-3"><Sparkles size={18} className="text-primary" /><div><span className="font-medium">Surprise Planner</span><p className="text-xs text-gray-500">Planification complète + coordination sur place</p></div></div>
+                    <div className="flex items-center gap-4"><span className="text-primary font-bold">200 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(2)} onChange={() => handleServiceToggle(2)} className="w-4 h-4 text-primary rounded" /></div>
+                  </label>
+
+                  {/* Custom Website */}
+                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(3) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                    <div className="flex items-center gap-3"><Globe size={18} className="text-primary" /><div><span className="font-medium">Custom Website</span><p className="text-xs text-gray-500">Site personnalisé pour votre événement</p></div></div>
+                    <div className="flex items-center gap-4"><span className="text-primary font-bold">25 000 - 45 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(3)} onChange={() => handleServiceToggle(3)} className="w-4 h-4 text-primary rounded" /></div>
+                  </label>
+
+                  {/* Flower Bouquet */}
+                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(4) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                    <div className="flex items-center gap-3"><Flower2 size={18} className="text-primary" /><div><span className="font-medium">Flower Bouquet</span><p className="text-xs text-gray-500">Bouquet de fleurs fraîches</p></div></div>
+                    <div className="flex items-center gap-4"><span className="text-primary font-bold">15 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(4)} onChange={() => handleServiceToggle(4)} className="w-4 h-4 text-primary rounded" /></div>
+                  </label>
+
+                  {/* Gift Baskets */}
+                  <div className="border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" /><h4 className="font-semibold text-dark">Gift Baskets</h4></div>
+                    <div className="space-y-3">
+                      {basketsData.map(basket => (
+                        <div key={basket.id} className={`p-3 rounded-lg border transition ${formData.selectedBaskets.some(b => b.id === basket.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3"><basket.icon size={16} className="text-primary" /><span className="font-medium">{basket.name}</span></div>
+                            <input type="checkbox" checked={formData.selectedBaskets.some(b => b.id === basket.id)} onChange={() => handleBasketToggle(basket.id, 'standard')} className="w-4 h-4 text-primary rounded" />
+                          </div>
+                          {formData.selectedBaskets.some(b => b.id === basket.id) && (
+                            <div className="flex gap-3 ml-6 mt-2">
+                              <label className="flex items-center gap-2"><input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find(b => b.id === basket.id)?.version === 'standard'} onChange={() => updateBasketVersion(basket.id, 'standard')} className="w-4 h-4 text-primary" /><span className="text-sm">Standard: {basket.standard.toLocaleString()} RWF</span></label>
+                              <label className="flex items-center gap-2"><input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find(b => b.id === basket.id)?.version === 'premium'} onChange={() => updateBasketVersion(basket.id, 'premium')} className="w-4 h-4 text-primary" /><span className="text-sm">Premium: {basket.premium.toLocaleString()} RWF</span></label>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 ml-6 mt-1">{basket.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Message sur carte */}
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Message sur la carte</label><textarea value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Joyeux anniversaire ! Je t'aime" /></div>
+
+                  {/* Instructions spéciales */}
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Instructions spéciales</label><textarea value={formData.specialInstructions} onChange={(e) => setFormData({...formData, specialInstructions: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Thème, couleurs, préférences..." /></div>
+
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 5 && (
+                <motion.div key="step5" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Livraison & Budget</h3>
+                  
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Mode de livraison</label><div className="grid grid-cols-2 gap-4"><label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'delivery' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}><input type="radio" name="deliveryMethod" value="delivery" checked={formData.deliveryMethod === 'delivery'} onChange={() => setFormData({...formData, deliveryMethod: 'delivery'})} className="w-4 h-4 text-primary" /><div><span className="font-semibold block">Livraison à domicile</span><span className="text-xs text-gray-500">+5 000 RWF</span></div></label><label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'pickup' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}><input type="radio" name="deliveryMethod" value="pickup" checked={formData.deliveryMethod === 'pickup'} onChange={() => setFormData({...formData, deliveryMethod: 'pickup'})} className="w-4 h-4 text-primary" /><div><span className="font-semibold block">Retrait au bureau</span><span className="text-xs text-gray-500">Gratuit</span></div></label></div></div>
+
+                  <div className="bg-primaryLight rounded-xl p-5">
+                    <h4 className="font-semibold text-dark mb-3">Récapitulatif des services</h4>
+                    <div className="space-y-2 text-sm">
+                      {formData.selectedPacks.map(packId => {
+                        const pack = servicesData[0].packs.find(p => p.id === packId)
+                        return <div key={packId} className="flex justify-between"><span>{pack?.name}</span><span className="font-bold">{pack?.price.toLocaleString()} RWF</span></div>
+                      })}
+                      {formData.selectedServices.includes(2) && <div className="flex justify-between"><span>Surprise Planner</span><span className="font-bold">200 000 RWF</span></div>}
+                      {formData.selectedServices.includes(3) && <div className="flex justify-between"><span>Custom Website</span><span className="font-bold">~35 000 RWF</span></div>}
+                      {formData.selectedServices.includes(4) && <div className="flex justify-between"><span>Flower Bouquet</span><span className="font-bold">15 000 RWF</span></div>}
+                      {formData.selectedBaskets.map(b => {
+                        const basket = basketsData.find(bk => bk.id === b.id)
+                        return <div key={b.id} className="flex justify-between"><span>{basket?.name} ({b.version})</span><span className="font-bold">{b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</span></div>
+                      })}
+                      {formData.deliveryMethod === 'delivery' && <div className="flex justify-between"><span>Livraison</span><span className="font-bold">+5 000 RWF</span></div>}
+                      <div className="border-t pt-2 mt-2 flex justify-between"><span className="font-bold">Total :</span><span className="font-bold text-primary text-lg">{totalPrice.toLocaleString()} RWF</span></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Votre budget (RWF)</label>
+                    <input type="number" value={formData.budget || totalPrice} onChange={handleBudgetChange} className="w-full px-4 py-3 border rounded-lg" placeholder={totalPrice.toString()} />
+                    {budgetError && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{budgetError}</p>}
+                    <p className="text-xs text-gray-400 mt-1">Budget minimum requis : {totalPrice.toLocaleString()} RWF</p>
+                  </div>
+
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 6 && (
+                <motion.div key="step6" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Vérification</h3>
+                  
+                  <ReviewContent />
+                  
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight"><input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5 text-primary rounded" /><span>Surprise discrète (ne pas révéler l'expéditeur)</span></label>
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight"><input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5 text-primary rounded" /><span>Le destinataire doit être présent lors de la livraison</span></label>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Notes supplémentaires</label><textarea value={formData.additionalNotes} onChange={(e) => setFormData({...formData, additionalNotes: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Information importante..." /></div>
+
+                  <div className="flex flex-col gap-3">
+                    <div className="flex gap-4">
+                      <button type="button" onClick={() => goToStep(4)} className="btn-secondary flex-1">Modifier la commande</button>
+                      <button type="button" onClick={downloadPDF} className="bg-gray-100 text-gray-700 px-4 py-3 rounded-full font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2 flex-1"><Download size={18} /> Télécharger PDF</button>
+                    </div>
+                    <button type="submit" disabled={isSubmitting || (!hasValidSelection) || (formData.budget > 0 && formData.budget < totalPrice)} className="btn-primary w-full">{isSubmitting ? 'Envoi...' : 'Confirmer et envoyer'}</button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </form>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+FILE_END: components/ContactForm.tsx
+
+
+FILE_START: components/AvisForm.tsx
+------------------------------------------------------------
+'use client'
+
+import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { Star, Heart, Camera, X } from 'lucide-react'
+
+export default function AvisForm() {
+  const [note, setNote] = useState(5)
+  const [message, setMessage] = useState('')
+  const [nom, setNom] = useState('')
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setPhoto(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removePhoto = () => {
+    setPhoto(null)
+    setPhotoPreview(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!message.trim()) {
+      alert('Veuillez écrire votre témoignage')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      let photoBase64 = null
+      if (photo) {
+        const reader = new FileReader()
+        photoBase64 = await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result)
+          reader.readAsDataURL(photo)
+        })
+      }
+
+      const response = await fetch('/api/submit-testimonial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          note,
+          message,
+          nom: nom.trim() || 'Client LoveExpress',
+          photoBase64,
+          hasPhoto: !!photo
+        })
+      })
+
+      if (response.ok) {
+        setIsSubmitted(true)
+        setNote(5)
+        setMessage('')
+        setNom('')
+        setPhoto(null)
+        setPhotoPreview(null)
+        setTimeout(() => setIsSubmitted(false), 5000)
+      } else {
+        alert('Erreur lors de l\'envoi. Veuillez réessayer.')
+      }
+    } catch (error) {
+      console.error('Erreur:', error)
+      alert('Erreur lors de l\'envoi. Veuillez réessayer.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isSubmitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center"
+      >
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Heart className="w-8 h-8 text-green-600 fill-green-600" />
+        </div>
+        <h3 className="text-xl font-bold text-dark mb-2">Merci pour votre témoignage !</h3>
+        <p className="text-gray-600">
+          Votre avis sera publié après validation par notre équipe (sous 24-48h).
+        </p>
+      </motion.div>
+    )
+  }
+
+  return (
+    <section className="py-24 bg-white">
+      <div className="container-custom">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+            <Star size={14} className="text-primary fill-primary" />
+            <span className="text-xs font-medium text-primary uppercase tracking-wider">Votre avis compte</span>
+          </div>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+            Donnez votre avis
+          </h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            Partagez votre expérience LoveExpress avec la communauté
+          </p>
+        </motion.div>
+
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          viewport={{ once: true }}
+          onSubmit={handleSubmit}
+          className="max-w-2xl mx-auto bg-primaryLight rounded-2xl p-8 shadow-sm"
+        >
+          {/* Note étoiles */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Votre note *
+            </label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setNote(s)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star
+                    size={32}
+                    className={`${s <= note ? 'fill-accent text-accent' : 'text-gray-300'}`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Message */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Votre témoignage *
+            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="J'ai adoré ma surprise, tout était parfait ! Merci LoveExpress ❤️"
+              required
+            />
+          </div>
+
+          {/* Nom (optionnel) */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Votre nom (optionnel)
+            </label>
+            <input
+              type="text"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Marie, Jean, ..."
+            />
+          </div>
+
+          {/* Photo (optionnelle) */}
+          <div className="mb-8">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ajouter une photo (optionnelle)
+            </label>
+            {photoPreview ? (
+              <div className="relative inline-block">
+                <img src={photoPreview} alt="Aperçu" className="w-32 h-32 object-cover rounded-xl" />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary transition">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">Cliquez pour ajouter une photo</p>
+                  <p className="text-xs text-gray-400">JPG, PNG (max 5MB)</p>
+                </div>
+                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
+              </label>
+            )}
+          </div>
+
+          {/* Bouton envoyer */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              'Envoi en cours...'
+            ) : (
+              <>
+                <Heart size={18} />
+                Envoyer mon témoignage
+              </>
+            )}
+          </button>
+
+          <p className="text-center text-xs text-gray-400 mt-4">
+            Votre témoignage sera publié après validation par notre équipe
+          </p>
+        </motion.form>
+      </div>
+    </section>
+  )
+}
+
+FILE_END: components/AvisForm.tsx
+
+
+FILE_START: app/gallery/page.tsx
+------------------------------------------------------------
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { ArrowLeft, X, Heart, User, Calendar, Star } from 'lucide-react'
+
+interface Testimonial {
+  id: string
+  nom: string
+  note: number
+  message: string
+  photoUrl?: string
+  createdAt: string
+  status: string
+}
+
+export default function GalleryPage() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null)
+
+  useEffect(() => {
+    fetchTestimonials()
+  }, [])
+
+  const fetchTestimonials = async () => {
+    try {
+      const response = await fetch('/api/get-testimonials')
+      const data = await response.json()
+      if (data.success && data.avis) {
+        setTestimonials(data.avis)
+      }
+    } catch (error) {
+      console.error('Erreur chargement témoignages:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-primaryLight flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-500">Chargement des témoignages...</p>
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="min-h-screen bg-primaryLight">
+      {/* Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="container-custom py-4">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition group"
+          >
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition" />
+            Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+
+      <section className="py-16">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-4 shadow-sm">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Ils nous ont fait confiance</span>
+            </div>
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-dark mb-4">
+              Avis Clients
+            </h1>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              Découvrez les sourires et la joie de nos clients après leurs surprises
+            </p>
+          </motion.div>
+
+          {testimonials.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl">
+              <Heart size={48} className="text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Aucun témoignage pour le moment</p>
+              <p className="text-sm text-gray-400 mt-2">Soyez le premier à partager votre expérience !</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {testimonials.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ y: -5 }}
+                  onClick={() => setSelectedTestimonial(item)}
+                  className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl"
+                >
+                  <div className="relative h-56 overflow-hidden">
+                    {item.photoUrl ? (
+                      <img
+                        src={item.photoUrl}
+                        alt={item.nom}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
+                        <Heart size={48} className="text-primary/40" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                    <div className="absolute bottom-3 left-3 flex gap-0.5">
+                      {[...Array(item.note || 5)].map((_, i) => (
+                        <Star key={i} size={12} className="fill-accent text-accent" />
+                      ))}
+                    </div>
+                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <Heart size={40} className="text-white drop-shadow-lg" />
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User size={14} className="text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-dark">{item.nom}</h3>
+                    </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Calendar size={12} className="text-gray-400" />
+                      <span className="text-xs text-gray-400">
+                        {new Date(item.createdAt).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {selectedTestimonial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedTestimonial(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative">
+                {selectedTestimonial.photoUrl ? (
+                  <img 
+                    src={selectedTestimonial.photoUrl} 
+                    alt={selectedTestimonial.nom}
+                    className="w-full h-80 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-80 bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
+                    <Heart size={64} className="text-primary/40" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <button 
+                  onClick={() => setSelectedTestimonial(null)}
+                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
+                >
+                  <X size={20} className="text-white" />
+                </button>
+                <div className="absolute bottom-4 left-4 flex gap-0.5">
+                  {[...Array(selectedTestimonial.note || 5)].map((_, i) => (
+                    <Star key={i} size={16} className="fill-accent text-accent" />
+                  ))}
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-dark">{selectedTestimonial.nom}</h3>
+                    <div className="flex items-center gap-2">
+                      <Calendar size={12} className="text-gray-400" />
+                      <span className="text-xs text-gray-500">
+                        {new Date(selectedTestimonial.createdAt).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-gray-600 italic text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
+                <div className="mt-6 pt-4 border-t flex justify-center">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Heart key={i} size={16} className="fill-primary text-primary" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </main>
+  )
+}
+
+FILE_END: app/gallery/page.tsx
+
+
+FILE_START: components/IdentityProvider.tsx
+------------------------------------------------------------
+'use client';
+
+import { useEffect } from 'react';
+
+export default function IdentityProvider() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Charger le script Netlify Identity Widget via CDN (plus fiable)
+    const script = document.createElement('script');
+    script.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+    script.async = true;
+    document.head.appendChild(script);
+
+    script.onload = () => {
+      // @ts-ignore
+      const netlifyIdentity = window.netlifyIdentity;
+      if (netlifyIdentity) {
+        netlifyIdentity.init({
+          APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+        });
+
+        // Détecter un token d'invitation
+        const hash = window.location.hash;
+        if (hash && hash.includes('invite_token')) {
+          setTimeout(() => {
+            netlifyIdentity.open();
+          }, 500);
+        }
+      }
+    };
+
+    return () => {
+      // Nettoyage non nécessaire pour le script
+    };
+  }, []);
+
+  return null;
+}
+
+FILE_END: components/IdentityProvider.tsx
+
+
+FILE_START: netlify.toml
+------------------------------------------------------------
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Netlify CMS - servira le fichier index.html de public/admin
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
+  status = 200
+
+# Dashboard React - ne pas rediriger, laisser Next.js gérer
+
+FILE_END: netlify.toml
+
+
+FILE_START: next.config.js
+------------------------------------------------------------
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    domains: ['images.pexels.com', 'localhost', 'loveexpress.netlify.app'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.pexels.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.netlify.app',
+      },
+    ],
+    unoptimized: process.env.NODE_ENV === 'development',
+    formats: ['image/avif', 'image/webp'],
+  },
+  output: 'standalone',
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production',
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+}
+
+module.exports = nextConfig
+
+FILE_END: next.config.js
+
+
+FILE_START: lib/utils/verify-token.js
+------------------------------------------------------------
+const jwt = require('jsonwebtoken');
+
+const NETLIFY_JWT_SECRET = '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCYZM6i19L\nnMvNtP5W3C9lT5S8m7j9k0L2nM3pO4qR5sT6uV7wX8yZ9aB0cD1eF2gH3iJ4kL5mN6oP7\nQ8rR9sS0tU1vV2wW3xX4yY5zZ6aA7bB8cC9dD0eE1fF2gG3hH4iI5jJ6kK7lL8mM9nN0oO1pP2qQ3rR4sS5tT6uU7vV8wW9xX0yY1zZ2aA3bB4cC5dD6eE7fF8gG9hH0iI1jJ2kK3lL4mM5nN6oO7pP8qQ9rR0sS1tT2uU3vV4wW5xX6yY7zZ8aA9bB0cC1dD2eE3fF4gG5hH6iI7jJ8kK9lL0mM1nN2oO3pP4qQ5rR6sS7tT8uU9vV0wW1xX2yY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ0aA1bB2cC3dD4eE5fF6gG7hH8iI9jJ0kK1lL2mM3nN4oO5pP6qQ7rR8sS9tT0uU1vV2wW3xX4yY5zZ6aA7bB8cC9dD0eE1fF2gG3hH4iI5jJ6kK7lL8mM9nN0oO\n-----END PUBLIC KEY-----';
+
+exports.verifyToken = async (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, NETLIFY_JWT_SECRET, { algorithms: ['RS256'] }, (err, decoded) => {
+      if (err) reject(err);
+      else resolve(decoded);
+    });
+  });
+};
+
+exports.isAdmin = async (event) => {
+  try {
+    const authHeader = event.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+    
+    const token = authHeader.split(' ')[1];
+    const decoded = await exports.verifyToken(token);
+    
+    const allowedEmails = process.env.ADMIN_EMAILS || 'mekuiadele271@gmail.com';
+    return allowedEmails.split(',').includes(decoded.email);
+  } catch (error) {
+    return false;
+  }
+};
+
+FILE_END: lib/utils/verify-token.js
+
+
+FILE_START: lib/utils/netlify-blobs.js
+------------------------------------------------------------
+export async function getStore(storeName) {
+  if (process.env.NODE_ENV === 'development') {
+    return {
+      get: async (key) => {
+        const data = localStorage.getItem(`blob_${storeName}_${key}`);
+        return data ? JSON.parse(data) : null;
+      },
+      set: async (key, value) => {
+        localStorage.setItem(`blob_${storeName}_${key}`, JSON.stringify(value));
+      },
+      list: async () => {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith(`blob_${storeName}_`)) {
+            keys.push(key.replace(`blob_${storeName}_`, ''));
+          }
+        }
+        return keys;
+      }
+    };
+  }
+
+  const { getStore: getNetlifyStore } = await import('@netlify/blobs');
+  return getNetlifyStore(storeName);
+}
+
+export async function saveCommand(data) {
+  const store = await getStore('commandes');
+  const id = `CMD_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  const commande = { id, ...data, status: 'pending', createdAt: new Date().toISOString() };
+  await store.set(id, commande);
+  return commande;
+}
+
+export async function getCommandes() {
+  const store = await getStore('commandes');
+  const keys = await store.list();
+  const commandes = [];
+  for (const key of keys) {
+    const cmd = await store.get(key);
+    if (cmd) commandes.push(cmd);
+  }
+  return commandes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+export async function updateCommandeStatus(id, status) {
+  const store = await getStore('commandes');
+  const commande = await store.get(id);
+  if (commande) {
+    commande.status = status;
+    await store.set(id, commande);
+  }
+  return commande;
+}
+
+export async function saveAvis(avis) {
+  const store = await getStore('avis');
+  const id = `AVIS_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  const nouvelAvis = { id, ...avis, status: 'pending', createdAt: new Date().toISOString() };
+  await store.set(id, nouvelAvis);
+  return nouvelAvis;
+}
+
+export async function getAvis(status = null) {
+  const store = await getStore('avis');
+  const keys = await store.list();
+  const avis = [];
+  for (const key of keys) {
+    const a = await store.get(key);
+    if (a && (status === null || a.status === status)) {
+      avis.push(a);
+    }
+  }
+  return avis.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+export async function moderateAvis(id, status) {
+  const store = await getStore('avis');
+  const avis = await store.get(id);
+  if (avis) {
+    avis.status = status;
+    await store.set(id, avis);
+  }
+  return avis;
+}
+
+FILE_END: lib/utils/netlify-blobs.js

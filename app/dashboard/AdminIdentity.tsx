@@ -15,11 +15,8 @@ export function useNetlifyAuth() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Attendre que le script soit chargé
-    const checkIdentity = setInterval(() => {
+    const checkIdentity = () => {
       if (window.netlifyIdentity) {
-        clearInterval(checkIdentity);
-        
         const netlifyIdentity = window.netlifyIdentity;
         
         if (!netlifyIdentity.init) {
@@ -32,7 +29,6 @@ export function useNetlifyAuth() {
           APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
         });
 
-        // Gérer les événements
         const handleLogin = (user: any) => {
           setUser(user);
           window.location.href = '/dashboard';
@@ -51,15 +47,14 @@ export function useNetlifyAuth() {
           setUser(currentUser);
         }
         setLoading(false);
-
-        return () => {
-          netlifyIdentity.off('login', handleLogin);
-          netlifyIdentity.off('logout', handleLogout);
-        };
+      } else {
+        setTimeout(checkIdentity, 50);
       }
-    }, 100);
+    };
 
-    return () => clearInterval(checkIdentity);
+    checkIdentity();
+
+    return () => {};
   }, []);
 
   const login = () => {

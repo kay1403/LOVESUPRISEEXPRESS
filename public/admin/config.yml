@@ -6,34 +6,6 @@ media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
 
 collections:
-  - name: "commandes"
-    label: "📦 Commandes"
-    folder: "content/commandes"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    fields:
-      - { label: "Client", name: "clientName", widget: "string" }
-      - { label: "Téléphone", name: "clientPhone", widget: "string" }
-      - { label: "Email", name: "clientEmail", widget: "string", required: false }
-      - { label: "Destinataire", name: "destName", widget: "string" }
-      - { label: "Adresse", name: "destAddress", widget: "string" }
-      - { label: "Type d'événement", name: "eventType", widget: "string" }
-      - { label: "Date événement", name: "eventDate", widget: "date" }
-      - { label: "Budget", name: "budget", widget: "number" }
-      - { label: "Statut", name: "status", widget: "select", options: ["pending", "confirmed", "delivered", "cancelled"], default: "pending" }
-
-  - name: "avis"
-    label: "⭐ Avis clients"
-    folder: "content/avis"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    fields:
-      - { label: "Nom", name: "nom", widget: "string" }
-      - { label: "Note", name: "note", widget: "number", valueType: "int", min: 1, max: 5 }
-      - { label: "Message", name: "message", widget: "text" }
-      - { label: "Photo", name: "photo", widget: "image", required: false }
-      - { label: "Statut", name: "status", widget: "select", options: ["pending", "published", "rejected"], default: "pending" }
-
   - name: "services"
     label: "🎈 Services"
     folder: "content/services"

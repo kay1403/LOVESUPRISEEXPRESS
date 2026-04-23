@@ -1,9 +1,9 @@
-'use client'
+'use client';
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, X, Heart, User, Calendar, Star } from 'lucide-react'
+import { ArrowLeft, X, Heart, User, Calendar, Star, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface Testimonial {
   id: string
@@ -15,10 +15,13 @@ interface Testimonial {
   status: string
 }
 
+const ITEMS_PER_PAGE = 9;
+
 export default function GalleryPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
     fetchTestimonials()
@@ -38,6 +41,15 @@ export default function GalleryPage() {
     }
   }
 
+  // Pagination
+  const totalPages = Math.ceil(testimonials.length / ITEMS_PER_PAGE)
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const paginatedTestimonials = testimonials.slice(startIndex, startIndex + ITEMS_PER_PAGE)
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)))
+  }
+
   if (loading) {
     return (
       <main className="min-h-screen bg-primaryLight flex items-center justify-center">
@@ -51,13 +63,9 @@ export default function GalleryPage() {
 
   return (
     <main className="min-h-screen bg-primaryLight">
-      {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="container-custom py-4">
-          <Link 
-            href="/" 
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition group"
-          >
+          <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition group">
             <ArrowLeft size={18} className="group-hover:-translate-x-1 transition" />
             Retour à l'accueil
           </Link>
@@ -91,62 +99,89 @@ export default function GalleryPage() {
               <p className="text-sm text-gray-400 mt-2">Soyez le premier à partager votre expérience !</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {testimonials.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ y: -5 }}
-                  onClick={() => setSelectedTestimonial(item)}
-                  className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl"
-                >
-                  <div className="relative h-56 overflow-hidden">
-                    {item.photoUrl ? (
-                      <img
-                        src={item.photoUrl}
-                        alt={item.nom}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
-                        <Heart size={48} className="text-primary/40" />
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {paginatedTestimonials.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: (index % ITEMS_PER_PAGE) * 0.05 }}
+                    whileHover={{ y: -5 }}
+                    onClick={() => setSelectedTestimonial(item)}
+                    className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl"
+                  >
+                    <div className="relative h-56 overflow-hidden">
+                      {item.photoUrl ? (
+                        <img src={item.photoUrl} alt={item.nom} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
+                          <Heart size={48} className="text-primary/40" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                      <div className="absolute bottom-3 left-3 flex gap-0.5">
+                        {[...Array(item.note || 5)].map((_, i) => (
+                          <Star key={i} size={12} className="fill-accent text-accent" />
+                        ))}
                       </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-                    <div className="absolute bottom-3 left-3 flex gap-0.5">
-                      {[...Array(item.note || 5)].map((_, i) => (
-                        <Star key={i} size={12} className="fill-accent text-accent" />
-                      ))}
-                    </div>
-                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <Heart size={40} className="text-white drop-shadow-lg" />
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <User size={14} className="text-primary" />
+                      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                        <Heart size={40} className="text-white drop-shadow-lg" />
                       </div>
-                      <h3 className="font-semibold text-dark">{item.nom}</h3>
                     </div>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Calendar size={12} className="text-gray-400" />
-                      <span className="text-xs text-gray-400">
-                        {new Date(item.createdAt).toLocaleDateString('fr-FR')}
-                      </span>
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User size={14} className="text-primary" />
+                        </div>
+                        <h3 className="font-semibold text-dark">{item.nom}</h3>
+                      </div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Calendar size={12} className="text-gray-400" />
+                        <span className="text-xs text-gray-400">
+                          {new Date(item.createdAt).toLocaleDateString('fr-FR')}
+                        </span>
+                      </div>
+                      <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
                     </div>
-                    <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 mt-12">
+                  <button
+                    onClick={() => goToPage(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 transition"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => goToPage(i + 1)}
+                      className={`w-10 h-10 rounded-lg transition ${currentPage === i + 1 ? 'bg-primary text-white' : 'border border-gray-300 hover:bg-primary/10'}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => goToPage(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 transition"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
 
-      {/* Modal */}
+      {/* Modal - inchangé */}
       <AnimatePresence>
         {selectedTestimonial && (
           <motion.div
@@ -166,21 +201,14 @@ export default function GalleryPage() {
             >
               <div className="relative">
                 {selectedTestimonial.photoUrl ? (
-                  <img 
-                    src={selectedTestimonial.photoUrl} 
-                    alt={selectedTestimonial.nom}
-                    className="w-full h-80 object-cover"
-                  />
+                  <img src={selectedTestimonial.photoUrl} alt={selectedTestimonial.nom} className="w-full h-80 object-cover" />
                 ) : (
                   <div className="w-full h-80 bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
                     <Heart size={64} className="text-primary/40" />
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <button 
-                  onClick={() => setSelectedTestimonial(null)}
-                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
-                >
+                <button onClick={() => setSelectedTestimonial(null)} className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition">
                   <X size={20} className="text-white" />
                 </button>
                 <div className="absolute bottom-4 left-4 flex gap-0.5">
