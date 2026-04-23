@@ -1,4 +1,4 @@
-const { sendWhatsApp } = require('../lib/utils/whatsapp.js');
+const { sendWhatsApp } = require('../../lib/utils/whatsapp.js');
 
 exports.handler = async (event) => {
   const headers = {
