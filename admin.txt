@@ -548,14 +548,3 @@ export async function getPhotos(category = null) {
   from = "/admin/*"
   to = "/admin"
   status = 200
-
-# Important: laisser Netlify Identity gérer ses propres routes
-# Ne pas rediriger /.netlify/identity/*
-
-# Rediriger les tokens d'invitation vers /admin
-[[redirects]]
-  from = "/*"
-  to = "/admin"
-  status = 200
-  force = true
-  conditions = { Query = { invite_token = [".*"] } }

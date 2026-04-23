@@ -4,25 +4,28 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 let netlifyIdentity: any = null;
+let isInitialized = false;
 
 const initIdentity = () => {
-  if (typeof window !== 'undefined' && !netlifyIdentity) {
-    import('netlify-identity-widget').then((module) => {
-      netlifyIdentity = module.default || module;
-      netlifyIdentity.init({
-        APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-      });
-      
-      netlifyIdentity.on('login', (user: any) => {
-        console.log('User logged in:', user?.email);
-        window.location.href = '/admin';
-      });
-      
-      netlifyIdentity.on('logout', () => {
-        window.location.href = '/admin';
-      });
+  if (typeof window === 'undefined' || isInitialized) return;
+  
+  import('netlify-identity-widget').then((module) => {
+    netlifyIdentity = module.default || module;
+    netlifyIdentity.init({
+      APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
     });
-  }
+    isInitialized = true;
+    
+    // Redirection après login
+    netlifyIdentity.on('login', (user: any) => {
+      console.log('✅ Utilisateur connecté:', user?.email);
+      window.location.href = '/admin';
+    });
+    
+    netlifyIdentity.on('logout', () => {
+      window.location.href = '/admin';
+    });
+  });
 };
 
 export function useNetlifyAuth() {
@@ -33,23 +36,19 @@ export function useNetlifyAuth() {
   useEffect(() => {
     initIdentity();
 
-    const checkInterval = setInterval(() => {
+    const checkUser = setInterval(() => {
       if (netlifyIdentity) {
-        clearInterval(checkInterval);
-        
+        clearInterval(checkUser);
         const currentUser = netlifyIdentity.currentUser();
         if (currentUser) {
           setUser(currentUser);
-          if (typeof window !== 'undefined' && window.location.pathname !== '/admin') {
-            router.push('/admin');
-          }
         }
         setLoading(false);
       }
     }, 100);
 
-    return () => clearInterval(checkInterval);
-  }, [router]);
+    return () => clearInterval(checkUser);
+  }, []);
 
   const login = () => {
     if (netlifyIdentity) {
@@ -95,7 +94,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-dark mb-2">Dashboard LoveExpress</h1>
-          <p className="text-gray-500 mb-6">Connectez-vous avec votre email pour accéder à l'administration</p>
+          <p className="text-gray-500 mb-6">Connectez-vous avec votre email</p>
           <button
             onClick={login}
             className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full"
