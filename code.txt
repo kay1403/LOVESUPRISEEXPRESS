@@ -220,68 +220,107 @@ export default function GalleryPage() {
     </main>
   )
 }
+'use client'
+
+import { I18nextProvider } from 'react-i18next'
+import i18n from '@/lib/i18n'
+
+export default function I18nProvider({ children }: { children: React.ReactNode }) {
+  return (
+    <I18nextProvider i18n={i18n}>
+      {children}
+    </I18nextProvider>
+  )
+}
 'use client';
 
 import { useEffect, useState } from 'react';
-import netlifyIdentity from 'netlify-identity-widget';
-import { Heart } from 'lucide-react';
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+declare global {
+  interface Window {
+    netlifyIdentity: any;
+  }
+}
+
+export function useNetlifyAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Initialiser Netlify Identity
-    netlifyIdentity.init({
-      APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-    });
+    if (typeof window === 'undefined') return;
 
-    const handleLogin = (user: any) => {
-      setUser(user);
-      setLoading(false);
-    };
+    // Attendre que le script soit chargé
+    const checkIdentity = setInterval(() => {
+      if (window.netlifyIdentity) {
+        clearInterval(checkIdentity);
+        
+        const netlifyIdentity = window.netlifyIdentity;
+        
+        if (!netlifyIdentity.init) {
+          console.error('netlifyIdentity.init is not a function');
+          setLoading(false);
+          return;
+        }
 
-    const handleLogout = () => {
-      setUser(null);
-      window.location.href = '/admin';
-    };
+        netlifyIdentity.init({
+          APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+        });
 
-    netlifyIdentity.on('login', handleLogin);
-    netlifyIdentity.on('logout', handleLogout);
+        // Gérer les événements
+        const handleLogin = (user: any) => {
+          setUser(user);
+          window.location.href = '/dashboard';
+        };
 
-    const currentUser = netlifyIdentity.currentUser();
-    if (currentUser) {
-      setUser(currentUser);
-    }
-    setLoading(false);
+        const handleLogout = () => {
+          setUser(null);
+          window.location.href = '/dashboard';
+        };
 
-    return () => {
-      netlifyIdentity.off('login', handleLogin);
-      netlifyIdentity.off('logout', handleLogout);
-    };
+        netlifyIdentity.on('login', handleLogin);
+        netlifyIdentity.on('logout', handleLogout);
+
+        const currentUser = netlifyIdentity.currentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        }
+        setLoading(false);
+
+        return () => {
+          netlifyIdentity.off('login', handleLogin);
+          netlifyIdentity.off('logout', handleLogout);
+        };
+      }
+    }, 100);
+
+    return () => clearInterval(checkIdentity);
   }, []);
 
-  const handleLoginClick = () => {
-    netlifyIdentity.open();
+  const login = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      window.netlifyIdentity.open();
+    }
   };
 
-  // Récupérer le token JWT pour les appels API
+  const logout = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      window.netlifyIdentity.logout();
+    }
+  };
+
   const getToken = () => {
-    const currentUser = netlifyIdentity.currentUser();
-    if (currentUser) {
-      return currentUser.token?.access_token;
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      const user = window.netlifyIdentity.currentUser();
+      return user?.token?.access_token;
     }
     return null;
   };
 
-  // Exposer le token globalement pour les appels fetch
-  if (typeof window !== 'undefined') {
-    (window as any).__getAdminToken = getToken;
-  }
+  return { user, loading, login, logout, getToken };
+}
+
+export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
+  const { user, loading, login } = useNetlifyAuth();
 
   if (loading) {
     return (
@@ -299,14 +338,13 @@ export default function AdminLayout({
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
           <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Heart className="w-8 h-8 text-primary" />
+            <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
           </div>
           <h1 className="text-2xl font-bold text-dark mb-2">Dashboard LoveExpress</h1>
-          <p className="text-gray-500 mb-6">Connectez-vous avec votre email pour accéder à l'administration</p>
-          <button
-            onClick={handleLoginClick}
-            className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full"
-          >
+          <p className="text-gray-500 mb-6">Connectez-vous avec votre email</p>
+          <button onClick={login} className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full">
             Se connecter
           </button>
         </div>
@@ -314,58 +352,69 @@ export default function AdminLayout({
     );
   }
 
+  return <>{children}</>;
+}
+'use client';
+
+import { AdminAuthGuard, useNetlifyAuth } from './AdminIdentity';
+import { Heart } from 'lucide-react';
+
+function DashboardHeader() {
+  const { user, logout } = useNetlifyAuth();
+
+  if (!user) return null;
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <Heart className="w-6 h-6 text-primary" />
-            <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">{user.email}</span>
-            <button
-              onClick={() => netlifyIdentity.logout()}
-              className="text-gray-500 hover:text-red-500 text-sm transition"
-            >
-              Déconnexion
-            </button>
-          </div>
+    <div className="bg-white shadow-sm sticky top-0 z-10">
+      <div className="px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <Heart className="w-6 h-6 text-primary" />
+          <h1 className="text-xl font-bold text-dark">LoveExpress Dashboard</h1>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-500">{user.email}</span>
+          <button onClick={logout} className="text-gray-500 hover:text-red-500 text-sm transition">
+            Déconnexion
+          </button>
         </div>
       </div>
-      {children}
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AdminAuthGuard>
+      <div className="min-h-screen bg-gray-100">
+        <DashboardHeader />
+        {children}
+      </div>
+    </AdminAuthGuard>
   );
 }
 'use client';
 
 import { useState, useEffect } from 'react';
-import netlifyIdentity from 'netlify-identity-widget';
+import { useNetlifyAuth } from './AdminIdentity';
 
-// Fonction pour récupérer le token
-const getToken = () => {
-  const user = netlifyIdentity.currentUser();
-  return user?.token?.access_token;
-};
-
-// Fonction fetch avec token
-const authFetch = async (url: string, options: RequestInit = {}) => {
-  const token = getToken();
-  return fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-};
-
-export default function AdminPage() {
+export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getToken } = useNetlifyAuth();
+
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const token = getToken();
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -403,6 +452,13 @@ export default function AdminPage() {
     if (res.ok) fetchData();
   };
 
+  const stats = {
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
+    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
+    totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
+  };
+
   const getStatusBadge = (status: string) => {
     const badges: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-700',
@@ -421,13 +477,6 @@ export default function AdminPage() {
       cancelled: 'Annulée'
     };
     return labels[status] || 'En attente';
-  };
-
-  const stats = {
-    totalOrders: orders.length,
-    pendingOrders: orders.filter(o => o.status === 'pending').length,
-    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
-    totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
   };
 
   if (loading) {
@@ -513,9 +562,7 @@ export default function AdminPage() {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <div className="flex gap-0.5">
-                          {[...Array(testimonial.note || 5)].map((_, i) => (
-                            <span key={i} className="text-accent">★</span>
-                          ))}
+                          {[...Array(testimonial.note || 5)].map((_, i) => <span key={i} className="text-accent">★</span>)}
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${testimonial.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                           {testimonial.status === 'published' ? 'Publié' : 'En attente'}
@@ -544,26 +591,15 @@ export default function AdminPage() {
     </div>
   );
 }
-'use client'
-
-import { I18nextProvider } from 'react-i18next'
-import i18n from '@/lib/i18n'
-
-export default function I18nProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <I18nextProvider i18n={i18n}>
-      {children}
-    </I18nextProvider>
-  )
-}
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
+import Script from 'next/script'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://loveexpress.rw'),
   title: 'LoveExpress | Organisation de surprises à Kigali',
-  description: 'LoveExpress crée des moments de surprise inoubliables : anniversaires, demandes en mariage, baby showers. Livraison de gift baskets et décorations à Kigali, Rwanda.',
+  description: 'LoveExpress crée des moments de surprise inoubliables : anniversaires, demandes en mariage, baby showers.',
   keywords: 'surprise kigali, organisation anniversaire, demande mariage surprise, gift basket rwanda, décoration fête kigali',
   authors: [{ name: 'LoveExpress' }],
   openGraph: {
@@ -590,6 +626,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
+      <head>
+        {/* Netlify Identity Widget - chargé globalement */}
+        <Script 
+          src="https://identity.netlify.com/v1/netlify-identity-widget.js"
+          strategy="afterInteractive"
+        />
+      </head>
       <body>
         <Providers>
           {children}
@@ -717,10 +760,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
   to = "/.netlify/functions/:splat"
   status = 200
 
+# Netlify CMS - servira le fichier index.html de public/admin
 [[redirects]]
   from = "/admin/*"
-  to = "/admin"
+  to = "/admin/index.html"
   status = 200
+
+# Dashboard React - ne pas rediriger, laisser Next.js gérer
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -803,202 +849,8 @@ const config: Config = {
   plugins: [],
 }
 export default config
-// Utilitaires pour Netlify Blobs (stockage gratuit)
-// Documentation: https://docs.netlify.com/blobs/
-
-export async function getStore(storeName) {
-  // En développement, utiliser localStorage ou mémoire
-  if (process.env.NODE_ENV === 'development') {
-    return {
-      get: async (key) => {
-        const data = localStorage.getItem(`blob_${storeName}_${key}`);
-        return data ? JSON.parse(data) : null;
-      },
-      set: async (key, value) => {
-        localStorage.setItem(`blob_${storeName}_${key}`, JSON.stringify(value));
-      },
-      list: async () => {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key?.startsWith(`blob_${storeName}_`)) {
-            keys.push(key.replace(`blob_${storeName}_`, ''));
-          }
-        }
-        return keys;
-      }
-    };
-  }
-
-  // En production, utiliser Netlify Blobs
-  const { getStore: getNetlifyStore } = await import('@netlify/blobs');
-  return getNetlifyStore(storeName);
-}
-
-export async function saveCommand(data) {
-  const store = await getStore('commandes');
-  const id = `CMD_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-  const commande = {
-    id,
-    ...data,
-    status: 'pending',
-    createdAt: new Date().toISOString()
-  };
-  await store.set(id, commande);
-  return commande;
-}
-
-export async function getCommandes() {
-  const store = await getStore('commandes');
-  const keys = await store.list();
-  const commandes = [];
-  for (const key of keys) {
-    const cmd = await store.get(key);
-    if (cmd) commandes.push(cmd);
-  }
-  return commandes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-}
-
-export async function updateCommandeStatus(id, status) {
-  const store = await getStore('commandes');
-  const commande = await store.get(id);
-  if (commande) {
-    commande.status = status;
-    await store.set(id, commande);
-  }
-  return commande;
-}
-
-export async function saveAvis(avis) {
-  const store = await getStore('avis');
-  const id = `AVIS_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-  const nouvelAvis = {
-    id,
-    ...avis,
-    status: 'pending',
-    createdAt: new Date().toISOString()
-  };
-  await store.set(id, nouvelAvis);
-  return nouvelAvis;
-}
-
-export async function getAvis(status = null) {
-  const store = await getStore('avis');
-  const keys = await store.list();
-  const avis = [];
-  for (const key of keys) {
-    const a = await store.get(key);
-    if (a && (status === null || a.status === status)) {
-      avis.push(a);
-    }
-  }
-  return avis.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-}
-
-export async function moderateAvis(id, status) {
-  const store = await getStore('avis');
-  const avis = await store.get(id);
-  if (avis) {
-    avis.status = status;
-    await store.set(id, avis);
-  }
-  return avis;
-}
-
-export async function savePhoto(file, category) {
-  const store = await getStore('photos');
-  const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-  await store.set(id, file);
-  return { id, url: `/.netlify/images/${id}` };
-}
-
-export async function getPhotos(category = null) {
-  const store = await getStore('photos');
-  const keys = await store.list();
-  const photos = [];
-  for (const key of keys) {
-    if (category === null || key.startsWith(category)) {
-      photos.push({ id: key, url: `/.netlify/images/${key}` });
-    }
-  }
-  return photos;
-}
-// Utilitaires pour notifications WhatsApp via CallMeBot API
-// API gratuite: https://www.callmebot.com/blog/free-api-whatsapp-messages/
-
-const CALLMEBOT_API = 'https://api.callmebot.com/whatsapp.php';
-
-export async function sendWhatsApp(phoneNumber, message) {
-  // Format du numéro: 25078XXXXXXXX (sans +)
-  const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-  
-  // Récupérer la clé API depuis les variables d'environnement
-  const apiKey = process.env.CALLMEBOT_API_KEY;
-  
-  if (!apiKey) {
-    console.log('⚠️ Pas de clé API CallMeBot, notification non envoyée');
-    console.log('Message aurait été:', message);
-    return false;
-  }
-
-  const params = new URLSearchParams({
-    phone: cleanPhone,
-    text: message,
-    apikey: apiKey
-  });
-
-  try {
-    const response = await fetch(`${CALLMEBOT_API}?${params}`);
-    const result = await response.text();
-    console.log('WhatsApp envoyé à', cleanPhone, ':', result);
-    return true;
-  } catch (error) {
-    console.error('Erreur envoi WhatsApp:', error);
-    return false;
-  }
-}
-
-export function formatCommandeMessage(commande) {
-  return `
-🆕 NOUVELLE COMMANDE LoveExpress !
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 CLIENT: ${commande.clientName}
-📞 TEL: ${commande.clientPhone}
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎁 DESTINATAIRE: ${commande.destName}
-📍 ADRESSE: ${commande.destAddress}
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 ÉVÉNEMENT: ${commande.eventType}
-🗓️ DATE: ${commande.eventDate}
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-�� BUDGET: ${parseInt(commande.budget).toLocaleString()} RWF
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ Répondre sur WhatsApp: ${commande.clientPhone}
-  `.trim();
-}
-
-export function formatConfirmationClient(commande) {
-  return `
-✅ Merci ${commande.clientName} !
-
-Votre demande LoveExpress a bien été reçue.
-
-📋 RÉCAPITULATIF:
-• Destinataire: ${commande.destName}
-• Événement: ${commande.eventType}
-• Date: ${commande.eventDate}
-• Budget: ${parseInt(commande.budget).toLocaleString()} RWF
-
-📄 Vous allez recevoir votre récapitulatif en PDF.
-
-⏰ Nous vous répondons sous 30 minutes.
-
-❤️ LoveExpress - Nous livrons l'amour et la gentillesse
-  `.trim();
-}
-const { moderateAvis } = require('../lib/utils/netlify-blobs.js');
-const { isAdmin } = require('../lib/utils/verify-token.js');
+const { moderateAvis } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -1011,13 +863,12 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérifier que l'utilisateur est admin via Netlify Identity
   const admin = await isAdmin(event);
   if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
+      body: JSON.stringify({ error: 'Non autorisé' })
     };
   }
 
@@ -1037,65 +888,10 @@ exports.handler = async (event) => {
     };
   }
 };
-const { savePhoto } = require('../lib/utils/netlify-blobs.js');
+const { saveCommand } = require('../../lib/utils/netlify-blobs.js');
+const { sendWhatsApp, formatCommandeMessage, formatConfirmationClient } = require('../../lib/utils/whatsapp.js');
 
 exports.handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
-  };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers, body: '' };
-  }
-
-  // Vérification admin
-  const adminKey = event.headers.authorization;
-  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
-    return {
-      statusCode: 401,
-      headers,
-      body: JSON.stringify({ error: 'Non autorisé' })
-    };
-  }
-
-  try {
-    const { photoBase64, category } = JSON.parse(event.body);
-    
-    if (!photoBase64) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Photo requise' })
-      };
-    }
-
-    // Convertir base64 en buffer
-    const base64Data = photoBase64.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
-    
-    const saved = await savePhoto(buffer, category || 'realisation');
-    
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ success: true, photo: saved })
-    };
-  } catch (error) {
-    console.error('Erreur upload:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ success: false, error: error.message })
-    };
-  }
-};
-const { saveCommand, getStore } = require('../lib/utils/netlify-blobs.js');
-const { sendWhatsApp, formatCommandeMessage, formatConfirmationClient } = require('../lib/utils/whatsapp.js');
-
-exports.handler = async (event) => {
-  // Autoriser CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -1108,40 +904,26 @@ exports.handler = async (event) => {
 
   try {
     const commande = JSON.parse(event.body);
-    
-    // 1. Sauvegarder dans Netlify Blobs (stockage principal)
     const savedCommande = await saveCommand(commande);
     
-    // 2. Backup dans Google Sheets (si configuré)
     let googleSheetsSaved = false;
     try {
-      const { addToGoogleSheets } = require('../lib/googleSheets.js');
+      const { addToGoogleSheets } = require('../../lib/googleSheets.js');
       googleSheetsSaved = await addToGoogleSheets(commande);
     } catch (e) {
-      console.log('Google Sheets non configuré, backup ignoré');
+      console.log('Google Sheets non configuré');
     }
     
-    // 3. Envoyer notification WhatsApp à l'entreprise
     const entreprisePhone = process.env.ENTREPRISE_WHATSAPP || '250799366007';
-    const messageEntreprise = formatCommandeMessage(savedCommande);
-    await sendWhatsApp(entreprisePhone, messageEntreprise);
-    
-    // 4. Envoyer confirmation WhatsApp au client
-    const messageClient = formatConfirmationClient(savedCommande);
-    await sendWhatsApp(commande.clientPhone, messageClient);
+    await sendWhatsApp(entreprisePhone, formatCommandeMessage(savedCommande));
+    await sendWhatsApp(commande.clientPhone, formatConfirmationClient(savedCommande));
     
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({
-        success: true,
-        commandeId: savedCommande.id,
-        googleSheetsBackup: googleSheetsSaved
-      })
+      body: JSON.stringify({ success: true, commandeId: savedCommande.id })
     };
-    
   } catch (error) {
-    console.error('Erreur:', error);
     return {
       statusCode: 500,
       headers,
@@ -1149,7 +931,7 @@ exports.handler = async (event) => {
     };
   }
 };
-const { getAvis } = require('../lib/utils/netlify-blobs.js');
+const { getAvis } = require('../../lib/utils/netlify-blobs.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -1163,7 +945,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Récupérer uniquement les avis publiés
     const published = await getAvis('published');
     return {
       statusCode: 200,
@@ -1178,47 +959,7 @@ exports.handler = async (event) => {
     };
   }
 };
-const { sendWhatsApp } = require('../lib/utils/whatsapp.js');
-
-exports.handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
-  };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers, body: '' };
-  }
-
-  try {
-    const { phone, message } = JSON.parse(event.body);
-    
-    if (!phone || !message) {
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({ error: 'Téléphone et message requis' })
-      };
-    }
-
-    const result = await sendWhatsApp(phone, message);
-    
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ success: result })
-    };
-  } catch (error) {
-    console.error('Erreur envoi WhatsApp:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ success: false, error: error.message })
-    };
-  }
-};
-const { saveAvis } = require('../lib/utils/netlify-blobs.js');
+const { saveAvis } = require('../../lib/utils/netlify-blobs.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -1233,8 +974,6 @@ exports.handler = async (event) => {
 
   try {
     const avis = JSON.parse(event.body);
-    
-    // Sauvegarder l'avis (statut 'pending' par défaut)
     const savedAvis = await saveAvis(avis);
     
     return {
@@ -1246,44 +985,6 @@ exports.handler = async (event) => {
         message: "Merci pour votre avis ! Il sera publié après validation."
       })
     };
-    
-  } catch (error) {
-    console.error('Erreur:', error);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ success: false, error: error.message })
-    };
-  }
-};
-exports.handler = async (event) => {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
-  };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers, body: '' };
-  }
-
-  try {
-    const { key } = JSON.parse(event.body);
-    const validKey = process.env.ADMIN_API_KEY || 'loveexpress2024';
-    
-    if (key === validKey) {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({ success: true })
-      };
-    } else {
-      return {
-        statusCode: 401,
-        headers,
-        body: JSON.stringify({ success: false, error: 'Clé invalide' })
-      };
-    }
   } catch (error) {
     return {
       statusCode: 500,
@@ -1292,8 +993,8 @@ exports.handler = async (event) => {
     };
   }
 };
-const { updateCommandeStatus } = require('../lib/utils/netlify-blobs.js');
-const { isAdmin } = require('../lib/utils/verify-token.js');
+const { updateCommandeStatus } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -1306,13 +1007,12 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérifier que l'utilisateur est admin via Netlify Identity
   const admin = await isAdmin(event);
   if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
+      body: JSON.stringify({ error: 'Non autorisé' })
     };
   }
 
@@ -1332,8 +1032,8 @@ exports.handler = async (event) => {
     };
   }
 };
-const { getCommandes } = require('../lib/utils/netlify-blobs.js');
-const { isAdmin } = require('../lib/utils/verify-token.js');
+const { getCommandes } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -1346,13 +1046,12 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérifier que l'utilisateur est admin via Netlify Identity
   const admin = await isAdmin(event);
   if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
+      body: JSON.stringify({ error: 'Non autorisé' })
     };
   }
 
@@ -1371,8 +1070,8 @@ exports.handler = async (event) => {
     };
   }
 };
-const { getAvis } = require('../lib/utils/netlify-blobs.js');
-const { isAdmin } = require('../lib/utils/verify-token.js');
+const { getAvis } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -1385,13 +1084,12 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérifier que l'utilisateur est admin via Netlify Identity
   const admin = await isAdmin(event);
   if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
+      body: JSON.stringify({ error: 'Non autorisé' })
     };
   }
 
@@ -1412,7 +1110,6 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error('Erreur:', error);
     return {
       statusCode: 500,
       headers,
@@ -1420,228 +1117,6 @@ exports.handler = async (event) => {
     };
   }
 };
-'use client'
-
-import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
-import Link from 'next/link'
-import { X, Heart, User, Calendar, ArrowRight, Star } from 'lucide-react'
-
-// Témoignages clients (aperçu sur la page d'accueil)
-const testimonials = [
-  {
-    id: 1,
-    url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',
-    clientName: 'Marie & Jean',
-    event: 'Demande en mariage',
-    date: '15 Mars 2026',
-    message: 'Merci LoveExpress pour ce moment magique !',
-    rating: 5
-  },
-  {
-    id: 2,
-    url: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
-    clientName: 'Sarah',
-    event: 'Anniversaire 30 ans',
-    date: '2 Avril 2026',
-    message: 'Une décoration magnifique, tout le monde a adoré !',
-    rating: 5
-  },
-  {
-    id: 3,
-    url: 'https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg',
-    clientName: 'David',
-    event: 'Baby shower',
-    date: '20 Mars 2026',
-    message: 'Les ballons étaient parfaits, merci !',
-    rating: 5
-  }
-]
-
-// Variants d'animation
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.6, ease: [0.2, 0.9, 0.3, 1] }
-  }
-}
-
-export default function Gallery() {
-  const [selectedTestimonial, setSelectedTestimonial] = useState<typeof testimonials[0] | null>(null)
-
-  return (
-    <>
-      <section className="py-24 bg-white">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
-              <Heart size={14} className="text-primary" />
-              <span className="text-xs font-medium text-primary uppercase tracking-wider">Témoignages</span>
-            </div>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-              Ils nous ont fait confiance
-            </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              Découvrez les sourires et la joie de nos clients après leurs surprises
-            </p>
-          </motion.div>
-
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            {testimonials.map((item, index) => (
-              <motion.div
-                key={item.id}
-                variants={itemVariants}
-                whileHover={{ y: -8 }}
-                onClick={() => setSelectedTestimonial(item)}
-                className="group relative bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
-              >
-                <div className="relative h-64 overflow-hidden">
-                  <img
-                    src={item.url}
-                    alt={item.clientName}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                  
-                  {/* Rating */}
-                  <div className="absolute bottom-4 left-4 flex gap-0.5">
-                    {[...Array(item.rating)].map((_, i) => (
-                      <Star key={i} size={14} className="fill-accent text-accent" />
-                    ))}
-                  </div>
-                  
-                  {/* Overlay au hover */}
-                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <Heart size={48} className="text-white drop-shadow-lg transform scale-0 group-hover:scale-100 transition-transform duration-300" />
-                  </div>
-                </div>
-                
-                <div className="p-5">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User size={14} className="text-primary" />
-                    </div>
-                    <h3 className="font-semibold text-dark">{item.clientName}</h3>
-                  </div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Calendar size={12} className="text-gray-400" />
-                    <span className="text-xs text-gray-400">{item.date}</span>
-                    <span className="text-xs text-primary ml-auto">{item.event}</span>
-                  </div>
-                  <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Bouton pour voir toute la galerie */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <Link 
-              href="/gallery" 
-              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-6 py-3 rounded-full font-semibold hover:bg-primary hover:text-white transition-all duration-300 group"
-            >
-              Voir tous les témoignages
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition" />
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Modal pour agrandir le témoignage */}
-      <AnimatePresence>
-        {selectedTestimonial && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedTestimonial(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 50, opacity: 0 }}
-              animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 50, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="relative">
-                <img 
-                  src={selectedTestimonial.url} 
-                  alt={selectedTestimonial.clientName}
-                  className="w-full h-80 object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <button 
-                  onClick={() => setSelectedTestimonial(null)}
-                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
-                >
-                  <X size={20} className="text-white" />
-                </button>
-                <div className="absolute bottom-4 left-4 flex gap-0.5">
-                  {[...Array(selectedTestimonial.rating)].map((_, i) => (
-                    <Star key={i} size={16} className="fill-accent text-accent" />
-                  ))}
-                </div>
-              </div>
-              <div className="p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User size={18} className="text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-dark">{selectedTestimonial.clientName}</h3>
-                    <div className="flex items-center gap-2">
-                      <Calendar size={12} className="text-gray-400" />
-                      <span className="text-xs text-gray-500">{selectedTestimonial.date}</span>
-                    </div>
-                  </div>
-                  <span className="ml-auto text-sm text-primary font-medium">{selectedTestimonial.event}</span>
-                </div>
-                <p className="text-gray-600 italic text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
-                <div className="mt-6 pt-4 border-t flex justify-center">
-                  <div className="flex gap-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Heart key={i} size={16} className="fill-primary text-primary" />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  )
-}
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
@@ -3430,6 +2905,45 @@ export default function AvisForm() {
     </section>
   )
 }
+'use client';
+
+import { useEffect } from 'react';
+
+export default function IdentityProvider() {
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Charger le script Netlify Identity Widget via CDN (plus fiable)
+    const script = document.createElement('script');
+    script.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+    script.async = true;
+    document.head.appendChild(script);
+
+    script.onload = () => {
+      // @ts-ignore
+      const netlifyIdentity = window.netlifyIdentity;
+      if (netlifyIdentity) {
+        netlifyIdentity.init({
+          APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+        });
+
+        // Détecter un token d'invitation
+        const hash = window.location.hash;
+        if (hash && hash.includes('invite_token')) {
+          setTimeout(() => {
+            netlifyIdentity.open();
+          }, 500);
+        }
+      }
+    };
+
+    return () => {
+      // Nettoyage non nécessaire pour le script
+    };
+  }, []);
+
+  return null;
+}
 'use client'
 
 import { motion } from 'framer-motion'
@@ -3780,6 +3294,96 @@ export default function About() {
     </section>
   )
 }
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LoveExpress - CMS Admin</title>
+  </head>
+  <body>
+    <!-- Netlify Identity Widget -->
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <!-- Netlify CMS -->
+    <script src="https://unpkg.com/netlify-cms@^2.0.0/dist/netlify-cms.js"></script>
+  </body>
+</html>
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "commandes"
+    label: "📦 Commandes"
+    folder: "content/commandes"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Client", name: "clientName", widget: "string" }
+      - { label: "Téléphone", name: "clientPhone", widget: "string" }
+      - { label: "Email", name: "clientEmail", widget: "string", required: false }
+      - { label: "Destinataire", name: "destName", widget: "string" }
+      - { label: "Adresse", name: "destAddress", widget: "string" }
+      - { label: "Type d'événement", name: "eventType", widget: "string" }
+      - { label: "Date événement", name: "eventDate", widget: "date" }
+      - { label: "Budget", name: "budget", widget: "number" }
+      - { label: "Statut", name: "status", widget: "select", options: ["pending", "confirmed", "delivered", "cancelled"], default: "pending" }
+
+  - name: "avis"
+    label: "⭐ Avis clients"
+    folder: "content/avis"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Nom", name: "nom", widget: "string" }
+      - { label: "Note", name: "note", widget: "number", valueType: "int", min: 1, max: 5 }
+      - { label: "Message", name: "message", widget: "text" }
+      - { label: "Photo", name: "photo", widget: "image", required: false }
+      - { label: "Statut", name: "status", widget: "select", options: ["pending", "published", "rejected"], default: "pending" }
+
+  - name: "services"
+    label: "🎈 Services"
+    folder: "content/services"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Titre", name: "title", widget: "string" }
+      - { label: "Sous-titre", name: "subtitle", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Prix", name: "price", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Badge", name: "badge", widget: "string" }
+      - { label: "Caractéristiques", name: "features", widget: "list", field: { label: "Feature", name: "feature", widget: "string" } }
+
+  - name: "gift_baskets"
+    label: "🎁 Paniers cadeaux"
+    folder: "content/gift_baskets"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Nom", name: "name", widget: "string" }
+      - { label: "Sous-titre", name: "subtitle", widget: "string" }
+      - { label: "Badge", name: "badge", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Description longue", name: "longDescription", widget: "text" }
+      - { label: "Prix standard", name: "priceStandard", widget: "number" }
+      - { label: "Prix premium", name: "pricePremium", widget: "number" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Populaire", name: "popular", widget: "boolean", default: false }
+      - { label: "Contenu", name: "includes", widget: "list", field: { label: "Item", name: "item", widget: "string" } }
+
+  - name: "realisations"
+    label: "📸 Réalisations"
+    folder: "content/realisations"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Titre", name: "title", widget: "string" }
+      - { label: "Catégorie", name: "category", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
@@ -4041,11 +3645,7 @@ i18n
   })
 
 export default i18n
-// Utilitaires pour Netlify Blobs (stockage gratuit)
-// Documentation: https://docs.netlify.com/blobs/
-
 export async function getStore(storeName) {
-  // En développement, utiliser localStorage ou mémoire
   if (process.env.NODE_ENV === 'development') {
     return {
       get: async (key) => {
@@ -4068,7 +3668,6 @@ export async function getStore(storeName) {
     };
   }
 
-  // En production, utiliser Netlify Blobs
   const { getStore: getNetlifyStore } = await import('@netlify/blobs');
   return getNetlifyStore(storeName);
 }
@@ -4076,12 +3675,7 @@ export async function getStore(storeName) {
 export async function saveCommand(data) {
   const store = await getStore('commandes');
   const id = `CMD_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-  const commande = {
-    id,
-    ...data,
-    status: 'pending',
-    createdAt: new Date().toISOString()
-  };
+  const commande = { id, ...data, status: 'pending', createdAt: new Date().toISOString() };
   await store.set(id, commande);
   return commande;
 }
@@ -4110,12 +3704,7 @@ export async function updateCommandeStatus(id, status) {
 export async function saveAvis(avis) {
   const store = await getStore('avis');
   const id = `AVIS_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-  const nouvelAvis = {
-    id,
-    ...avis,
-    status: 'pending',
-    createdAt: new Date().toISOString()
-  };
+  const nouvelAvis = { id, ...avis, status: 'pending', createdAt: new Date().toISOString() };
   await store.set(id, nouvelAvis);
   return nouvelAvis;
 }
@@ -4142,53 +3731,21 @@ export async function moderateAvis(id, status) {
   }
   return avis;
 }
-
-export async function savePhoto(file, category) {
-  const store = await getStore('photos');
-  const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-  await store.set(id, file);
-  return { id, url: `/.netlify/images/${id}` };
-}
-
-export async function getPhotos(category = null) {
-  const store = await getStore('photos');
-  const keys = await store.list();
-  const photos = [];
-  for (const key of keys) {
-    if (category === null || key.startsWith(category)) {
-      photos.push({ id: key, url: `/.netlify/images/${key}` });
-    }
-  }
-  return photos;
-}
-// Utilitaires pour notifications WhatsApp via CallMeBot API
-// API gratuite: https://www.callmebot.com/blog/free-api-whatsapp-messages/
-
 const CALLMEBOT_API = 'https://api.callmebot.com/whatsapp.php';
 
 export async function sendWhatsApp(phoneNumber, message) {
-  // Format du numéro: 25078XXXXXXXX (sans +)
   const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
-  
-  // Récupérer la clé API depuis les variables d'environnement
   const apiKey = process.env.CALLMEBOT_API_KEY;
   
   if (!apiKey) {
-    console.log('⚠️ Pas de clé API CallMeBot, notification non envoyée');
-    console.log('Message aurait été:', message);
+    console.log('⚠️ Pas de clé API CallMeBot');
     return false;
   }
 
-  const params = new URLSearchParams({
-    phone: cleanPhone,
-    text: message,
-    apikey: apiKey
-  });
+  const params = new URLSearchParams({ phone: cleanPhone, text: message, apikey: apiKey });
 
   try {
     const response = await fetch(`${CALLMEBOT_API}?${params}`);
-    const result = await response.text();
-    console.log('WhatsApp envoyé à', cleanPhone, ':', result);
     return true;
   } catch (error) {
     console.error('Erreur envoi WhatsApp:', error);
@@ -4197,58 +3754,21 @@ export async function sendWhatsApp(phoneNumber, message) {
 }
 
 export function formatCommandeMessage(commande) {
-  return `
-🆕 NOUVELLE COMMANDE LoveExpress !
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-👤 CLIENT: ${commande.clientName}
-📞 TEL: ${commande.clientPhone}
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎁 DESTINATAIRE: ${commande.destName}
-📍 ADRESSE: ${commande.destAddress}
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-📅 ÉVÉNEMENT: ${commande.eventType}
-🗓️ DATE: ${commande.eventDate}
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-�� BUDGET: ${parseInt(commande.budget).toLocaleString()} RWF
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ Répondre sur WhatsApp: ${commande.clientPhone}
-  `.trim();
+  return `🆕 NOUVELLE COMMANDE !\nClient: ${commande.clientName}\nTel: ${commande.clientPhone}\nDestinataire: ${commande.destName}\nDate: ${commande.eventDate}\nBudget: ${parseInt(commande.budget).toLocaleString()} RWF`;
 }
 
 export function formatConfirmationClient(commande) {
-  return `
-✅ Merci ${commande.clientName} !
-
-Votre demande LoveExpress a bien été reçue.
-
-📋 RÉCAPITULATIF:
-• Destinataire: ${commande.destName}
-• Événement: ${commande.eventType}
-• Date: ${commande.eventDate}
-• Budget: ${parseInt(commande.budget).toLocaleString()} RWF
-
-📄 Vous allez recevoir votre récapitulatif en PDF.
-
-⏰ Nous vous répondons sous 30 minutes.
-
-❤️ LoveExpress - Nous livrons l'amour et la gentillesse
-  `.trim();
+  return `✅ Merci ${commande.clientName} ! Votre demande a bien été reçue. Nous vous répondons sous 30 min.`;
 }
-// Vérification du token JWT Netlify Identity
 const jwt = require('jsonwebtoken');
 
-// La clé publique Netlify Identity (fixe pour tous les sites)
 const NETLIFY_JWT_SECRET = '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCYZM6i19L\nnMvNtP5W3C9lT5S8m7j9k0L2nM3pO4qR5sT6uV7wX8yZ9aB0cD1eF2gH3iJ4kL5mN6oP7\nQ8rR9sS0tU1vV2wW3xX4yY5zZ6aA7bB8cC9dD0eE1fF2gG3hH4iI5jJ6kK7lL8mM9nN0oO1pP2qQ3rR4sS5tT6uU7vV8wW9xX0yY1zZ2aA3bB4cC5dD6eE7fF8gG9hH0iI1jJ2kK3lL4mM5nN6oO7pP8qQ9rR0sS1tT2uU3vV4wW5xX6yY7zZ8aA9bB0cC1dD2eE3fF4gG5hH6iI7jJ8kK9lL0mM1nN2oO3pP4qQ5rR6sS7tT8uU9vV0wW1xX2yY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ0aA1bB2cC3dD4eE5fF6gG7hH8iI9jJ0kK1lL2mM3nN4oO5pP6qQ7rR8sS9tT0uU1vV2wW3xX4yY5zZ6aA7bB8cC9dD0eE1fF2gG3hH4iI5jJ6kK7lL8mM9nN0oO\n-----END PUBLIC KEY-----';
 
 exports.verifyToken = async (token) => {
   return new Promise((resolve, reject) => {
     jwt.verify(token, NETLIFY_JWT_SECRET, { algorithms: ['RS256'] }, (err, decoded) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(decoded);
-      }
+      if (err) reject(err);
+      else resolve(decoded);
     });
   });
 };
@@ -4256,20 +3776,14 @@ exports.verifyToken = async (token) => {
 exports.isAdmin = async (event) => {
   try {
     const authHeader = event.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return false;
-    }
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
     
     const token = authHeader.split(' ')[1];
     const decoded = await exports.verifyToken(token);
     
-    // Vérifier que l'email est autorisé
     const allowedEmails = process.env.ADMIN_EMAILS || 'mekuiadele271@gmail.com';
-    const emails = allowedEmails.split(',');
-    
-    return emails.includes(decoded.email);
+    return allowedEmails.split(',').includes(decoded.email);
   } catch (error) {
-    console.error('Erreur vérification admin:', error);
     return false;
   }
 };
