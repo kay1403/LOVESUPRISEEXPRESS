@@ -2,6 +2,8 @@
 
 import { AdminAuthGuard, useNetlifyAuth } from './AdminIdentity';
 import { Heart } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 function AdminHeader() {
   const { user, logout } = useNetlifyAuth();
