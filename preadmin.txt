@@ -1,0 +1,2682 @@
+'use client'
+
+export default function Footer() {
+  const currentYear = new Date().getFullYear()
+
+  return (
+    <footer className="bg-dark text-white py-12">
+      <div className="container-custom">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="font-display text-2xl font-bold text-primary mb-4">
+              LoveExpress
+            </h3>
+            <p className="text-gray-400 text-sm">
+              We deliver love and kindness. Creons ensemble des moments inoubliables.
+            </p>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-4">Contact</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              <li>Tel: +250 799 366 007</li>
+              <li>Tel: +250 737 769 092</li>
+              <li>Kigali, Rwanda</li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-4">Services</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              <li>Balloons & Helium</li>
+              <li>Party Decoration</li>
+              <li>Surprise Planner</li>
+              <li>Gift Baskets</li>
+            </ul>
+          </div>
+          
+          <div>
+            <h4 className="font-semibold text-lg mb-4">Horaires</h4>
+            <ul className="space-y-2 text-gray-400 text-sm">
+              <li>Lundi - Samedi: 9h - 19h</li>
+              <li>Dimanche: Sur rendez-vous</li>
+              <li>Livraison 24/24 sur demande</li>
+            </ul>
+          </div>
+        </div>
+        
+        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
+          <p>&copy; {currentYear} LoveExpress. Tous droits reserves.</p>
+          <p className="mt-2">We deliver love and kindness</p>
+        </div>
+      </div>
+    </footer>
+  )
+}
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import { X, Info, Sparkles, Clock, MapPin, CreditCard, Heart, Gift, Flower2, Globe, PartyPopper, Check } from 'lucide-react'
+
+type ServiceOption = {
+  name: string
+  price: number
+  note?: string
+}
+
+type ServicePack = {
+  name: string
+  price: number
+  desc: string
+}
+
+const services = [
+  {
+    id: 1,
+    title: "Party",
+    subtitle: "Decoration",
+    badge: "Pack Premier Frisson",
+    description: 'The beauty of your events is prepared everyday',
+    longDescription: 'Transformez n\'importe quel espace en un lieu magique. Décoration complète et personnalisée selon votre thème.',
+    basePrice: 60000,
+    priceRange: '60 000 RWF',
+    image: 'https://images.pexels.com/photos/11474201/pexels-photo-11474201.jpeg',
+    packs: [
+      { name: 'Pack Premier Frisson', price: 60000, desc: '15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie' },
+      { name: 'Pack Love XL', price: 100000, desc: '25 ballons, lettre/chiffre lumineux, table dressée pour deux, bougie parfumée, playlist personnalisée' },
+      { name: 'Pack ROYAL SURPRISE', price: 200000, desc: 'Rideau de ballons + néon personnalisé, plateau de fruits + vin, photographe 20 min, bouquet de fleurs' }
+    ],
+    includes: ['Installation complète', 'Décoration sur mesure', 'Démontage inclus', 'Discrétion garantie'],
+    options: [] as ServiceOption[],
+    duration: '4-8 heures',
+    coverage: 'Kigali et environs',
+    icon: PartyPopper
+  },
+  {
+    id: 2,
+    title: "Surprise",
+    subtitle: "Planner",
+    badge: "Expert en émotions",
+    description: 'Dites nous l\'occasion et on planifie toute la surprise',
+    longDescription: 'Vous avez l\'idée, nous exécutons. Notre service de planification de surprise prend en charge TOUS les détails : logistique, coordination, timing, et même la complicité des invités.',
+    basePrice: 200000,
+    priceRange: '200 000 RWF',
+    //image: 'https://images.pexels.com/photos/36253171/pexels-photo-36253171.jpeg',
+    image: 'https://i.pinimg.com/1200x/44/8c/f2/448cf2102dc4b6f9156ed867f181e985.jpg',
+    includes: ['Consultation et planification', 'Coordination avec tous les prestataires', 'Timing et discrétion garantis', 'Présence sur place'],
+    options: [
+      { name: 'Photographe professionnel', price: 50000 },
+      { name: 'Violoniste / Musicien', price: 60000 }
+    ] as ServiceOption[],
+    duration: '1-2 semaines',
+    coverage: 'Tout le Rwanda',
+    icon: Sparkles
+  },
+  {
+    id: 3,
+    title: "Custom",
+    subtitle: "Website",
+    badge: "Digital & Créatif",
+    description: 'Site web personnalisé pour votre événement ou entreprise',
+    longDescription: 'Créez un site web personnalisé pour votre événement : site d\'anniversaire surprise, site de mariage avec RSVP, ou site vitrine pour votre commerce.',
+    basePrice: 25000,
+    pricePremium: 45000,
+    priceRange: '25 000 - 45 000 RWF',
+    image: 'https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg',
+    includes: ['Design personnalisé', 'Hébergement 1 an inclus', 'Nom de domaine personnalisé', 'Support technique 3 mois'],
+    options: [
+      { name: 'Site simple (5 pages)', price: 25000 },
+      { name: 'Site premium (illimité + blog)', price: 45000 },
+      { name: 'Galerie photo', price: 20000 }
+    ] as ServiceOption[],
+    duration: '5-10 jours',
+    coverage: '100% en ligne',
+    icon: Globe
+  },
+  {
+    id: 4,
+    title: "Flower",
+    subtitle: "Bouquet",
+    badge: "Frais & Élégant",
+    description: 'Pour tout événement - Bouquet personnalisable',
+    longDescription: 'Des bouquets de fleurs fraîches soigneusement sélectionnés. Parfait pour accompagner toute surprise. Le client peut adapter son montant.',
+    basePrice: 15000,
+    priceRange: '15 000 RWF',
+    image: 'https://images.pexels.com/photos/32356065/pexels-photo-32356065.jpeg',
+    includes: ['Fleurs fraîches de saison', 'Emballage élégant', 'Carte personnalisée', 'Livraison offerte'],
+    options: [
+      { name: 'Bouquet premium roses rouges', price: 25000 },
+      { name: 'Livraison express (2h)', price: 5000 },
+      { name: 'Personnalisation du montant', price: 0, note: 'À partir de 15 000 RWF' }
+    ] as ServiceOption[],
+    duration: '2 heures',
+    coverage: 'Kigali',
+    icon: Flower2
+  },
+  {
+    id: 5,
+    title: "Gift",
+    subtitle: "Baskets",
+    badge: "Luxe & Douceur",
+    description: 'Paniers cadeaux personnalisables pour toutes les occasions',
+    longDescription: 'Des paniers cadeaux luxueux soigneusement composés selon l\'occasion et les goûts de la personne. Chaque panier est unique.',
+    basePrice: 15000,
+    priceRange: '15 000 - 100 000 RWF',
+    image: 'https://i.pinimg.com/1200x/ba/98/c8/ba98c85a1a0864781b15f9f0a823a691.jpg',
+    includes: ['Panier premium', 'Produits de qualité', 'Carte personnalisée', 'Emballage cadeau'],
+    options: [
+      { name: 'Ajout de chocolats belges', price: 12000 },
+      { name: 'Ajout de champagne', price: 25000 },
+      { name: 'Livraison nocturne', price: 8000 }
+    ] as ServiceOption[],
+    duration: '1-2 jours',
+    coverage: 'Tout le Rwanda',
+    icon: Gift
+  }
+]
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.2, 0.9, 0.3, 1] } }
+}
+
+export default function Services() {
+  const [selectedService, setSelectedService] = useState<typeof services[0] | null>(null)
+
+  return (
+    <>
+      <section id="services" className="py-24 bg-white">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Nos Prestations</span>
+            </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">Nos Services</h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">Tout ce dont vous avez besoin pour créer le moment de surprise parfait</p>
+          </motion.div>
+          
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            {services.map((service) => (
+              <motion.div
+                key={service.id}
+                variants={itemVariants}
+                whileHover={{ y: -10 }}
+                onClick={() => setSelectedService(service)}
+                className="group bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
+              >
+                <div className="relative h-56 overflow-hidden">
+                  <img src={service.image} alt={service.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold text-primary">{service.badge}</span>
+                  </div>
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold bg-primary/90 px-5 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                      Découvrir
+                    </span>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      {service.icon && <service.icon size={18} className="text-primary" />}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-dark">{service.title}</h3>
+                      <p className="text-xs text-gray-400">{service.subtitle}</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">{service.description}</p>
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <span className="text-primary font-bold">{service.priceRange}</span>
+                    <button className="text-primary text-sm font-medium hover:text-accent transition flex items-center gap-1">
+                      Détails <Info size={14} />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      <AnimatePresence>
+        {selectedService && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setSelectedService(null)}>
+            <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} transition={{ type: "spring", damping: 25 }} className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="relative h-64">
+                <img src={selectedService.image} alt={selectedService.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                <button onClick={() => setSelectedService(null)} className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"><X size={20} className="text-white" /></button>
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-3">
+                    <span className="text-xs font-medium text-white uppercase tracking-wider">{selectedService.badge}</span>
+                  </div>
+                  <h3 className="text-3xl font-display font-bold text-white">{selectedService.title} {selectedService.subtitle}</h3>
+                  <p className="text-white/80 mt-1">{selectedService.priceRange}</p>
+                </div>
+              </div>
+              <div className="p-6 space-y-6">
+                <div><h4 className="text-xl font-semibold text-dark mb-3">Description</h4><p className="text-gray-600 leading-relaxed">{selectedService.longDescription}</p></div>
+                {selectedService.packs && selectedService.packs.length > 0 && (
+                  <div className="bg-primaryLight rounded-xl p-5">
+                    <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2"><Sparkles size={20} className="text-primary" />Nos Packs Décoration</h4>
+                    <div className="space-y-3">
+                      {selectedService.packs.map((pack, idx) => (
+                        <div key={idx} className="border-b border-white/50 pb-3 last:border-0">
+                          <div className="flex justify-between items-center mb-1"><span className="font-bold text-dark">{pack.name}</span><span className="text-primary font-bold">{pack.price.toLocaleString()} RWF</span></div>
+                          <p className="text-sm text-gray-600">{pack.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-primaryLight rounded-xl p-5">
+                    <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2"><Check size={20} className="text-primary" />Inclus</h4>
+                    <ul className="space-y-2">{selectedService.includes.map((item, idx) => (<li key={idx} className="flex items-center gap-2 text-gray-600 text-sm"><Check size={14} className="text-primary" />{item}</li>))}</ul>
+                  </div>
+                  {selectedService.options && selectedService.options.length > 0 && (
+                    <div className="bg-primaryLight rounded-xl p-5">
+                      <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2"><CreditCard size={20} className="text-primary" />Options</h4>
+                      <ul className="space-y-2">{selectedService.options.map((option, idx) => (<li key={idx} className="flex justify-between items-center text-gray-600 text-sm"><span>{option.name}</span>{option.price > 0 ? <span className="text-primary font-semibold">+{option.price.toLocaleString()} RWF</span> : option.note ? <span className="text-xs text-gray-400">{option.note}</span> : <span className="text-green-600 text-xs">Inclus</span>}</li>))}</ul>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-4 p-5 bg-gradient-to-r from-primary/5 to-primaryLight rounded-xl">
+                  <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><Clock size={20} className="text-primary" /></div><div><p className="text-xs text-gray-500">Préparation</p><p className="font-semibold text-dark text-sm">{selectedService.duration}</p></div></div>
+                  <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center"><MapPin size={20} className="text-primary" /></div><div><p className="text-xs text-gray-500">Couverture</p><p className="font-semibold text-dark text-sm">{selectedService.coverage}</p></div></div>
+                </div>
+                <div className="flex gap-4 pt-4">
+                  <button onClick={() => { setSelectedService(null); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }} className="flex-1 bg-primary text-white px-6 py-3 rounded-full font-semibold hover:bg-primary/90 transition">Demander un devis</button>
+                  <button onClick={() => setSelectedService(null)} className="px-6 py-3 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:border-primary hover:text-primary transition">Fermer</button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+'use client';
+
+import { useState, useEffect } from 'react';
+
+export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminKey, setAdminKey] = useState('');
+  const [activeTab, setActiveTab] = useState('orders');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const handleLogin = () => {
+    if (adminKey === 'loveexpress2024') {
+      setIsAuthenticated(true);
+      fetchData();
+    } else {
+      alert('Clé admin incorrecte');
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const ordersRes = await fetch('/api/get-orders', {
+        headers: { 'Authorization': 'Bearer loveexpress2024' }
+      });
+      const ordersData = await ordersRes.json();
+      if (ordersData.success) setOrders(ordersData.commandes || []);
+
+      const avisRes = await fetch('/api/get-all-testimonials', {
+        headers: { 'Authorization': 'Bearer loveexpress2024' }
+      });
+      const avisData = await avisRes.json();
+      if (avisData.success) setTestimonials(avisData.avis || []);
+    } catch (error) {
+      console.error('Erreur chargement:', error);
+    }
+    setLoading(false);
+  };
+
+  const updateOrderStatus = async (id: string, status: string) => {
+    const res = await fetch('/api/update-order-status', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer loveexpress2024'
+      },
+      body: JSON.stringify({ id, status })
+    });
+    if (res.ok) fetchData();
+  };
+
+  const moderateTestimonial = async (id: string, status: string) => {
+    const res = await fetch('/api/moderate-testimonial', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer loveexpress2024'
+      },
+      body: JSON.stringify({ id, status })
+    });
+    if (res.ok) fetchData();
+  };
+
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-700',
+      confirmed: 'bg-green-100 text-green-700',
+      delivered: 'bg-blue-100 text-blue-700',
+      cancelled: 'bg-red-100 text-red-700'
+    };
+    return badges[status] || badges.pending;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: 'En attente',
+      confirmed: 'Confirmée',
+      delivered: 'Livrée',
+      cancelled: 'Annulée'
+    };
+    return labels[status] || 'En attente';
+  };
+
+  const stats = {
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
+    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
+    totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
+  };
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">Chargement...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-dark">Dashboard LoveExpress</h1>
+            <p className="text-gray-500 mt-2">Accès réservé à l'administration</p>
+          </div>
+          <input
+            type="password"
+            placeholder="Clé d'accès"
+            value={adminKey}
+            onChange={(e) => setAdminKey(e.target.value)}
+            className="w-full px-4 py-3 border rounded-lg mb-4"
+            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+          />
+          <button onClick={handleLogin} className="bg-primary text-white w-full py-3 rounded-lg font-semibold hover:bg-primary/90 transition">
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="px-6 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
+          <button onClick={() => setIsAuthenticated(false)} className="text-gray-500 hover:text-red-500 text-sm">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold">{stats.totalOrders}</p>
+          <p className="text-gray-500 text-sm">Commandes</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
+          <p className="text-gray-500 text-sm">En attente</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-accent">{stats.pendingTestimonials}</p>
+          <p className="text-gray-500 text-sm">Avis à modérer</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-green-600">{stats.totalRevenue.toLocaleString()} RWF</p>
+          <p className="text-gray-500 text-sm">CA total</p>
+        </div>
+      </div>
+
+      <div className="px-6">
+        <div className="flex gap-2 border-b">
+          <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 font-medium ${activeTab === 'orders' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+            Commandes ({stats.totalOrders})
+          </button>
+          <button onClick={() => setActiveTab('testimonials')} className={`px-4 py-2 font-medium ${activeTab === 'testimonials' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+            Avis clients ({stats.pendingTestimonials} en attente)
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {loading ? (
+          <div className="text-center py-12">Chargement...</div>
+        ) : activeTab === 'orders' ? (
+          <div className="space-y-4">
+            {orders.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucune commande</div>
+            ) : (
+              orders.map((order) => (
+                <div key={order.id} className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start flex-wrap gap-3">
+                    <div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                      <p className="font-semibold mt-2">{order.clientName}</p>
+                      <p className="text-sm text-gray-500">→ {order.destName}</p>
+                      <p className="text-primary font-bold mt-1">{parseInt(order.budget).toLocaleString()} RWF</p>
+                    </div>
+                    <select
+                      value={order.status}
+                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                      className="px-3 py-2 text-sm border rounded-lg bg-white"
+                    >
+                      <option value="pending">En attente</option>
+                      <option value="confirmed">Confirmée</option>
+                      <option value="delivered">Livrée</option>
+                      <option value="cancelled">Annulée</option>
+                    </select>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {testimonials.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucun témoignage</div>
+            ) : (
+              testimonials.map((testimonial) => (
+                <div key={testimonial.id} className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start flex-wrap gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex gap-0.5">
+                          {[...Array(testimonial.note || 5)].map((_, i) => (
+                            <span key={i} className="text-accent">★</span>
+                          ))}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${testimonial.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {testimonial.status === 'published' ? 'Publié' : 'En attente'}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 italic">"{testimonial.message}"</p>
+                      <p className="text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
+                    </div>
+                    {testimonial.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm">
+                          Publier
+                        </button>
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm">
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { ChevronLeft, ChevronRight, Heart, ChevronDown } from 'lucide-react'
+import Image from 'next/image'
+import LanguageSelector from './LanguageSelector'
+
+// Services data
+const services = [
+  {
+    id: 1,
+    title: "Bouquet",
+    subtitle: "de Fleurs",
+    badge: "Frais & Élégant",
+    description: "Des bouquets de fleurs fraîches pour toutes les occasions. Roses, lys, tournesols ou compositions sur mesure pour exprimer vos sentiments.",
+    features: ["Fleurs fraîches de saison", "Emballage élégant", "Carte personnalisée", "Livraison offerte à Kigali"],
+    image: "https://images.pexels.com/photos/35841488/pexels-photo-35841488.jpeg",
+    bgColor: "#FF4D6D",
+    bgLight: "#FFF0F3"
+  },
+  {
+    id: 2,
+    title: "Décoration",
+    subtitle: "d'Exception",
+    badge: "Art & Élégance",
+    description: "Transformez n'importe quel espace en un lieu magique. Nos décorations sur mesure créent l'ambiance parfaite pour vos célébrations les plus importantes.",
+    features: ["Thèmes personnalisés", "Installation complète", "Démontage inclus"],
+    image: "https://images.pexels.com/photos/17417854/pexels-photo-17417854.jpeg",
+    bgColor: "#FF4D6D",
+    bgLight: "#FFF0F3"
+  },
+  {
+    id: 3,
+    title: "Surprise",
+    subtitle: "Planner",
+    badge: "Expert en émotions",
+    description: "Vous avez l'idée, nous l'exécutons. Une organisation sans faille pour des moments de surprise parfaitement orchestrés et totalement inoubliables.",
+    features: ["Planification complète", "Discrétion absolue", "Coordination totale"],
+    image: "https://images.pexels.com/photos/30319620/pexels-photo-30319620.jpeg",
+    bgColor: "#FF4D6D",
+    bgLight: "#FFF0F3"
+  },
+  {
+    id: 4,
+    title: "Gift",
+    subtitle: "Baskets",
+    badge: "Luxe & Douceur",
+    description: "Des paniers cadeaux luxueux soigneusement composés selon les goûts et l'occasion. Un cadeau qui marque les esprits et réchauffe les cœurs.",
+    features: ["Personnalisation totale", "Produits premium", "Emballage cadeau"],
+    image: "https://i.pinimg.com/1200x/e6/3e/d3/e63ed35a4e166f7830f1ef5cd2839392.jpg",
+    bgColor: "#FF4D6D",
+    bgLight: "#FFF0F3"
+  }
+]
+
+// Cœurs flottants - VISIBLES
+const FloatingHearts = () => {
+  const hearts = [
+    { id: 1, x: "8%", y: "15%", size: 18, duration: 10, delay: 0 },
+    { id: 2, x: "15%", y: "45%", size: 24, duration: 12, delay: 2 },
+    { id: 3, x: "5%", y: "70%", size: 14, duration: 8, delay: 4 },
+    { id: 4, x: "25%", y: "25%", size: 20, duration: 14, delay: 1 },
+    { id: 5, x: "12%", y: "85%", size: 16, duration: 11, delay: 3 },
+    { id: 6, x: "20%", y: "55%", size: 22, duration: 9, delay: 5 },
+    { id: 7, x: "3%", y: "35%", size: 12, duration: 13, delay: 2.5 },
+    { id: 8, x: "28%", y: "10%", size: 26, duration: 15, delay: 1.5 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {hearts.map((heart) => (
+        <motion.div
+          key={heart.id}
+          className="absolute"
+          style={{ left: heart.x, top: heart.y }}
+          animate={{
+            y: [0, -40, -80, -40, 0],
+            x: [0, 15, 0, -15, 0],
+            opacity: [0.2, 0.5, 0.3, 0.5, 0.2],
+            scale: [1, 1.1, 1, 0.9, 1]
+          }}
+          transition={{
+            duration: heart.duration,
+            repeat: Infinity,
+            delay: heart.delay,
+            ease: "easeInOut"
+          }}
+        >
+          <Heart size={heart.size} className="text-primary/40" fill="#FF4D6D" fillOpacity={0.2} />
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+// Étoiles filantes - VISIBLES
+const ShootingStars = () => {
+  const stars = [
+    { id: 1, top: "8%", left: "-5%", duration: 2.5, delay: 0 },
+    { id: 2, top: "30%", left: "-10%", duration: 3, delay: 4 },
+    { id: 3, top: "55%", left: "-8%", duration: 2.8, delay: 8 },
+    { id: 4, top: "75%", left: "-15%", duration: 3.2, delay: 12 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {stars.map((star) => (
+        <motion.div
+          key={star.id}
+          className="absolute"
+          style={{ top: star.top, left: star.left }}
+          animate={{
+            x: ["0%", "100%"],
+            opacity: [0, 0.8, 0],
+          }}
+          transition={{
+            duration: star.duration,
+            repeat: Infinity,
+            delay: star.delay,
+            ease: "linear"
+          }}
+        >
+          <div className="relative">
+            <div className="w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(255,77,109,0.8)]" />
+            <div className="absolute -top-0.5 left-1 w-14 h-px bg-gradient-to-r from-primary to-transparent" />
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+// Confettis - VISIBLES
+const Confetti = () => {
+  const confettis = [
+    { id: 1, x: "10%", y: "20%", width: 6, height: 3, color: "#FF4D6D", duration: 6, delay: 0 },
+    { id: 2, x: "18%", y: "50%", width: 5, height: 2, color: "#FFD700", duration: 7, delay: 2 },
+    { id: 3, x: "7%", y: "75%", width: 4, height: 3, color: "#FF8BA8", duration: 5, delay: 4 },
+    { id: 4, x: "22%", y: "35%", width: 7, height: 2, color: "#FF6B8A", duration: 8, delay: 1 },
+    { id: 5, x: "14%", y: "65%", width: 5, height: 3, color: "#FF4D6D", duration: 6.5, delay: 3 },
+    { id: 6, x: "30%", y: "15%", width: 4, height: 2, color: "#FFD700", duration: 7.5, delay: 5 },
+    { id: 7, x: "25%", y: "80%", width: 6, height: 2, color: "#FF8BA8", duration: 5.5, delay: 1.5 },
+    { id: 8, x: "3%", y: "40%", width: 5, height: 3, color: "#FF4D6D", duration: 9, delay: 3.5 },
+    { id: 9, x: "32%", y: "60%", width: 4, height: 2, color: "#FFD700", duration: 6, delay: 2.5 },
+    { id: 10, x: "20%", y: "10%", width: 6, height: 3, color: "#FF6B8A", duration: 8.5, delay: 4.5 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {confettis.map((conf) => (
+        <motion.div
+          key={conf.id}
+          className="absolute"
+          style={{
+            left: conf.x,
+            top: conf.y,
+            width: conf.width,
+            height: conf.height,
+            backgroundColor: conf.color,
+          }}
+          animate={{
+            y: [0, -50, -100, -50, 0],
+            x: [0, 20, 0, -20, 0],
+            rotate: [0, 180, 360, 180, 0],
+            opacity: [0.3, 0.6, 0.3, 0.6, 0.3]
+          }}
+          transition={{
+            duration: conf.duration,
+            repeat: Infinity,
+            delay: conf.delay,
+            ease: "easeOut"
+          }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// Rubans flottants - VISIBLES
+const FloatingRibbons = () => {
+  const ribbons = [
+    { id: 1, x: "5%", y: "18%", duration: 11, delay: 0 },
+    { id: 2, x: "28%", y: "68%", duration: 13, delay: 3 },
+    { id: 3, x: "12%", y: "82%", duration: 9, delay: 6 },
+    { id: 4, x: "18%", y: "38%", duration: 15, delay: 1.5 },
+    { id: 5, x: "32%", y: "52%", duration: 12, delay: 4.5 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {ribbons.map((ribbon) => (
+        <motion.div
+          key={ribbon.id}
+          className="absolute"
+          style={{ left: ribbon.x, top: ribbon.y }}
+          animate={{
+            y: [0, -20, 0, 20, 0],
+            x: [0, 15, 0, -15, 0],
+            rotate: [0, 15, 0, -15, 0],
+            opacity: [0.2, 0.4, 0.2, 0.4, 0.2]
+          }}
+          transition={{
+            duration: ribbon.duration,
+            repeat: Infinity,
+            delay: ribbon.delay,
+            ease: "easeInOut"
+          }}
+        >
+          <svg width="40" height="55" viewBox="0 0 40 55" fill="none">
+            <path d="M20 0 L24 14 L38 17 L24 24 L28 38 L20 30 L12 38 L16 24 L2 17 L16 14 Z" fill="#FF4D6D" fillOpacity="0.25" stroke="#FF4D6D" strokeWidth="0.8" strokeOpacity="0.4"/>
+            <path d="M20 30 L20 55" stroke="#FF4D6D" strokeWidth="0.8" strokeOpacity="0.3"/>
+          </svg>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+// Ballons flottants - VISIBLES
+const FloatingBalloons = () => {
+  const balloons = [
+    { id: 1, x: "45%", y: "5%", size: 38, color: "#FF4D6D", duration: 16, delay: 0 },
+    { id: 2, x: "52%", y: "48%", size: 32, color: "#FFD700", duration: 20, delay: 5 },
+    { id: 3, x: "38%", y: "30%", size: 35, color: "#FF8BA8", duration: 14, delay: 2 },
+    { id: 4, x: "55%", y: "70%", size: 28, color: "#FF6B8A", duration: 18, delay: 8 },
+    { id: 5, x: "42%", y: "85%", size: 42, color: "#FF4D6D", duration: 22, delay: 3 },
+    { id: 6, x: "60%", y: "20%", size: 30, color: "#FFD700", duration: 15, delay: 6 },
+  ]
+  return (
+    <div className="absolute inset-0 z-20 pointer-events-none overflow-hidden">
+      {balloons.map((balloon) => (
+        <motion.div
+          key={balloon.id}
+          className="absolute"
+          style={{ left: balloon.x, top: balloon.y }}
+          animate={{
+            y: [0, -25, -50, -25, 0],
+            x: [0, 12, 0, -12, 0],
+            rotate: [0, 5, -5, 5, 0],
+            opacity: [0.2, 0.4, 0.2, 0.4, 0.2]
+          }}
+          transition={{
+            duration: balloon.duration,
+            repeat: Infinity,
+            delay: balloon.delay,
+            ease: "easeInOut"
+          }}
+        >
+          <svg width={balloon.size} height={balloon.size * 1.2} viewBox="0 0 40 50" fill="none">
+            <ellipse cx="20" cy="20" rx="14" ry="18" fill={balloon.color} fillOpacity="0.15" stroke={balloon.color} strokeWidth="1" strokeOpacity="0.4"/>
+            <line x1="20" y1="38" x2="20" y2="48" stroke={balloon.color} strokeWidth="1" strokeOpacity="0.3"/>
+            <polygon points="16,48 24,48 20,44" fill={balloon.color} fillOpacity="0.2"/>
+          </svg>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+export default function Hero() {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const [isHovering, setIsHovering] = useState(false)
+  
+  const currentService = services[currentIndex]
+
+  useEffect(() => {
+    if (isHovering) return
+    
+    const startTime = Date.now()
+    let animationFrame: number
+    
+    const updateProgress = () => {
+      const elapsed = Date.now() - startTime
+      const newProgress = Math.min((elapsed / 6000) * 100, 100)
+      setProgress(newProgress)
+      
+      if (newProgress < 100) {
+        animationFrame = requestAnimationFrame(updateProgress)
+      }
+    }
+    
+    const timer = setTimeout(() => {
+      setCurrentIndex((prev) => (prev + 1) % services.length)
+      setProgress(0)
+    }, 6000)
+    
+    animationFrame = requestAnimationFrame(updateProgress)
+    
+    return () => {
+      clearTimeout(timer)
+      cancelAnimationFrame(animationFrame)
+    }
+  }, [currentIndex, isHovering])
+
+  const nextSlide = () => {
+    setProgress(0)
+    setCurrentIndex((prev) => (prev + 1) % services.length)
+  }
+
+  const prevSlide = () => {
+    setProgress(0)
+    setCurrentIndex((prev) => (prev - 1 + services.length) % services.length)
+  }
+
+  const goToSlide = (index: number) => {
+    setProgress(0)
+    setCurrentIndex(index)
+  }
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.08, delayChildren: 0.2 }
+    }
+  }
+
+  const wordVariants = {
+    hidden: { y: "100%", opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { duration: 0.6, ease: [0.2, 1, 0.3, 1] }
+    }
+  }
+
+  const featureVariants = {
+    hidden: (i: number) => ({
+      x: -20,
+      opacity: 0,
+      filter: "blur(4px)"
+    }),
+    visible: (i: number) => ({
+      x: 0,
+      opacity: 1,
+      filter: "blur(0px)",
+      transition: { delay: 0.3 + i * 0.1, duration: 0.5, ease: [0.2, 0.9, 0.3, 1] }
+    })
+  }
+
+  return (
+    <section 
+      className="relative h-screen w-full overflow-hidden"
+      onMouseEnter={() => setIsHovering(true)}
+      onMouseLeave={() => setIsHovering(false)}
+    >
+      {/* Language selector */}
+      <div className="absolute top-6 right-6 z-50">
+        <LanguageSelector />
+      </div>
+
+      {/* OVERLAY COLORÉ DYNAMIQUE */}
+      <div 
+        className="absolute inset-0 z-0 transition-colors duration-700"
+        style={{ backgroundColor: currentService.bgLight }}
+      />
+
+      {/* IMAGE DE FOND */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentIndex}
+            initial={{ scale: 1.2, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ duration: 1, ease: [0.4, 0, 0.2, 1] }}
+            className="absolute inset-0"
+          >
+            <img
+              src={currentService.image}
+              alt={currentService.title}
+              className="h-full w-full object-cover object-center"
+            />
+            <div 
+              className="absolute inset-0 mix-blend-multiply opacity-20 transition-colors duration-500"
+              style={{ backgroundColor: currentService.bgColor }}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      {/* MASQUE EN ARC DE CERCLE - plus transparent */}
+      <motion.div 
+        className="absolute inset-0 z-10 bg-white/85 backdrop-blur-sm"
+        style={{ clipPath: 'ellipse(80% 120% at -15% 50%)' }}
+        initial={{ clipPath: 'ellipse(60% 120% at -20% 50%)' }}
+        animate={{ clipPath: 'ellipse(80% 120% at -15% 50%)' }}
+        transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+      />
+
+      {/* ÉLÉMENTS DÉCORATIFS - z-index 25 (PAR-DESSUS le masque) */}
+      <FloatingHearts />
+      <ShootingStars />
+      <Confetti />
+      <FloatingRibbons />
+      <FloatingBalloons />
+
+      {/* LOGO */}
+      <div className="absolute top-6 left-6 z-30">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="relative w-10 h-10"
+        >
+          <Image
+            src="/images/logoCreator_imagetologo-3.jpg"
+            alt="Love Surprise Express Logo"
+            width={40}
+            height={40}
+            className="rounded-xl shadow-lg object-cover"
+          />
+        </motion.div>
+      </div>
+
+      {/* LOVE SURPRISE EXPRESS - TRÈS GRAND */}
+      <div className="absolute top-20 left-6 z-30">
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="flex flex-col"
+        >
+          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight leading-[1.1]">
+            Love Surprise
+          </span>
+          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-gray-700 tracking-tight leading-[1.1]">
+            Express
+          </span>
+        </motion.div>
+      </div>
+
+      {/* BARRE DE PROGRESSION */}
+      <div className="absolute top-48 left-6 z-30 flex gap-1.5">
+        {services.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => goToSlide(idx)}
+            className="group relative h-0.5 rounded-full overflow-hidden transition-all duration-300"
+            style={{ width: idx === currentIndex ? '50px' : '25px' }}
+          >
+            <div className={`h-full w-full rounded-full transition-all duration-300 ${idx === currentIndex ? 'bg-primary' : 'bg-gray-300 group-hover:bg-gray-400'}`} />
+            {idx === currentIndex && (
+              <motion.div
+                className="absolute top-0 left-0 h-full bg-primary/40 rounded-full"
+                initial={{ width: '0%' }}
+                animate={{ width: `${progress}%` }}
+                transition={{ duration: 0.05, ease: "linear" }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* CONTENU PRINCIPAL */}
+      <div className="relative z-30 flex h-full items-center px-6 lg:px-16 pt-64">
+        <div className="max-w-xl text-left">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="space-y-5"
+            >
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="inline-flex items-center gap-2 bg-primary/10 px-3 py-1.5 rounded-full"
+              >
+                <span className="text-xs font-medium text-primary uppercase tracking-wider">
+                  {currentService.badge}
+                </span>
+              </motion.div>
+
+              <div className="space-y-1">
+                <div className="overflow-hidden">
+                  <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                    key={currentIndex}
+                  >
+                    <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.2]">
+                      {currentService.title.split(' ').map((word, i) => (
+                        <span key={i} className="block overflow-hidden">
+                          <motion.span
+                            variants={wordVariants}
+                            className="block bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"
+                          >
+                            {word}
+                          </motion.span>
+                        </span>
+                      ))}
+                      <span className="block overflow-hidden">
+                        <motion.span
+                          variants={wordVariants}
+                          className="block text-dark"
+                        >
+                          {currentService.subtitle}
+                        </motion.span>
+                      </span>
+                    </h2>
+                  </motion.div>
+                </div>
+              </div>
+
+              {/* Description - RESPONSIVE CORRIGÉE */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+                className="text-gray-600 text-sm sm:text-base leading-relaxed max-w-md w-full break-words"
+              >
+                {currentService.description}
+              </motion.p>
+
+              <motion.div 
+                className="space-y-1.5"
+                initial="hidden"
+                animate="visible"
+              >
+                {currentService.features.map((feature, idx) => (
+                  <motion.div
+                    key={idx}
+                    custom={idx}
+                    variants={featureVariants}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="w-3 h-px bg-primary" />
+                    <span className="text-gray-600 text-xs">{feature}</span>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+
+      {/* FLÈCHE CLIGNOTANTE SEULE */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 cursor-pointer">
+        <motion.div
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          onClick={() => {
+            const servicesSection = document.getElementById('services')
+            if (servicesSection) {
+              servicesSection.scrollIntoView({ behavior: 'smooth' })
+            }
+          }}
+        >
+          <ChevronDown size={28} className="text-primary/60 animate-pulse" strokeWidth={1.5} />
+        </motion.div>
+      </div>
+
+      {/* NAVIGATION */}
+      <div className="absolute bottom-6 left-6 z-30 flex gap-2">
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={prevSlide}
+          className="w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm shadow-md border border-gray-100 flex items-center justify-center hover:bg-white transition-all duration-300"
+        >
+          <ChevronLeft size={12} className="text-primary" />
+        </motion.button>
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={nextSlide}
+          className="w-7 h-7 rounded-full bg-primary/80 backdrop-blur-sm shadow-md flex items-center justify-center hover:bg-primary transition-all duration-300"
+        >
+          <ChevronRight size={12} className="text-white" />
+        </motion.button>
+      </div>
+
+      {/* COMPTEUR */}
+      <div className="absolute bottom-6 right-6 z-30">
+        <div className="text-right">
+          <p className="text-[8px] text-gray-400 uppercase tracking-[0.2em]">Actuel</p>
+          <p className="text-base font-bold text-primary">
+            {String(currentIndex + 1).padStart(2, '0')}
+            <span className="text-gray-300 text-xs">/{String(services.length).padStart(2, '0')}</span>
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState } from 'react'
+import { X, Package, Heart, Baby, Coffee, Flower2, Sparkles, Gift, Check } from 'lucide-react'
+
+const giftBaskets = [
+  {
+    id: 1, name: 'Birthday', subtitle: 'Gift Basket', badge: 'Anniversaire',
+    description: 'Pour un anniversaire inoubliable',
+    longDescription: 'Mini gâteau d\'anniversaire, bougie, carte personnalisée, jus de fruit.',
+    priceStandard: 15000, pricePremium: 80000, priceRange: '15 000 - 80 000 RWF',
+    image: 'https://i.pinimg.com/1200x/ec/36/e4/ec36e470b8d41448d810491847893f83.jpg',
+    popular: true, icon: Package,
+    includes: ['Mini gâteau anniversaire', 'Bougie', 'Carte personnalisée', 'Jus de fruit']
+  },
+  {
+    id: 2, name: 'Romantic', subtitle: 'Gift Basket', badge: 'Romantique',
+    description: 'Pour votre moitié',
+    longDescription: 'Chocolat, bougies parfumées, lettre d\'amour, bouquet de fleurs.',
+    priceStandard: 40000, pricePremium: 50000, priceRange: '40 000 - 50 000 RWF',
+    image: 'https://i.pinimg.com/736x/63/a7/09/63a709e557275506ec67b31b59642c44.jpg',
+    popular: true, icon: Heart,
+    includes: ['Chocolat', 'Bougies parfumées', 'Lettre d\'amour', 'Bouquet de fleurs']
+  },
+  {
+    id: 3, name: 'New Baby', subtitle: 'Gift Basket', badge: 'Naissance',
+    description: 'Bienvenue au nouveau-né',
+    longDescription: 'Vêtements bébé, couches, produits de soin, doudou.',
+    priceStandard: 40000, pricePremium: 80000, priceRange: '40 000 - 80 000 RWF',
+    image: 'https://i.pinimg.com/1200x/48/b0/79/48b07903362683f89724cc49e705a008.jpg',
+    popular: false, icon: Baby,
+    includes: ['Vêtements bébé', 'Couches', 'Produits de soin', 'Doudou']
+  },
+  {
+    id: 4, name: 'Gourmet', subtitle: 'Gift Basket', badge: 'Gastronomie',
+    description: 'Pour les gourmands',
+    longDescription: 'Biscuits, fruits, chocolat, jus, bonbons.',
+    priceStandard: 20000, pricePremium: 70000, priceRange: '20 000 - 70 000 RWF',
+    image: 'https://i.pinimg.com/1200x/5d/1c/43/5d1c43fa44d4ceec1d095ce415241b0a.jpg',
+    popular: true, icon: Coffee,
+    includes: ['Biscuits', 'Fruits', 'Chocolat', 'Jus', 'Bonbons']
+  },
+  {
+    id: 5, name: 'Wellness', subtitle: 'Gift Basket', badge: 'Bien-être',
+    description: 'Détente et bien-être',
+    longDescription: 'Thé, huiles essentielles, savon, masques visage, parfum, crème.',
+    priceStandard: 50000, pricePremium: 100000, priceRange: '50 000 - 100 000 RWF',
+    image: 'https://i.pinimg.com/1200x/fe/c3/97/fec397b6fbc634e851457411b107e4c5.jpg',
+    popular: false, icon: Flower2,
+    includes: ['Thé', 'Huiles essentielles', 'Savon', 'Masques visage', 'Parfum', 'Crème']
+  }
+]
+
+export default function GiftBaskets() {
+  const [selectedBasket, setSelectedBasket] = useState<typeof giftBaskets[0] | null>(null)
+
+  return (
+    <>
+      <section className="py-24 bg-primaryLight">
+        <div className="container-custom">
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
+              <Gift size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Cadeaux sur mesure</span>
+            </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">Nos Paniers Cadeaux</h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">Des cadeaux soigneusement sélectionnés pour chaque occasion</p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {giftBaskets.map((basket, index) => (
+              <motion.div
+                key={basket.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -10 }}
+                onClick={() => setSelectedBasket(basket)}
+                className="group bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
+              >
+                <div className="relative h-56 overflow-hidden">
+                  <img src={basket.image} alt={basket.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                    <span className="text-xs font-semibold text-primary">{basket.badge}</span>
+                  </div>
+                  {basket.popular && (
+                    <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
+                      <Sparkles size={12} className="text-dark" />
+                      <span className="text-xs font-semibold text-dark">Populaire</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold bg-primary/90 px-5 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                      Voir le panier
+                    </span>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <basket.icon size={18} className="text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-dark">{basket.name}</h3>
+                      <p className="text-xs text-gray-400">{basket.subtitle}</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-sm mb-4">{basket.description}</p>
+                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                    <span className="text-primary font-bold">{basket.priceStandard.toLocaleString()} RWF</span>
+                    <button className="text-primary text-sm font-medium hover:text-accent transition">Détails</button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <AnimatePresence>
+        {selectedBasket && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={() => setSelectedBasket(null)}>
+            <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} transition={{ type: "spring", damping: 25 }} className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="relative h-56">
+                <img src={selectedBasket.image} alt={selectedBasket.name} className="w-full h-full object-cover rounded-t-2xl" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <button onClick={() => setSelectedBasket(null)} className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"><X size={20} className="text-white" /></button>
+                {selectedBasket.popular && (<div className="absolute top-4 left-4 bg-accent px-3 py-1 rounded-full flex items-center gap-1"><Sparkles size={12} className="text-dark" /><span className="text-xs font-semibold text-dark">Populaire</span></div>)}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-3">
+                    <selectedBasket.icon size={12} className="text-white" />
+                    <span className="text-xs font-medium text-white uppercase tracking-wider">{selectedBasket.badge}</span>
+                  </div>
+                  <h3 className="text-2xl font-display font-bold text-white">{selectedBasket.name} {selectedBasket.subtitle}</h3>
+                </div>
+              </div>
+              <div className="p-6 space-y-5">
+                <p className="text-gray-600 leading-relaxed">{selectedBasket.longDescription}</p>
+                <div className="bg-primaryLight rounded-xl p-5">
+                  <h4 className="font-semibold text-dark mb-3 flex items-center gap-2"><Package size={18} className="text-primary" />Contenu du panier</h4>
+                  <ul className="grid grid-cols-2 gap-2">{selectedBasket.includes.map((item, idx) => (<li key={idx} className="flex items-center gap-2 text-gray-600 text-sm"><Check size={14} className="text-primary" />{item}</li>))}</ul>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="border rounded-xl p-3 text-center"><p className="text-xs text-gray-500">Standard</p><p className="text-xl font-bold text-primary">{selectedBasket.priceStandard.toLocaleString()} RWF</p></div>
+                  <div className="border rounded-xl p-3 text-center bg-gradient-to-r from-primary/5 to-primaryLight"><p className="text-xs text-gray-500">Premium</p><p className="text-xl font-bold text-primary">{selectedBasket.pricePremium.toLocaleString()} RWF</p></div>
+                </div>
+                <div className="flex justify-between items-center pt-4 border-t">
+                  <div><p className="text-sm text-gray-500">À partir de</p><p className="text-2xl font-bold text-primary">{selectedBasket.priceStandard.toLocaleString()} RWF</p></div>
+                  <button onClick={() => { setSelectedBasket(null); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-primary text-white px-6 py-2.5 rounded-full font-semibold hover:bg-primary/90 transition">Commander</button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  )
+}
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Download, CheckCircle, Heart, ChevronRight, ChevronLeft, Eye, AlertCircle, Package, Sparkles, Globe, Flower2, Gift, PartyPopper, Baby, Coffee } from 'lucide-react'
+
+interface FormData {
+  clientName: string
+  clientPhone: string
+  clientEmail: string
+  destName: string
+  destPhone: string
+  destAddress: string
+  destAge: string
+  eventType: string
+  eventDate: string
+  eventTime: string
+  eventLocation: string
+  selectedServices: number[]
+  selectedPacks: number[]
+  selectedBaskets: { id: number; version: 'standard' | 'premium' }[]
+  budget: number
+  deliveryMethod: 'delivery' | 'pickup'
+  message: string
+  specialInstructions: string
+  isDiscreet: boolean
+  needsPersonPresent: boolean
+  additionalNotes: string
+}
+
+const servicesData = [
+  { id: 1, name: 'Party Decoration', icon: PartyPopper, packs: [
+    { id: 1, name: 'Pack Premier Frisson', price: 60000, desc: '15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie' },
+    { id: 2, name: 'Pack Love XL', price: 100000, desc: '25 ballons, lettre/chiffre lumineux, table dressée pour deux, bougie parfumée, playlist personnalisée' },
+    { id: 3, name: 'Pack ROYAL SURPRISE', price: 200000, desc: 'Rideau de ballons + néon personnalisé, plateau de fruits + vin, photographe 20 min, bouquet de fleurs' }
+  ] },
+  { id: 2, name: 'Surprise Planner', icon: Sparkles, price: 200000, desc: 'Dites nous l\'occasion et on planifie toute la surprise' },
+  { id: 3, name: 'Custom Website', icon: Globe, priceMin: 25000, priceMax: 45000, desc: 'Site web personnalisé pour votre événement' },
+  { id: 4, name: 'Flower Bouquet', icon: Flower2, price: 15000, desc: 'Bouquet de fleurs fraîches pour toute occasion' }
+]
+
+const basketsData = [
+  { id: 1, name: 'Birthday', icon: Gift, standard: 15000, premium: 80000, desc: 'Mini gâteau, bougie, carte, jus de fruit' },
+  { id: 2, name: 'Romantic', icon: Heart, standard: 40000, premium: 50000, desc: 'Chocolat, bougies, lettre, fleurs' },
+  { id: 3, name: 'New Baby', icon: Baby, standard: 40000, premium: 80000, desc: 'Vêtements, couches, soin, doudou' },
+  { id: 4, name: 'Gourmet', icon: Coffee, standard: 20000, premium: 70000, desc: 'Biscuits, fruits, chocolat, jus, bonbons' },
+  { id: 5, name: 'Wellness', icon: Flower2, standard: 50000, premium: 100000, desc: 'Thé, huiles, savon, masques, parfum, crème' }
+]
+
+const eventTypes = ['Birthday', 'Proposal', 'Anniversary', 'Baby Shower', 'Bridal Shower', 'Welcome Back Party', 'Other']
+
+export default function ContactForm() {
+  const [step, setStep] = useState(1)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+  const [budgetError, setBudgetError] = useState('')
+  const reviewRef = useRef<HTMLDivElement>(null)
+
+  const [formData, setFormData] = useState<FormData>({
+    clientName: '', clientPhone: '', clientEmail: '',
+    destName: '', destPhone: '', destAddress: '', destAge: '',
+    eventType: 'Birthday', eventDate: '', eventTime: '', eventLocation: '',
+    selectedServices: [], selectedPacks: [], selectedBaskets: [],
+    budget: 0, deliveryMethod: 'delivery',
+    message: '', specialInstructions: '', isDiscreet: false, needsPersonPresent: false, additionalNotes: ''
+  })
+
+  useEffect(() => { setIsMounted(true) }, [])
+
+  const calculateTotalPrice = (): number => {
+    let total = 0
+
+    // Party Decoration packs
+    formData.selectedPacks.forEach(packId => {
+      const pack = servicesData[0].packs.find(p => p.id === packId)
+      if (pack) total += pack.price
+    })
+
+    // Surprise Planner
+    if (formData.selectedServices.includes(2)) total += 200000
+
+    // Custom Website
+    if (formData.selectedServices.includes(3)) total += 35000
+
+    // Flower Bouquet
+    if (formData.selectedServices.includes(4)) total += 15000
+
+    // Gift Baskets
+    formData.selectedBaskets.forEach(basket => {
+      const b = basketsData.find(bk => bk.id === basket.id)
+      if (b) total += basket.version === 'standard' ? b.standard : b.premium
+    })
+
+    // Livraison
+    if (formData.deliveryMethod === 'delivery') total += 5000
+
+    return total
+  }
+
+  const totalPrice = calculateTotalPrice()
+  const hasValidSelection = totalPrice > 0
+
+  const handlePackToggle = (packId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedPacks: prev.selectedPacks.includes(packId)
+        ? prev.selectedPacks.filter(id => id !== packId)
+        : [...prev.selectedPacks, packId]
+    }))
+  }
+
+  const handleServiceToggle = (serviceId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedServices: prev.selectedServices.includes(serviceId)
+        ? prev.selectedServices.filter(id => id !== serviceId)
+        : [...prev.selectedServices, serviceId]
+    }))
+  }
+
+  const handleBasketToggle = (basketId: number, version: 'standard' | 'premium') => {
+    setFormData(prev => {
+      const exists = prev.selectedBaskets.find(b => b.id === basketId)
+      if (exists) {
+        return { ...prev, selectedBaskets: prev.selectedBaskets.filter(b => b.id !== basketId) }
+      } else {
+        return { ...prev, selectedBaskets: [...prev.selectedBaskets, { id: basketId, version }] }
+      }
+    })
+  }
+
+  const updateBasketVersion = (basketId: number, version: 'standard' | 'premium') => {
+    setFormData(prev => ({
+      ...prev,
+      selectedBaskets: prev.selectedBaskets.map(b => b.id === basketId ? { ...b, version } : b)
+    }))
+  }
+
+  const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value) || 0
+    setFormData(prev => ({ ...prev, budget: value }))
+    if (value < totalPrice) {
+      setBudgetError(`Budget minimum requis : ${totalPrice.toLocaleString()} RWF`)
+    } else {
+      setBudgetError('')
+    }
+  }
+
+  const downloadPDF = async () => {
+    if (!isMounted || !reviewRef.current) return
+    const html2pdf = (await import('html2pdf.js')).default
+    const opt = { margin: [10, 10, 10, 10], filename: `commande_${formData.clientName || 'client'}_${Date.now()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }
+    try { await html2pdf().set(opt).from(reviewRef.current).save() } catch (error) { console.error('Erreur PDF:', error) }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!hasValidSelection) { alert('Veuillez sélectionner au moins un service ou un panier cadeau'); return }
+    if (formData.budget > 0 && formData.budget < totalPrice) { alert(`Le budget minimum est de ${totalPrice.toLocaleString()} RWF`); return }
+    
+    setIsSubmitting(true)
+    try {
+      const response = await fetch('/api/submit-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...formData, totalPrice, budget: formData.budget || totalPrice }) })
+      if (response.ok) {
+        setTimeout(() => downloadPDF(), 500)
+        setIsSubmitted(true)
+        setTimeout(() => {
+          setStep(1)
+          setIsSubmitted(false)
+          setFormData({
+            clientName: '', clientPhone: '', clientEmail: '', destName: '', destPhone: '', destAddress: '', destAge: '',
+            eventType: 'Birthday', eventDate: '', eventTime: '', eventLocation: '',
+            selectedServices: [], selectedPacks: [], selectedBaskets: [],
+            budget: 0, deliveryMethod: 'delivery', message: '', specialInstructions: '',
+            isDiscreet: false, needsPersonPresent: false, additionalNotes: ''
+          })
+        }, 5000)
+      } else alert('Erreur lors de l\'envoi')
+    } catch (error) { console.error(error); alert('Erreur') }
+    finally { setIsSubmitting(false) }
+  }
+
+  const nextStep = () => setStep(step + 1)
+  const prevStep = () => setStep(step - 1)
+  const goToStep = (targetStep: number) => setStep(targetStep)
+
+  if (isSubmitted) {
+    return (
+      <section id="contact" className="py-24 bg-white">
+        <div className="container-custom">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-2xl mx-auto text-center p-12 bg-green-50 rounded-2xl">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"><CheckCircle size={32} className="text-green-600" /></div>
+            <h3 className="text-2xl font-bold text-dark mb-2">Demande envoyée !</h3>
+            <p className="text-gray-600 mb-4">Merci pour votre confiance. Nous vous répondrons dans les 30 minutes sur WhatsApp.</p>
+            <p className="text-sm text-gray-500">Votre récapitulatif PDF va être téléchargé automatiquement.</p>
+          </motion.div>
+        </div>
+      </section>
+    )
+  }
+
+  const ReviewContent = () => (
+    <div ref={reviewRef} className="bg-white p-6 rounded-xl space-y-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+      <div className="text-center border-b pb-4"><h2 className="text-2xl font-bold text-primary">LoveExpress</h2><p className="text-gray-500 text-sm">Récapitulatif de votre commande</p><p className="text-xs text-gray-400 mt-1">Date: {new Date().toLocaleDateString()}</p></div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Informations client</h3><div className="grid grid-cols-2 gap-2 text-sm"><p><span className="text-gray-500">Nom:</span> {formData.clientName || 'Non renseigné'}</p><p><span className="text-gray-500">Téléphone:</span> {formData.clientPhone || 'Non renseigné'}</p></div></div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Informations destinataire</h3><div className="grid grid-cols-2 gap-2 text-sm"><p><span className="text-gray-500">Nom:</span> {formData.destName || 'Non renseigné'}</p><p><span className="text-gray-500">Adresse:</span> {formData.destAddress || 'Non renseignée'}</p></div></div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Informations événement</h3><div className="grid grid-cols-2 gap-2 text-sm"><p><span className="text-gray-500">Type:</span> {formData.eventType}</p><p><span className="text-gray-500">Date:</span> {formData.eventDate || 'Non renseignée'}</p></div></div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Services & Packs</h3>
+        <ul className="text-sm space-y-1">
+          {formData.selectedPacks.map(packId => {
+            const pack = servicesData[0].packs.find(p => p.id === packId)
+            return <li key={packId}>• {pack?.name} : {pack?.price.toLocaleString()} RWF</li>
+          })}
+          {formData.selectedServices.includes(2) && <li>• Surprise Planner : 200 000 RWF</li>}
+          {formData.selectedServices.includes(3) && <li>• Custom Website : 35 000 RWF (estimation)</li>}
+          {formData.selectedServices.includes(4) && <li>• Flower Bouquet : 15 000 RWF</li>}
+          {formData.selectedBaskets.map(b => {
+            const basket = basketsData.find(bk => bk.id === b.id)
+            return <li key={b.id}>• {basket?.name} ({b.version}) : {b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</li>
+          })}
+        </ul>
+      </div>
+      <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Livraison</h3><p className="text-sm">{formData.deliveryMethod === 'delivery' ? 'Livraison à domicile (+5 000 RWF)' : 'Retrait au bureau'}</p></div>
+      <div className="border-t pt-3"><div className="flex justify-between"><span className="font-semibold">Total :</span><span className="font-bold text-primary text-lg">{totalPrice.toLocaleString()} RWF</span></div></div>
+      {formData.message && (<div className="bg-primaryLight p-3 rounded-lg"><p className="text-sm italic">"{formData.message}"</p></div>)}
+      <div className="text-center text-xs text-gray-400 pt-4 border-t"><p>LoveExpress - Nous livrons l'amour et la gentillesse</p><p>Tel: +250 799 366 007</p></div>
+    </div>
+  )
+
+  return (
+    <section id="contact" className="py-24 bg-white">
+      <div className="container-custom">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4"><Heart size={14} className="text-primary" /><span className="text-xs font-medium text-primary uppercase tracking-wider">Devis gratuit</span></div>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">Planifiez Votre Surprise</h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">Remplissez ce formulaire et nous nous occupons de tout</p>
+        </motion.div>
+
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-8"><div className="flex justify-between mb-2 text-sm text-gray-500"><span>Étape {step} / 6</span><span>{Math.round((step / 6) * 100)}%</span></div><div className="h-2 bg-gray-200 rounded-full overflow-hidden"><motion.div className="h-full bg-primary" initial={{ width: `${((step - 1) / 6) * 100}%` }} animate={{ width: `${((step - 1) / 6) * 100}%` }} transition={{ duration: 0.3 }} /></div></div>
+
+          <form onSubmit={handleSubmit}>
+            <AnimatePresence mode="wait">
+              {step === 1 && (
+                <motion.div key="step1" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Qui êtes-vous ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom complet *</label><input type="text" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Téléphone WhatsApp *</label><input type="tel" value={formData.clientPhone} onChange={(e) => setFormData({...formData, clientPhone: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Email (optionnel)</label><input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <button type="button" onClick={nextStep} className="btn-primary w-full">Suivant →</button>
+                </motion.div>
+              )}
+
+              {step === 2 && (
+                <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Qui recevra la surprise ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom du destinataire *</label><input type="text" value={formData.destName} onChange={(e) => setFormData({...formData, destName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label><input type="tel" value={formData.destPhone} onChange={(e) => setFormData({...formData, destPhone: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Adresse de livraison *</label><input type="text" value={formData.destAddress} onChange={(e) => setFormData({...formData, destAddress: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Âge (si anniversaire)</label><input type="text" value={formData.destAge} onChange={(e) => setFormData({...formData, destAge: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Quel événement ?</h3>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Type *</label><select value={formData.eventType} onChange={(e) => setFormData({...formData, eventType: e.target.value})} className="w-full px-4 py-3 border rounded-lg">{eventTypes.map(t => <option key={t}>{t}</option>)}</select></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Date *</label><input type="date" value={formData.eventDate} onChange={(e) => setFormData({...formData, eventDate: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Heure *</label><input type="time" value={formData.eventTime} onChange={(e) => setFormData({...formData, eventTime: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Lieu exact *</label><input type="text" value={formData.eventLocation} onChange={(e) => setFormData({...formData, eventLocation: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Que souhaitez-vous commander ?</h3>
+                  
+                  {/* Party Decoration */}
+                  <div className="border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3"><PartyPopper size={18} className="text-primary" /><h4 className="font-semibold text-dark">Party Decoration</h4></div>
+                    <div className="space-y-2">
+                      {servicesData[0].packs.map(pack => (
+                        <label key={pack.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition ${formData.selectedPacks.includes(pack.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                          <input type="checkbox" checked={formData.selectedPacks.includes(pack.id)} onChange={() => handlePackToggle(pack.id)} className="w-4 h-4 text-primary rounded" />
+                          <div className="flex-1"><span className="font-medium">{pack.name}</span><p className="text-xs text-gray-500">{pack.desc}</p></div>
+                          <span className="text-primary font-bold">{pack.price.toLocaleString()} RWF</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Surprise Planner */}
+                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(2) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                    <div className="flex items-center gap-3"><Sparkles size={18} className="text-primary" /><div><span className="font-medium">Surprise Planner</span><p className="text-xs text-gray-500">Planification complète + coordination sur place</p></div></div>
+                    <div className="flex items-center gap-4"><span className="text-primary font-bold">200 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(2)} onChange={() => handleServiceToggle(2)} className="w-4 h-4 text-primary rounded" /></div>
+                  </label>
+
+                  {/* Custom Website */}
+                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(3) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                    <div className="flex items-center gap-3"><Globe size={18} className="text-primary" /><div><span className="font-medium">Custom Website</span><p className="text-xs text-gray-500">Site personnalisé pour votre événement</p></div></div>
+                    <div className="flex items-center gap-4"><span className="text-primary font-bold">25 000 - 45 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(3)} onChange={() => handleServiceToggle(3)} className="w-4 h-4 text-primary rounded" /></div>
+                  </label>
+
+                  {/* Flower Bouquet */}
+                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(4) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                    <div className="flex items-center gap-3"><Flower2 size={18} className="text-primary" /><div><span className="font-medium">Flower Bouquet</span><p className="text-xs text-gray-500">Bouquet de fleurs fraîches</p></div></div>
+                    <div className="flex items-center gap-4"><span className="text-primary font-bold">15 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(4)} onChange={() => handleServiceToggle(4)} className="w-4 h-4 text-primary rounded" /></div>
+                  </label>
+
+                  {/* Gift Baskets */}
+                  <div className="border rounded-xl p-4">
+                    <div className="flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" /><h4 className="font-semibold text-dark">Gift Baskets</h4></div>
+                    <div className="space-y-3">
+                      {basketsData.map(basket => (
+                        <div key={basket.id} className={`p-3 rounded-lg border transition ${formData.selectedBaskets.some(b => b.id === basket.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3"><basket.icon size={16} className="text-primary" /><span className="font-medium">{basket.name}</span></div>
+                            <input type="checkbox" checked={formData.selectedBaskets.some(b => b.id === basket.id)} onChange={() => handleBasketToggle(basket.id, 'standard')} className="w-4 h-4 text-primary rounded" />
+                          </div>
+                          {formData.selectedBaskets.some(b => b.id === basket.id) && (
+                            <div className="flex gap-3 ml-6 mt-2">
+                              <label className="flex items-center gap-2"><input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find(b => b.id === basket.id)?.version === 'standard'} onChange={() => updateBasketVersion(basket.id, 'standard')} className="w-4 h-4 text-primary" /><span className="text-sm">Standard: {basket.standard.toLocaleString()} RWF</span></label>
+                              <label className="flex items-center gap-2"><input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find(b => b.id === basket.id)?.version === 'premium'} onChange={() => updateBasketVersion(basket.id, 'premium')} className="w-4 h-4 text-primary" /><span className="text-sm">Premium: {basket.premium.toLocaleString()} RWF</span></label>
+                            </div>
+                          )}
+                          <p className="text-xs text-gray-500 ml-6 mt-1">{basket.desc}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Message sur carte */}
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Message sur la carte</label><textarea value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Joyeux anniversaire ! Je t'aime" /></div>
+
+                  {/* Instructions spéciales */}
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Instructions spéciales</label><textarea value={formData.specialInstructions} onChange={(e) => setFormData({...formData, specialInstructions: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Thème, couleurs, préférences..." /></div>
+
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 5 && (
+                <motion.div key="step5" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Livraison & Budget</h3>
+                  
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Mode de livraison</label><div className="grid grid-cols-2 gap-4"><label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'delivery' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}><input type="radio" name="deliveryMethod" value="delivery" checked={formData.deliveryMethod === 'delivery'} onChange={() => setFormData({...formData, deliveryMethod: 'delivery'})} className="w-4 h-4 text-primary" /><div><span className="font-semibold block">Livraison à domicile</span><span className="text-xs text-gray-500">+5 000 RWF</span></div></label><label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'pickup' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}><input type="radio" name="deliveryMethod" value="pickup" checked={formData.deliveryMethod === 'pickup'} onChange={() => setFormData({...formData, deliveryMethod: 'pickup'})} className="w-4 h-4 text-primary" /><div><span className="font-semibold block">Retrait au bureau</span><span className="text-xs text-gray-500">Gratuit</span></div></label></div></div>
+
+                  <div className="bg-primaryLight rounded-xl p-5">
+                    <h4 className="font-semibold text-dark mb-3">Récapitulatif des services</h4>
+                    <div className="space-y-2 text-sm">
+                      {formData.selectedPacks.map(packId => {
+                        const pack = servicesData[0].packs.find(p => p.id === packId)
+                        return <div key={packId} className="flex justify-between"><span>{pack?.name}</span><span className="font-bold">{pack?.price.toLocaleString()} RWF</span></div>
+                      })}
+                      {formData.selectedServices.includes(2) && <div className="flex justify-between"><span>Surprise Planner</span><span className="font-bold">200 000 RWF</span></div>}
+                      {formData.selectedServices.includes(3) && <div className="flex justify-between"><span>Custom Website</span><span className="font-bold">~35 000 RWF</span></div>}
+                      {formData.selectedServices.includes(4) && <div className="flex justify-between"><span>Flower Bouquet</span><span className="font-bold">15 000 RWF</span></div>}
+                      {formData.selectedBaskets.map(b => {
+                        const basket = basketsData.find(bk => bk.id === b.id)
+                        return <div key={b.id} className="flex justify-between"><span>{basket?.name} ({b.version})</span><span className="font-bold">{b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</span></div>
+                      })}
+                      {formData.deliveryMethod === 'delivery' && <div className="flex justify-between"><span>Livraison</span><span className="font-bold">+5 000 RWF</span></div>}
+                      <div className="border-t pt-2 mt-2 flex justify-between"><span className="font-bold">Total :</span><span className="font-bold text-primary text-lg">{totalPrice.toLocaleString()} RWF</span></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Votre budget (RWF)</label>
+                    <input type="number" value={formData.budget || totalPrice} onChange={handleBudgetChange} className="w-full px-4 py-3 border rounded-lg" placeholder={totalPrice.toString()} />
+                    {budgetError && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{budgetError}</p>}
+                    <p className="text-xs text-gray-400 mt-1">Budget minimum requis : {totalPrice.toLocaleString()} RWF</p>
+                  </div>
+
+                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
+                </motion.div>
+              )}
+
+              {step === 6 && (
+                <motion.div key="step6" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                  <h3 className="text-2xl font-bold text-dark mb-6">Vérification</h3>
+                  
+                  <ReviewContent />
+                  
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight"><input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5 text-primary rounded" /><span>Surprise discrète (ne pas révéler l'expéditeur)</span></label>
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight"><input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5 text-primary rounded" /><span>Le destinataire doit être présent lors de la livraison</span></label>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Notes supplémentaires</label><textarea value={formData.additionalNotes} onChange={(e) => setFormData({...formData, additionalNotes: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Information importante..." /></div>
+
+                  <div className="flex flex-col gap-3">
+                    <div className="flex gap-4">
+                      <button type="button" onClick={() => goToStep(4)} className="btn-secondary flex-1">Modifier la commande</button>
+                      <button type="button" onClick={downloadPDF} className="bg-gray-100 text-gray-700 px-4 py-3 rounded-full font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2 flex-1"><Download size={18} /> Télécharger PDF</button>
+                    </div>
+                    <button type="submit" disabled={isSubmitting || (!hasValidSelection) || (formData.budget > 0 && formData.budget < totalPrice)} className="btn-primary w-full">{isSubmitting ? 'Envoi...' : 'Confirmer et envoyer'}</button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </form>
+        </div>
+      </div>
+    </section>
+  )
+}
+'use client'
+
+import { motion } from 'framer-motion'
+import { useState } from 'react'
+import { Star, Heart, Camera, X } from 'lucide-react'
+
+export default function AvisForm() {
+  const [note, setNote] = useState(5)
+  const [message, setMessage] = useState('')
+  const [nom, setNom] = useState('')
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitted, setIsSubmitted] = useState(false)
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setPhoto(file)
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removePhoto = () => {
+    setPhoto(null)
+    setPhotoPreview(null)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!message.trim()) {
+      alert('Veuillez écrire votre témoignage')
+      return
+    }
+
+    setIsSubmitting(true)
+
+    try {
+      let photoBase64 = null
+      if (photo) {
+        const reader = new FileReader()
+        photoBase64 = await new Promise((resolve) => {
+          reader.onloadend = () => resolve(reader.result)
+          reader.readAsDataURL(photo)
+        })
+      }
+
+      const response = await fetch('/api/submit-testimonial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          note,
+          message,
+          nom: nom.trim() || 'Client LoveExpress',
+          photoBase64,
+          hasPhoto: !!photo
+        })
+      })
+
+      if (response.ok) {
+        setIsSubmitted(true)
+        setNote(5)
+        setMessage('')
+        setNom('')
+        setPhoto(null)
+        setPhotoPreview(null)
+        setTimeout(() => setIsSubmitted(false), 5000)
+      } else {
+        alert('Erreur lors de l\'envoi. Veuillez réessayer.')
+      }
+    } catch (error) {
+      console.error('Erreur:', error)
+      alert('Erreur lors de l\'envoi. Veuillez réessayer.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  if (isSubmitted) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="bg-green-50 border border-green-200 rounded-2xl p-8 text-center"
+      >
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Heart className="w-8 h-8 text-green-600 fill-green-600" />
+        </div>
+        <h3 className="text-xl font-bold text-dark mb-2">Merci pour votre témoignage !</h3>
+        <p className="text-gray-600">
+          Votre avis sera publié après validation par notre équipe (sous 24-48h).
+        </p>
+      </motion.div>
+    )
+  }
+
+  return (
+    <section className="py-24 bg-white">
+      <div className="container-custom">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+            <Star size={14} className="text-primary fill-primary" />
+            <span className="text-xs font-medium text-primary uppercase tracking-wider">Votre avis compte</span>
+          </div>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+            Donnez votre avis
+          </h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            Partagez votre expérience LoveExpress avec la communauté
+          </p>
+        </motion.div>
+
+        <motion.form
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          viewport={{ once: true }}
+          onSubmit={handleSubmit}
+          className="max-w-2xl mx-auto bg-primaryLight rounded-2xl p-8 shadow-sm"
+        >
+          {/* Note étoiles */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Votre note *
+            </label>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setNote(s)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Star
+                    size={32}
+                    className={`${s <= note ? 'fill-accent text-accent' : 'text-gray-300'}`}
+                  />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Message */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Votre témoignage *
+            </label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={4}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="J'ai adoré ma surprise, tout était parfait ! Merci LoveExpress ❤️"
+              required
+            />
+          </div>
+
+          {/* Nom (optionnel) */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Votre nom (optionnel)
+            </label>
+            <input
+              type="text"
+              value={nom}
+              onChange={(e) => setNom(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
+              placeholder="Marie, Jean, ..."
+            />
+          </div>
+
+          {/* Photo (optionnelle) */}
+          <div className="mb-8">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ajouter une photo (optionnelle)
+            </label>
+            {photoPreview ? (
+              <div className="relative inline-block">
+                <img src={photoPreview} alt="Aperçu" className="w-32 h-32 object-cover rounded-xl" />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary transition">
+                <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                  <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">Cliquez pour ajouter une photo</p>
+                  <p className="text-xs text-gray-400">JPG, PNG (max 5MB)</p>
+                </div>
+                <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
+              </label>
+            )}
+          </div>
+
+          {/* Bouton envoyer */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="btn-primary w-full flex items-center justify-center gap-2"
+          >
+            {isSubmitting ? (
+              'Envoi en cours...'
+            ) : (
+              <>
+                <Heart size={18} />
+                Envoyer mon témoignage
+              </>
+            )}
+          </button>
+
+          <p className="text-center text-xs text-gray-400 mt-4">
+            Votre témoignage sera publié après validation par notre équipe
+          </p>
+        </motion.form>
+      </div>
+    </section>
+  )
+}
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { ArrowLeft, X, Heart, User, Calendar, Star } from 'lucide-react'
+
+interface Testimonial {
+  id: string
+  nom: string
+  note: number
+  message: string
+  photoUrl?: string
+  createdAt: string
+  status: string
+}
+
+export default function GalleryPage() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null)
+
+  useEffect(() => {
+    fetchTestimonials()
+  }, [])
+
+  const fetchTestimonials = async () => {
+    try {
+      const response = await fetch('/api/get-testimonials')
+      const data = await response.json()
+      if (data.success && data.avis) {
+        setTestimonials(data.avis)
+      }
+    } catch (error) {
+      console.error('Erreur chargement témoignages:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-primaryLight flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-500">Chargement des témoignages...</p>
+        </div>
+      </main>
+    )
+  }
+
+  return (
+    <main className="min-h-screen bg-primaryLight">
+      {/* Header */}
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="container-custom py-4">
+          <Link 
+            href="/" 
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition group"
+          >
+            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition" />
+            Retour à l'accueil
+          </Link>
+        </div>
+      </div>
+
+      <section className="py-16">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-4 shadow-sm">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">Ils nous ont fait confiance</span>
+            </div>
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-dark mb-4">
+              Avis Clients
+            </h1>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              Découvrez les sourires et la joie de nos clients après leurs surprises
+            </p>
+          </motion.div>
+
+          {testimonials.length === 0 ? (
+            <div className="text-center py-12 bg-white rounded-2xl">
+              <Heart size={48} className="text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Aucun témoignage pour le moment</p>
+              <p className="text-sm text-gray-400 mt-2">Soyez le premier à partager votre expérience !</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {testimonials.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ y: -5 }}
+                  onClick={() => setSelectedTestimonial(item)}
+                  className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl"
+                >
+                  <div className="relative h-56 overflow-hidden">
+                    {item.photoUrl ? (
+                      <img
+                        src={item.photoUrl}
+                        alt={item.nom}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
+                        <Heart size={48} className="text-primary/40" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                    <div className="absolute bottom-3 left-3 flex gap-0.5">
+                      {[...Array(item.note || 5)].map((_, i) => (
+                        <Star key={i} size={12} className="fill-accent text-accent" />
+                      ))}
+                    </div>
+                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <Heart size={40} className="text-white drop-shadow-lg" />
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <User size={14} className="text-primary" />
+                      </div>
+                      <h3 className="font-semibold text-dark">{item.nom}</h3>
+                    </div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Calendar size={12} className="text-gray-400" />
+                      <span className="text-xs text-gray-400">
+                        {new Date(item.createdAt).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Modal */}
+      <AnimatePresence>
+        {selectedTestimonial && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            onClick={() => setSelectedTestimonial(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 50, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative">
+                {selectedTestimonial.photoUrl ? (
+                  <img 
+                    src={selectedTestimonial.photoUrl} 
+                    alt={selectedTestimonial.nom}
+                    className="w-full h-80 object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-80 bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
+                    <Heart size={64} className="text-primary/40" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <button 
+                  onClick={() => setSelectedTestimonial(null)}
+                  className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
+                >
+                  <X size={20} className="text-white" />
+                </button>
+                <div className="absolute bottom-4 left-4 flex gap-0.5">
+                  {[...Array(selectedTestimonial.note || 5)].map((_, i) => (
+                    <Star key={i} size={16} className="fill-accent text-accent" />
+                  ))}
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-dark">{selectedTestimonial.nom}</h3>
+                    <div className="flex items-center gap-2">
+                      <Calendar size={12} className="text-gray-400" />
+                      <span className="text-xs text-gray-500">
+                        {new Date(selectedTestimonial.createdAt).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-gray-600 italic text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
+                <div className="mt-6 pt-4 border-t flex justify-center">
+                  <div className="flex gap-1">
+                    {[...Array(5)].map((_, i) => (
+                      <Heart key={i} size={16} className="fill-primary text-primary" />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </main>
+  )
+}
+// Utilitaires pour Netlify Blobs (stockage gratuit)
+// Documentation: https://docs.netlify.com/blobs/
+
+export async function getStore(storeName) {
+  // En développement, utiliser localStorage ou mémoire
+  if (process.env.NODE_ENV === 'development') {
+    return {
+      get: async (key) => {
+        const data = localStorage.getItem(`blob_${storeName}_${key}`);
+        return data ? JSON.parse(data) : null;
+      },
+      set: async (key, value) => {
+        localStorage.setItem(`blob_${storeName}_${key}`, JSON.stringify(value));
+      },
+      list: async () => {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith(`blob_${storeName}_`)) {
+            keys.push(key.replace(`blob_${storeName}_`, ''));
+          }
+        }
+        return keys;
+      }
+    };
+  }
+
+  // En production, utiliser Netlify Blobs
+  const { getStore: getNetlifyStore } = await import('@netlify/blobs');
+  return getNetlifyStore(storeName);
+}
+
+export async function saveCommand(data) {
+  const store = await getStore('commandes');
+  const id = `CMD_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  const commande = {
+    id,
+    ...data,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+  await store.set(id, commande);
+  return commande;
+}
+
+export async function getCommandes() {
+  const store = await getStore('commandes');
+  const keys = await store.list();
+  const commandes = [];
+  for (const key of keys) {
+    const cmd = await store.get(key);
+    if (cmd) commandes.push(cmd);
+  }
+  return commandes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+export async function updateCommandeStatus(id, status) {
+  const store = await getStore('commandes');
+  const commande = await store.get(id);
+  if (commande) {
+    commande.status = status;
+    await store.set(id, commande);
+  }
+  return commande;
+}
+
+export async function saveAvis(avis) {
+  const store = await getStore('avis');
+  const id = `AVIS_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  const nouvelAvis = {
+    id,
+    ...avis,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+  await store.set(id, nouvelAvis);
+  return nouvelAvis;
+}
+
+export async function getAvis(status = null) {
+  const store = await getStore('avis');
+  const keys = await store.list();
+  const avis = [];
+  for (const key of keys) {
+    const a = await store.get(key);
+    if (a && (status === null || a.status === status)) {
+      avis.push(a);
+    }
+  }
+  return avis.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+export async function moderateAvis(id, status) {
+  const store = await getStore('avis');
+  const avis = await store.get(id);
+  if (avis) {
+    avis.status = status;
+    await store.set(id, avis);
+  }
+  return avis;
+}
+
+export async function savePhoto(file, category) {
+  const store = await getStore('photos');
+  const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+  await store.set(id, file);
+  return { id, url: `/.netlify/images/${id}` };
+}
+
+export async function getPhotos(category = null) {
+  const store = await getStore('photos');
+  const keys = await store.list();
+  const photos = [];
+  for (const key of keys) {
+    if (category === null || key.startsWith(category)) {
+      photos.push({ id: key, url: `/.netlify/images/${key}` });
+    }
+  }
+  return photos;
+}
+// Utilitaires pour notifications WhatsApp via CallMeBot API
+// API gratuite: https://www.callmebot.com/blog/free-api-whatsapp-messages/
+
+const CALLMEBOT_API = 'https://api.callmebot.com/whatsapp.php';
+
+export async function sendWhatsApp(phoneNumber, message) {
+  // Format du numéro: 25078XXXXXXXX (sans +)
+  const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+  
+  // Récupérer la clé API depuis les variables d'environnement
+  const apiKey = process.env.CALLMEBOT_API_KEY;
+  
+  if (!apiKey) {
+    console.log('⚠️ Pas de clé API CallMeBot, notification non envoyée');
+    console.log('Message aurait été:', message);
+    return false;
+  }
+
+  const params = new URLSearchParams({
+    phone: cleanPhone,
+    text: message,
+    apikey: apiKey
+  });
+
+  try {
+    const response = await fetch(`${CALLMEBOT_API}?${params}`);
+    const result = await response.text();
+    console.log('WhatsApp envoyé à', cleanPhone, ':', result);
+    return true;
+  } catch (error) {
+    console.error('Erreur envoi WhatsApp:', error);
+    return false;
+  }
+}
+
+export function formatCommandeMessage(commande) {
+  return `
+🆕 NOUVELLE COMMANDE LoveExpress !
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+👤 CLIENT: ${commande.clientName}
+📞 TEL: ${commande.clientPhone}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎁 DESTINATAIRE: ${commande.destName}
+📍 ADRESSE: ${commande.destAddress}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 ÉVÉNEMENT: ${commande.eventType}
+🗓️ DATE: ${commande.eventDate}
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+�� BUDGET: ${parseInt(commande.budget).toLocaleString()} RWF
+━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ Répondre sur WhatsApp: ${commande.clientPhone}
+  `.trim();
+}
+
+export function formatConfirmationClient(commande) {
+  return `
+✅ Merci ${commande.clientName} !
+
+Votre demande LoveExpress a bien été reçue.
+
+📋 RÉCAPITULATIF:
+• Destinataire: ${commande.destName}
+• Événement: ${commande.eventType}
+• Date: ${commande.eventDate}
+• Budget: ${parseInt(commande.budget).toLocaleString()} RWF
+
+📄 Vous allez recevoir votre récapitulatif en PDF.
+
+⏰ Nous vous répondons sous 30 minutes.
+
+❤️ LoveExpress - Nous livrons l'amour et la gentillesse
+  `.trim();
+}
+const { saveCommand, getStore } = require('../lib/utils/netlify-blobs.js');
+const { sendWhatsApp, formatCommandeMessage, formatConfirmationClient } = require('../lib/utils/whatsapp.js');
+
+exports.handler = async (event) => {
+  // Autoriser CORS
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  try {
+    const commande = JSON.parse(event.body);
+    
+    // 1. Sauvegarder dans Netlify Blobs (stockage principal)
+    const savedCommande = await saveCommand(commande);
+    
+    // 2. Backup dans Google Sheets (si configuré)
+    let googleSheetsSaved = false;
+    try {
+      const { addToGoogleSheets } = require('../lib/googleSheets.js');
+      googleSheetsSaved = await addToGoogleSheets(commande);
+    } catch (e) {
+      console.log('Google Sheets non configuré, backup ignoré');
+    }
+    
+    // 3. Envoyer notification WhatsApp à l'entreprise
+    const entreprisePhone = process.env.ENTREPRISE_WHATSAPP || '250799366007';
+    const messageEntreprise = formatCommandeMessage(savedCommande);
+    await sendWhatsApp(entreprisePhone, messageEntreprise);
+    
+    // 4. Envoyer confirmation WhatsApp au client
+    const messageClient = formatConfirmationClient(savedCommande);
+    await sendWhatsApp(commande.clientPhone, messageClient);
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        commandeId: savedCommande.id,
+        googleSheetsBackup: googleSheetsSaved
+      })
+    };
+    
+  } catch (error) {
+    console.error('Erreur:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { saveAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  try {
+    const avis = JSON.parse(event.body);
+    
+    // Sauvegarder l'avis (statut 'pending' par défaut)
+    const savedAvis = await saveAvis(avis);
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        success: true,
+        avisId: savedAvis.id,
+        message: "Merci pour votre avis ! Il sera publié après validation."
+      })
+    };
+    
+  } catch (error) {
+    console.error('Erreur:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { getCommandes } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification simple de l'admin (à améliorer avec Netlify Identity)
+  const adminKey = event.headers.authorization;
+  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const commandes = await getCommandes();
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, commandes })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { getAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  try {
+    // Récupérer uniquement les avis publiés
+    const published = await getAvis('published');
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, avis: published })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { getAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification admin (clé API)
+  const adminKey = event.headers.authorization;
+  const validKey = process.env.ADMIN_API_KEY || 'loveexpress2024';
+  
+  if (adminKey !== `Bearer ${validKey}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé - Clé API invalide' })
+    };
+  }
+
+  try {
+    // Récupérer TOUS les avis (y compris en attente)
+    const allAvis = await getAvis(null);
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ 
+        success: true, 
+        avis: allAvis,
+        stats: {
+          total: allAvis.length,
+          published: allAvis.filter(a => a.status === 'published').length,
+          pending: allAvis.filter(a => a.status === 'pending').length,
+          rejected: allAvis.filter(a => a.status === 'rejected').length
+        }
+      })
+    };
+  } catch (error) {
+    console.error('Erreur:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { moderateAvis, getAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification admin
+  const adminKey = event.headers.authorization;
+  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const { id, status } = JSON.parse(event.body);
+    const updated = await moderateAvis(id, status);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, avis: updated })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { updateCommandeStatus } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification admin
+  const adminKey = event.headers.authorization;
+  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const { id, status } = JSON.parse(event.body);
+    const updated = await updateCommandeStatus(id, status);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, commande: updated })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin"
+  status = 200

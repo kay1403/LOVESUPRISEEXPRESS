@@ -28,9 +28,9 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-lg mb-4">Services</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li>Balloons & Helium</li>
               <li>Party Decoration</li>
               <li>Surprise Planner</li>
+              <li>Flower Bouquet</li>
               <li>Gift Baskets</li>
             </ul>
           </div>
