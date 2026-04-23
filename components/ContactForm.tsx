@@ -71,9 +71,9 @@ export default function ContactForm() {
   const calculateTotalPrice = useMemo(() => {
     let total = 0
 
-    // Party Decoration packs
+    // Party Decoration packs - avec sécurité TypeScript
     const partyDecoration = servicesData[0]
-    if (partyDecoration && partyDecoration.packs) {
+    if (partyDecoration && partyDecoration.packs && partyDecoration.packs.length > 0) {
       formData.selectedPacks.forEach(packId => {
         const pack = partyDecoration.packs.find(p => p.id === packId)
         if (pack) total += pack.price
@@ -152,9 +152,17 @@ export default function ContactForm() {
 
   const downloadPDF = async () => {
     if (!isMounted || !reviewRef.current) return
+    // @ts-ignore - html2pdf.js n'a pas de types officiels
     const html2pdf = (await import('html2pdf.js')).default
-    const opt = { margin: [10, 10, 10, 10], filename: `commande_${formData.clientName || 'client'}_${Date.now()}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } }
-    try { await html2pdf().set(opt).from(reviewRef.current).save() } catch (error) { console.error('Erreur PDF:', error) }
+    const opt = { 
+      margin: [10, 10, 10, 10], 
+      filename: `commande_${formData.clientName || 'client'}_${Date.now()}.pdf`, 
+      image: { type: 'jpeg', quality: 0.98 }, 
+      html2canvas: { scale: 2 }, 
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+    }
+    try { await html2pdf().set(opt).from(reviewRef.current).save() } 
+    catch (error) { console.error('Erreur PDF:', error) }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
