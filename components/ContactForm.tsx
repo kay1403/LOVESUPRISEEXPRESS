@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Download, CheckCircle, Heart, ChevronRight, ChevronLeft, Eye, AlertCircle, Package, Sparkles, Globe, Flower2, Gift, PartyPopper, Baby, Coffee } from 'lucide-react'
+import { Download, CheckCircle, Heart, AlertCircle, Package, Sparkles, Globe, Flower2, Gift, PartyPopper, Baby, Coffee } from 'lucide-react'
 
 interface FormData {
   clientName: string
@@ -68,14 +68,17 @@ export default function ContactForm() {
 
   useEffect(() => { setIsMounted(true) }, [])
 
-  const calculateTotalPrice = (): number => {
+  const calculateTotalPrice = useMemo(() => {
     let total = 0
 
     // Party Decoration packs
-    formData.selectedPacks.forEach(packId => {
-      const pack = servicesData[0].packs.find(p => p.id === packId)
-      if (pack) total += pack.price
-    })
+    const partyDecoration = servicesData[0]
+    if (partyDecoration && partyDecoration.packs) {
+      formData.selectedPacks.forEach(packId => {
+        const pack = partyDecoration.packs.find(p => p.id === packId)
+        if (pack) total += pack.price
+      })
+    }
 
     // Surprise Planner
     if (formData.selectedServices.includes(2)) total += 200000
@@ -96,9 +99,9 @@ export default function ContactForm() {
     if (formData.deliveryMethod === 'delivery') total += 5000
 
     return total
-  }
+  }, [formData.selectedPacks, formData.selectedServices, formData.selectedBaskets, formData.deliveryMethod])
 
-  const totalPrice = calculateTotalPrice()
+  const totalPrice = calculateTotalPrice
   const hasValidSelection = totalPrice > 0
 
   const handlePackToggle = (packId: number) => {
@@ -209,7 +212,7 @@ export default function ContactForm() {
       <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">Services & Packs</h3>
         <ul className="text-sm space-y-1">
           {formData.selectedPacks.map(packId => {
-            const pack = servicesData[0].packs.find(p => p.id === packId)
+            const pack = servicesData[0]?.packs?.find(p => p.id === packId)
             return <li key={packId}>• {pack?.name} : {pack?.price.toLocaleString()} RWF</li>
           })}
           {formData.selectedServices.includes(2) && <li>• Surprise Planner : 200 000 RWF</li>}
@@ -282,7 +285,7 @@ export default function ContactForm() {
                   <div className="border rounded-xl p-4">
                     <div className="flex items-center gap-2 mb-3"><PartyPopper size={18} className="text-primary" /><h4 className="font-semibold text-dark">Party Decoration</h4></div>
                     <div className="space-y-2">
-                      {servicesData[0].packs.map(pack => (
+                      {servicesData[0]?.packs?.map(pack => (
                         <label key={pack.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition ${formData.selectedPacks.includes(pack.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
                           <input type="checkbox" checked={formData.selectedPacks.includes(pack.id)} onChange={() => handlePackToggle(pack.id)} className="w-4 h-4 text-primary rounded" />
                           <div className="flex-1"><span className="font-medium">{pack.name}</span><p className="text-xs text-gray-500">{pack.desc}</p></div>
@@ -332,10 +335,7 @@ export default function ContactForm() {
                     </div>
                   </div>
 
-                  {/* Message sur carte */}
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Message sur la carte</label><textarea value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Joyeux anniversaire ! Je t'aime" /></div>
-
-                  {/* Instructions spéciales */}
                   <div><label className="block text-sm font-medium text-gray-700 mb-2">Instructions spéciales</label><textarea value={formData.specialInstructions} onChange={(e) => setFormData({...formData, specialInstructions: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Thème, couleurs, préférences..." /></div>
 
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
@@ -352,7 +352,7 @@ export default function ContactForm() {
                     <h4 className="font-semibold text-dark mb-3">Récapitulatif des services</h4>
                     <div className="space-y-2 text-sm">
                       {formData.selectedPacks.map(packId => {
-                        const pack = servicesData[0].packs.find(p => p.id === packId)
+                        const pack = servicesData[0]?.packs?.find(p => p.id === packId)
                         return <div key={packId} className="flex justify-between"><span>{pack?.name}</span><span className="font-bold">{pack?.price.toLocaleString()} RWF</span></div>
                       })}
                       {formData.selectedServices.includes(2) && <div className="flex justify-between"><span>Surprise Planner</span><span className="font-bold">200 000 RWF</span></div>}
@@ -390,7 +390,7 @@ export default function ContactForm() {
 
                   <div className="flex flex-col gap-3">
                     <div className="flex gap-4">
-                      <button type="button" onClick={() => goToStep(4)} className="btn-secondary flex-1">Modifier la commande</button>
+                      <button type="button" onClick={() => goToStep(1)} className="btn-secondary flex-1">Modifier</button>
                       <button type="button" onClick={downloadPDF} className="bg-gray-100 text-gray-700 px-4 py-3 rounded-full font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2 flex-1"><Download size={18} /> Télécharger PDF</button>
                     </div>
                     <button type="submit" disabled={isSubmitting || (!hasValidSelection) || (formData.budget > 0 && formData.budget < totalPrice)} className="btn-primary w-full">{isSubmitting ? 'Envoi...' : 'Confirmer et envoyer'}</button>
