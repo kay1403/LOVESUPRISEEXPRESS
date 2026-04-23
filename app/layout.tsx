@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
+import IdentityProvider from '@/components/IdentityProvider'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://loveexpress.rw'),
   title: 'LoveExpress | Organisation de surprises à Kigali',
-  description: 'LoveExpress crée des moments de surprise inoubliables : anniversaires, demandes en mariage, baby showers. Livraison de gift baskets et décorations à Kigali, Rwanda.',
+  description: 'LoveExpress crée des moments de surprise inoubliables : anniversaires, demandes en mariage, baby showers.',
   keywords: 'surprise kigali, organisation anniversaire, demande mariage surprise, gift basket rwanda, décoration fête kigali',
   authors: [{ name: 'LoveExpress' }],
   openGraph: {
@@ -34,6 +35,7 @@ export default function RootLayout({
     <html lang="fr">
       <body>
         <Providers>
+          <IdentityProvider />
           {children}
         </Providers>
       </body>
