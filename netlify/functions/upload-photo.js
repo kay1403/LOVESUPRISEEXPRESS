@@ -1,5 +1,5 @@
-const { savePhoto } = require('../lib/utils/netlify-blobs.js');
-const { isAdmin } = require('../lib/utils/verify-token.js');
+const { savePhoto } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -12,13 +12,12 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérification admin via Netlify Identity
   const admin = await isAdmin(event);
   if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
+      body: JSON.stringify({ error: 'Non autorisé' })
     };
   }
 

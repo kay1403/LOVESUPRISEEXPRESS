@@ -1,5 +1,5 @@
-const { getCommandes } = require('../../../lib/utils/netlify-blobs.js');
-const { isAdmin } = require('../../../lib/utils/verify-token.js');
+const { getCommandes } = require('../../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {

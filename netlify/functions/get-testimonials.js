@@ -1,4 +1,4 @@
-const { getAvis } = require('../lib/utils/netlify-blobs.js');
+const { getAvis } = require('../../lib/utils/netlify-blobs.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -12,7 +12,6 @@ exports.handler = async (event) => {
   }
 
   try {
-    // Récupérer uniquement les avis publiés
     const published = await getAvis('published');
     return {
       statusCode: 200,
