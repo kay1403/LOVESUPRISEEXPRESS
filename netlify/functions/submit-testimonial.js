@@ -1,4 +1,4 @@
-const { saveAvis } = require('../lib/utils/netlify-blobs.js');
+const { saveAvis } = require('../../lib/utils/netlify-blobs.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -14,7 +14,6 @@ exports.handler = async (event) => {
   try {
     const avis = JSON.parse(event.body);
     
-    // Sauvegarder l'avis (statut 'pending' par défaut)
     const savedAvis = await saveAvis(avis);
     
     return {
