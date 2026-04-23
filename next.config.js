@@ -26,6 +26,8 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Ignorer les erreurs de build pour les imports client-only
+  serverExternalPackages: ['netlify-identity-widget'],
 }
 
 module.exports = nextConfig

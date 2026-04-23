@@ -1,32 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import netlifyIdentity from 'netlify-identity-widget';
-
-// Fonction pour récupérer le token
-const getToken = () => {
-  const user = netlifyIdentity.currentUser();
-  return user?.token?.access_token;
-};
-
-// Fonction fetch avec token
-const authFetch = async (url: string, options: RequestInit = {}) => {
-  const token = getToken();
-  return fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-};
+import { useNetlifyAuth } from './AdminIdentity';
 
 export default function AdminPage() {
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { getToken } = useNetlifyAuth();
+
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const token = getToken();
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
+  };
 
   const fetchData = async () => {
     setLoading(true);
