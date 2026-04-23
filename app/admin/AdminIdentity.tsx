@@ -1,67 +1,85 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import netlifyIdentity from 'netlify-identity-widget';
 
-// Initialiser Netlify Identity uniquement côté client
-export function initNetlifyIdentity() {
-  if (typeof window !== 'undefined') {
-    netlifyIdentity.init({
-      APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+// Import dynamique pour éviter les erreurs de build
+let netlifyIdentity: any = null;
+
+// Initialiser uniquement côté client
+const initIdentity = () => {
+  if (typeof window !== 'undefined' && !netlifyIdentity) {
+    // Import dynamique uniquement dans le navigateur
+    import('netlify-identity-widget').then((module) => {
+      netlifyIdentity = module.default || module;
+      netlifyIdentity.init({
+        APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+      });
     });
   }
-}
+};
 
-// Hook pour gérer l'authentification
 export function useNetlifyAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    initNetlifyIdentity();
+    initIdentity();
 
-    const handleLogin = (user: any) => {
-      setUser(user);
-      setLoading(false);
-    };
+    // Attendre que netlifyIdentity soit chargé
+    const checkInterval = setInterval(() => {
+      if (netlifyIdentity) {
+        clearInterval(checkInterval);
+        
+        const handleLogin = (user: any) => {
+          setUser(user);
+          setLoading(false);
+        };
 
-    const handleLogout = () => {
-      setUser(null);
-      window.location.href = '/admin';
-    };
+        const handleLogout = () => {
+          setUser(null);
+          window.location.href = '/admin';
+        };
 
-    netlifyIdentity.on('login', handleLogin);
-    netlifyIdentity.on('logout', handleLogout);
+        netlifyIdentity.on('login', handleLogin);
+        netlifyIdentity.on('logout', handleLogout);
 
-    const currentUser = netlifyIdentity.currentUser();
-    if (currentUser) {
-      setUser(currentUser);
-    }
-    setLoading(false);
+        const currentUser = netlifyIdentity.currentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        }
+        setLoading(false);
 
-    return () => {
-      netlifyIdentity.off('login', handleLogin);
-      netlifyIdentity.off('logout', handleLogout);
-    };
+        return () => {
+          netlifyIdentity.off('login', handleLogin);
+          netlifyIdentity.off('logout', handleLogout);
+        };
+      }
+    }, 100);
+
+    return () => clearInterval(checkInterval);
   }, []);
 
   const login = () => {
-    netlifyIdentity.open();
+    if (netlifyIdentity) {
+      netlifyIdentity.open();
+    }
   };
 
   const logout = () => {
-    netlifyIdentity.logout();
+    if (netlifyIdentity) {
+      netlifyIdentity.logout();
+    }
   };
 
   const getToken = () => {
-    const user = netlifyIdentity.currentUser();
+    const user = netlifyIdentity?.currentUser();
     return user?.token?.access_token;
   };
 
   return { user, loading, login, logout, getToken };
 }
 
-// Composant qui affiche l'interface de connexion
+// Composant de protection de l'admin
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, login } = useNetlifyAuth();
 

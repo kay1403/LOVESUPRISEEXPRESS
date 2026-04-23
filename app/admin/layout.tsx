@@ -1,11 +1,12 @@
 'use client';
 
-import { AdminAuthGuard } from './AdminIdentity';
+import { AdminAuthGuard, useNetlifyAuth } from './AdminIdentity';
 import { Heart } from 'lucide-react';
-import { useNetlifyAuth } from './AdminIdentity';
 
 function AdminHeader() {
   const { user, logout } = useNetlifyAuth();
+
+  if (!user) return null;
 
   return (
     <div className="bg-white shadow-sm sticky top-0 z-10">
@@ -15,7 +16,7 @@ function AdminHeader() {
           <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
         </div>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-gray-500">{user?.email}</span>
+          <span className="text-sm text-gray-500">{user.email}</span>
           <button
             onClick={logout}
             className="text-gray-500 hover:text-red-500 text-sm transition"
