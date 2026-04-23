@@ -1,59 +1,65 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Package, Heart, Baby, Coffee, Flower2, Sparkles, Gift, Check } from 'lucide-react'
 
-const giftBaskets = [
-  {
-    id: 1, name: 'Birthday', subtitle: 'Gift Basket', badge: 'Anniversaire',
-    description: 'Pour un anniversaire inoubliable',
-    longDescription: 'Mini gâteau d\'anniversaire, bougie, carte personnalisée, jus de fruit.',
-    priceStandard: 15000, pricePremium: 80000, priceRange: '15 000 - 80 000 RWF',
-    image: 'https://i.pinimg.com/1200x/ec/36/e4/ec36e470b8d41448d810491847893f83.jpg',
-    popular: true, icon: Package,
-    includes: ['Mini gâteau anniversaire', 'Bougie', 'Carte personnalisée', 'Jus de fruit']
-  },
-  {
-    id: 2, name: 'Romantic', subtitle: 'Gift Basket', badge: 'Romantique',
-    description: 'Pour votre moitié',
-    longDescription: 'Chocolat, bougies parfumées, lettre d\'amour, bouquet de fleurs.',
-    priceStandard: 40000, pricePremium: 50000, priceRange: '40 000 - 50 000 RWF',
-    image: 'https://i.pinimg.com/736x/63/a7/09/63a709e557275506ec67b31b59642c44.jpg',
-    popular: true, icon: Heart,
-    includes: ['Chocolat', 'Bougies parfumées', 'Lettre d\'amour', 'Bouquet de fleurs']
-  },
-  {
-    id: 3, name: 'New Baby', subtitle: 'Gift Basket', badge: 'Naissance',
-    description: 'Bienvenue au nouveau-né',
-    longDescription: 'Vêtements bébé, couches, produits de soin, doudou.',
-    priceStandard: 40000, pricePremium: 80000, priceRange: '40 000 - 80 000 RWF',
-    image: 'https://i.pinimg.com/1200x/48/b0/79/48b07903362683f89724cc49e705a008.jpg',
-    popular: false, icon: Baby,
-    includes: ['Vêtements bébé', 'Couches', 'Produits de soin', 'Doudou']
-  },
-  {
-    id: 4, name: 'Gourmet', subtitle: 'Gift Basket', badge: 'Gastronomie',
-    description: 'Pour les gourmands',
-    longDescription: 'Biscuits, fruits, chocolat, jus, bonbons.',
-    priceStandard: 20000, pricePremium: 70000, priceRange: '20 000 - 70 000 RWF',
-    image: 'https://i.pinimg.com/1200x/5d/1c/43/5d1c43fa44d4ceec1d095ce415241b0a.jpg',
-    popular: true, icon: Coffee,
-    includes: ['Biscuits', 'Fruits', 'Chocolat', 'Jus', 'Bonbons']
-  },
-  {
-    id: 5, name: 'Wellness', subtitle: 'Gift Basket', badge: 'Bien-être',
-    description: 'Détente et bien-être',
-    longDescription: 'Thé, huiles essentielles, savon, masques visage, parfum, crème.',
-    priceStandard: 50000, pricePremium: 100000, priceRange: '50 000 - 100 000 RWF',
-    image: 'https://i.pinimg.com/1200x/fe/c3/97/fec397b6fbc634e851457411b107e4c5.jpg',
-    popular: false, icon: Flower2,
-    includes: ['Thé', 'Huiles essentielles', 'Savon', 'Masques visage', 'Parfum', 'Crème']
-  }
-]
+interface GiftBasket {
+  id: number
+  name: string
+  subtitle: string
+  badge: string
+  description: string
+  longDescription: string
+  priceStandard: number
+  pricePremium: number
+  popular: boolean
+  image: string
+  includes: string[]
+}
 
 export default function GiftBaskets() {
-  const [selectedBasket, setSelectedBasket] = useState<typeof giftBaskets[0] | null>(null)
+  const [giftBaskets, setGiftBaskets] = useState<GiftBasket[]>([])
+  const [selectedBasket, setSelectedBasket] = useState<GiftBasket | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchGiftBaskets()
+  }, [])
+
+  const fetchGiftBaskets = async () => {
+    try {
+      const response = await fetch('/api/cms/gift-baskets')
+      const data = await response.json()
+      if (data.success && data.giftBaskets) {
+        setGiftBaskets(data.giftBaskets)
+      }
+    } catch (error) {
+      console.error('Erreur chargement gift baskets:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getIcon = (name: string) => {
+    switch (name.toLowerCase()) {
+      case 'birthday': return Package
+      case 'romantic': return Heart
+      case 'new baby': return Baby
+      case 'gourmet': return Coffee
+      default: return Flower2
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="py-24 bg-primaryLight">
+        <div className="container-custom text-center">
+          <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <>
@@ -69,53 +75,56 @@ export default function GiftBaskets() {
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {giftBaskets.map((basket, index) => (
-              <motion.div
-                key={basket.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -10 }}
-                onClick={() => setSelectedBasket(basket)}
-                className="group bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
-              >
-                <div className="relative h-56 overflow-hidden">
-                  <img src={basket.image} alt={basket.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-                  <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                    <span className="text-xs font-semibold text-primary">{basket.badge}</span>
-                  </div>
-                  {basket.popular && (
-                    <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
-                      <Sparkles size={12} className="text-dark" />
-                      <span className="text-xs font-semibold text-dark">Populaire</span>
+            {giftBaskets.map((basket, index) => {
+              const Icon = getIcon(basket.name)
+              return (
+                <motion.div
+                  key={basket.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  viewport={{ once: true }}
+                  whileHover={{ y: -10 }}
+                  onClick={() => setSelectedBasket(basket)}
+                  className="group bg-white rounded-2xl overflow-hidden cursor-pointer transition-all duration-500 hover:shadow-2xl border border-gray-100"
+                >
+                  <div className="relative h-56 overflow-hidden">
+                    <img src={basket.image} alt={basket.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
+                      <span className="text-xs font-semibold text-primary">{basket.badge}</span>
                     </div>
-                  )}
-                  <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <span className="text-white text-sm font-semibold bg-primary/90 px-5 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                      Voir le panier
-                    </span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <basket.icon size={18} className="text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-dark">{basket.name}</h3>
-                      <p className="text-xs text-gray-400">{basket.subtitle}</p>
+                    {basket.popular && (
+                      <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
+                        <Sparkles size={12} className="text-dark" />
+                        <span className="text-xs font-semibold text-dark">Populaire</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <span className="text-white text-sm font-semibold bg-primary/90 px-5 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        Voir le panier
+                      </span>
                     </div>
                   </div>
-                  <p className="text-gray-600 text-sm mb-4">{basket.description}</p>
-                  <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                    <span className="text-primary font-bold">{basket.priceStandard.toLocaleString()} RWF</span>
-                    <button className="text-primary text-sm font-medium hover:text-accent transition">Détails</button>
+                  <div className="p-6">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Icon size={18} className="text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-dark">{basket.name}</h3>
+                        <p className="text-xs text-gray-400">{basket.subtitle}</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4">{basket.description}</p>
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-100">
+                      <span className="text-primary font-bold">{basket.priceStandard.toLocaleString()} RWF</span>
+                      <button className="text-primary text-sm font-medium hover:text-accent transition">Détails</button>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -131,7 +140,6 @@ export default function GiftBaskets() {
                 {selectedBasket.popular && (<div className="absolute top-4 left-4 bg-accent px-3 py-1 rounded-full flex items-center gap-1"><Sparkles size={12} className="text-dark" /><span className="text-xs font-semibold text-dark">Populaire</span></div>)}
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-3">
-                    <selectedBasket.icon size={12} className="text-white" />
                     <span className="text-xs font-medium text-white uppercase tracking-wider">{selectedBasket.badge}</span>
                   </div>
                   <h3 className="text-2xl font-display font-bold text-white">{selectedBasket.name} {selectedBasket.subtitle}</h3>

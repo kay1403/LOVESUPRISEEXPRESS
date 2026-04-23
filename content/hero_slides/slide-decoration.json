@@ -1,0 +1,16 @@
+{
+  "id": 2,
+  "title": "Décoration",
+  "subtitle": "d'Exception",
+  "badge": "Art & Élégance",
+  "description": "Transformez n'importe quel espace en un lieu magique. Nos décorations sur mesure créent l'ambiance parfaite pour vos célébrations les plus importantes.",
+  "image": "https://images.pexels.com/photos/17417854/pexels-photo-17417854.jpeg",
+  "features": [
+    "Thèmes personnalisés",
+    "Installation complète",
+    "Démontage inclus"
+  ],
+  "bgColor": "#FF4D6D",
+  "bgLight": "#FFF0F3",
+  "order": 2
+}

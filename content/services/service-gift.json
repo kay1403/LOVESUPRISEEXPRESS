@@ -1,0 +1,19 @@
+{
+  "id": 5,
+  "title": "Gift",
+  "subtitle": "Baskets",
+  "badge": "Luxe & Douceur",
+  "description": "Paniers cadeaux personnalisables pour toutes les occasions",
+  "longDescription": "Des paniers cadeaux luxueux soigneusement composés selon l'occasion et les goûts de la personne. Chaque panier est unique.",
+  "basePrice": 15000,
+  "priceRange": "15 000 - 100 000 RWF",
+  "image": "https://i.pinimg.com/1200x/ba/98/c8/ba98c85a1a0864781b15f9f0a823a691.jpg",
+  "duration": "1-2 jours",
+  "coverage": "Tout le Rwanda",
+  "includes": ["Panier premium", "Produits de qualité", "Carte personnalisée", "Emballage cadeau"],
+  "options": [
+    { "name": "Ajout de chocolats belges", "price": 12000 },
+    { "name": "Ajout de champagne", "price": 25000 },
+    { "name": "Livraison nocturne", "price": 8000 }
+  ]
+}

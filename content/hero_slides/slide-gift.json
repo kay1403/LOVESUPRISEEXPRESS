@@ -1,0 +1,16 @@
+{
+  "id": 4,
+  "title": "Gift",
+  "subtitle": "Baskets",
+  "badge": "Luxe & Douceur",
+  "description": "Des paniers cadeaux luxueux soigneusement composés selon les goûts et l'occasion. Un cadeau qui marque les esprits et réchauffe les cœurs.",
+  "image": "https://i.pinimg.com/1200x/e6/3e/d3/e63ed35a4e166f7830f1ef5cd2839392.jpg",
+  "features": [
+    "Personnalisation totale",
+    "Produits premium",
+    "Emballage cadeau"
+  ],
+  "bgColor": "#FF4D6D",
+  "bgLight": "#FFF0F3",
+  "order": 4
+}

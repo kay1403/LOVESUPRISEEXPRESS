@@ -1,45 +1,49 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowRight, Heart } from 'lucide-react'
 import Link from 'next/link'
 
-const realizations = [
-  {
-    url: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg',
-    title: 'Demande en mariage surprise',
-    category: 'Proposal'
-  },
-  {
-    url: 'https://images.pexels.com/photos/1749303/pexels-photo-1749303.jpeg',
-    title: 'Décoration anniversaire',
-    category: 'Birthday'
-  },
-  {
-    url: 'https://images.pexels.com/photos/931018/pexels-photo-931018.jpeg',
-    title: 'Ballons personnalisés',
-    category: 'Decoration'
-  },
-  {
-    url: 'https://images.pexels.com/photos/6521975/pexels-photo-6521975.jpeg',
-    title: 'Gift basket anniversaire',
-    category: 'Gift Basket'
-  },
-  {
-    url: 'https://images.pexels.com/photos/587741/pexels-photo-587741.jpeg',
-    title: 'Teddy bear géant',
-    category: 'Teddy Bear'
-  },
-  {
-    url: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg',
-    title: 'Bouquet de fleurs',
-    category: 'Flowers'
-  }
-]
+interface Realisation {
+  id: number
+  title: string
+  category: string
+  image: string
+}
 
 export default function Realizations() {
-  const [selectedImage, setSelectedImage] = useState<typeof realizations[0] | null>(null)
+  const [realizations, setRealisations] = useState<Realisation[]>([])
+  const [selectedImage, setSelectedImage] = useState<Realisation | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchRealisations()
+  }, [])
+
+  const fetchRealisations = async () => {
+    try {
+      const response = await fetch('/api/cms/realisations')
+      const data = await response.json()
+      if (data.success && data.realisations) {
+        setRealisations(data.realisations)
+      }
+    } catch (error) {
+      console.error('Erreur chargement réalisations:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <section className="py-24 bg-white">
+        <div className="container-custom text-center">
+          <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <>
@@ -63,7 +67,7 @@ export default function Realizations() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {realizations.map((image, index) => (
               <motion.div
-                key={index}
+                key={image.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.1 }}
@@ -74,7 +78,7 @@ export default function Realizations() {
               >
                 <div className="relative overflow-hidden rounded-2xl">
                   <img
-                    src={image.url}
+                    src={image.image}
                     alt={image.title}
                     className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -86,7 +90,6 @@ export default function Realizations() {
             ))}
           </div>
 
-          {/* Bouton pour voir la galerie clients */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -106,7 +109,6 @@ export default function Realizations() {
         </div>
       </section>
 
-      {/* Modal pour agrandir les réalisations */}
       {selectedImage && (
         <div 
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
@@ -119,7 +121,7 @@ export default function Realizations() {
             className="max-w-4xl w-full"
           >
             <img 
-              src={selectedImage.url} 
+              src={selectedImage.image} 
               alt={selectedImage.title}
               className="w-full h-auto rounded-2xl"
             />

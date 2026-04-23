@@ -1,0 +1,17 @@
+{
+  "id": 1,
+  "title": "Bouquet",
+  "subtitle": "de Fleurs",
+  "badge": "Frais & Élégant",
+  "description": "Des bouquets de fleurs fraîches pour toutes les occasions. Roses, lys, tournesols ou compositions sur mesure pour exprimer vos sentiments.",
+  "image": "https://images.pexels.com/photos/35841488/pexels-photo-35841488.jpeg",
+  "features": [
+    "Fleurs fraîches de saison",
+    "Emballage élégant",
+    "Carte personnalisée",
+    "Livraison offerte à Kigali"
+  ],
+  "bgColor": "#FF4D6D",
+  "bgLight": "#FFF0F3",
+  "order": 1
+}

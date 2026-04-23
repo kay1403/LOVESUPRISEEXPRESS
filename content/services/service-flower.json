@@ -1,0 +1,19 @@
+{
+  "id": 4,
+  "title": "Flower",
+  "subtitle": "Bouquet",
+  "badge": "Frais & Élégant",
+  "description": "Pour tout événement - Bouquet personnalisable",
+  "longDescription": "Des bouquets de fleurs fraîches soigneusement sélectionnés. Parfait pour accompagner toute surprise. Le client peut adapter son montant.",
+  "basePrice": 15000,
+  "priceRange": "15 000 RWF",
+  "image": "https://images.pexels.com/photos/32356065/pexels-photo-32356065.jpeg",
+  "duration": "2 heures",
+  "coverage": "Kigali",
+  "includes": ["Fleurs fraîches de saison", "Emballage élégant", "Carte personnalisée", "Livraison offerte"],
+  "options": [
+    { "name": "Bouquet premium roses rouges", "price": 25000 },
+    { "name": "Livraison express (2h)", "price": 5000 },
+    { "name": "Personnalisation du montant", "price": 0, "note": "À partir de 15 000 RWF" }
+  ]
+}

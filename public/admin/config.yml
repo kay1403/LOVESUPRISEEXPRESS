@@ -4,6 +4,7 @@ backend:
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
+public_path: "/images/uploads"
 
 collections:
   - name: "services"
@@ -11,21 +12,50 @@ collections:
     folder: "content/services"
     create: true
     slug: "{{slug}}"
+    format: "json"
+    extension: "json"
     fields:
+      - { label: "ID", name: "id", widget: "number", default: 1 }
       - { label: "Titre", name: "title", widget: "string" }
       - { label: "Sous-titre", name: "subtitle", widget: "string" }
-      - { label: "Description", name: "description", widget: "text" }
-      - { label: "Prix", name: "price", widget: "string" }
-      - { label: "Image", name: "image", widget: "image" }
       - { label: "Badge", name: "badge", widget: "string" }
-      - { label: "Caractéristiques", name: "features", widget: "list", field: { label: "Feature", name: "feature", widget: "string" } }
+      - { label: "Description courte", name: "description", widget: "text" }
+      - { label: "Description longue", name: "longDescription", widget: "text" }
+      - { label: "Prix départ", name: "basePrice", widget: "number" }
+      - { label: "Prix affiché", name: "priceRange", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Durée", name: "duration", widget: "string" }
+      - { label: "Couverture", name: "coverage", widget: "string" }
+      - label: "Packs"
+        name: "packs"
+        widget: "list"
+        required: false
+        fields:
+          - { label: "Nom", name: "name", widget: "string" }
+          - { label: "Prix", name: "price", widget: "number" }
+          - { label: "Description", name: "desc", widget: "text" }
+      - label: "Inclus"
+        name: "includes"
+        widget: "list"
+        field: { label: "Item", name: "item", widget: "string" }
+      - label: "Options"
+        name: "options"
+        widget: "list"
+        required: false
+        fields:
+          - { label: "Nom", name: "name", widget: "string" }
+          - { label: "Prix", name: "price", widget: "number" }
+          - { label: "Note", name: "note", widget: "string", required: false }
 
   - name: "gift_baskets"
     label: "🎁 Paniers cadeaux"
     folder: "content/gift_baskets"
     create: true
     slug: "{{slug}}"
+    format: "json"
+    extension: "json"
     fields:
+      - { label: "ID", name: "id", widget: "number" }
       - { label: "Nom", name: "name", widget: "string" }
       - { label: "Sous-titre", name: "subtitle", widget: "string" }
       - { label: "Badge", name: "badge", widget: "string" }
@@ -35,14 +65,44 @@ collections:
       - { label: "Prix premium", name: "pricePremium", widget: "number" }
       - { label: "Image", name: "image", widget: "image" }
       - { label: "Populaire", name: "popular", widget: "boolean", default: false }
-      - { label: "Contenu", name: "includes", widget: "list", field: { label: "Item", name: "item", widget: "string" } }
+      - label: "Contenu"
+        name: "includes"
+        widget: "list"
+        field: { label: "Item", name: "item", widget: "string" }
 
   - name: "realisations"
     label: "📸 Réalisations"
     folder: "content/realisations"
     create: true
     slug: "{{slug}}"
+    format: "json"
+    extension: "json"
     fields:
+      - { label: "ID", name: "id", widget: "number" }
       - { label: "Titre", name: "title", widget: "string" }
       - { label: "Catégorie", name: "category", widget: "string" }
       - { label: "Image", name: "image", widget: "image" }
+
+  - name: "hero_slides"
+    label: "🎬 Hero Slides"
+    folder: "content/hero_slides"
+    create: true
+    slug: "{{slug}}"
+    format: "json"
+    extension: "json"
+    fields:
+      - { label: "ID", name: "id", widget: "number" }
+      - { label: "Titre", name: "title", widget: "string" }
+      - { label: "Sous-titre", name: "subtitle", widget: "string" }
+      - { label: "Badge", name: "badge", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Image", name: "image", widget: "image" }
+      - label: "Caractéristiques"
+        name: "features"
+        widget: "list"
+        required: true
+        default: ["Fleurs fraîches de saison", "Emballage élégant", "Carte personnalisée", "Livraison offerte à Kigali"]
+        field: { label: "Feature", name: "feature", widget: "string" }
+      - { label: "Couleur de fond", name: "bgColor", widget: "string", default: "#FF4D6D", required: false }
+      - { label: "Couleur claire", name: "bgLight", widget: "string", default: "#FFF0F3", required: false }
+      - { label: "Position", name: "order", widget: "number", default: 0 }

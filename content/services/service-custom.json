@@ -1,0 +1,19 @@
+{
+  "id": 3,
+  "title": "Custom",
+  "subtitle": "Website",
+  "badge": "Digital & Créatif",
+  "description": "Site web personnalisé pour votre événement ou entreprise",
+  "longDescription": "Créez un site web personnalisé pour votre événement : site d'anniversaire surprise, site de mariage avec RSVP, ou site vitrine pour votre commerce.",
+  "basePrice": 25000,
+  "priceRange": "25 000 - 45 000 RWF",
+  "image": "https://images.pexels.com/photos/270408/pexels-photo-270408.jpeg",
+  "duration": "5-10 jours",
+  "coverage": "100% en ligne",
+  "includes": ["Design personnalisé", "Hébergement 1 an inclus", "Nom de domaine personnalisé", "Support technique 3 mois"],
+  "options": [
+    { "name": "Site simple (5 pages)", "price": 25000 },
+    { "name": "Site premium (illimité + blog)", "price": 45000 },
+    { "name": "Galerie photo", "price": 20000 }
+  ]
+}
