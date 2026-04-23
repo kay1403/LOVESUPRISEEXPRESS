@@ -6,21 +6,33 @@ export default function IdentityProvider() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Initialiser Netlify Identity Widget sur tout le site
-    import('netlify-identity-widget').then((module) => {
-      const netlifyIdentity = module.default || module;
-      netlifyIdentity.init({
-        APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-      });
+    // Charger le script Netlify Identity Widget via CDN (plus fiable)
+    const script = document.createElement('script');
+    script.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+    script.async = true;
+    document.head.appendChild(script);
 
-      // Détecter un token d'invitation dans l'URL
-      const hash = window.location.hash;
-      if (hash && hash.includes('invite_token')) {
-        setTimeout(() => {
-          netlifyIdentity.open();
-        }, 500);
+    script.onload = () => {
+      // @ts-ignore
+      const netlifyIdentity = window.netlifyIdentity;
+      if (netlifyIdentity) {
+        netlifyIdentity.init({
+          APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+        });
+
+        // Détecter un token d'invitation
+        const hash = window.location.hash;
+        if (hash && hash.includes('invite_token')) {
+          setTimeout(() => {
+            netlifyIdentity.open();
+          }, 500);
+        }
       }
-    });
+    };
+
+    return () => {
+      // Nettoyage non nécessaire pour le script
+    };
   }, []);
 
   return null;

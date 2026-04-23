@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { Providers } from './providers'
-import IdentityProvider from '@/components/IdentityProvider'
+import Script from 'next/script'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://loveexpress.rw'),
@@ -33,9 +33,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
+      <head>
+        {/* Netlify Identity Widget - chargé globalement */}
+        <Script 
+          src="https://identity.netlify.com/v1/netlify-identity-widget.js"
+          strategy="afterInteractive"
+        />
+      </head>
       <body>
         <Providers>
-          <IdentityProvider />
           {children}
         </Providers>
       </body>

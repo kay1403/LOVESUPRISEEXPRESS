@@ -2,51 +2,85 @@
 
 import { useEffect, useState } from 'react';
 
-let netlifyIdentity: any = null;
-let isInitialized = false;
-
-const initIdentity = () => {
-  if (typeof window === 'undefined' || isInitialized) return;
-  
-  import('netlify-identity-widget').then((module) => {
-    netlifyIdentity = module.default || module;
-    netlifyIdentity.init({
-      APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-    });
-    isInitialized = true;
-    
-    netlifyIdentity.on('login', () => {
-      window.location.href = '/dashboard';
-    });
-    
-    netlifyIdentity.on('logout', () => {
-      window.location.href = '/dashboard';
-    });
-  });
-};
+declare global {
+  interface Window {
+    netlifyIdentity: any;
+  }
+}
 
 export function useNetlifyAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    initIdentity();
+    if (typeof window === 'undefined') return;
 
-    const checkUser = setInterval(() => {
-      if (netlifyIdentity) {
-        clearInterval(checkUser);
+    // Attendre que le script soit chargé
+    const checkIdentity = setInterval(() => {
+      if (window.netlifyIdentity) {
+        clearInterval(checkIdentity);
+        
+        const netlifyIdentity = window.netlifyIdentity;
+        
+        if (!netlifyIdentity.init) {
+          console.error('netlifyIdentity.init is not a function');
+          setLoading(false);
+          return;
+        }
+
+        netlifyIdentity.init({
+          APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+        });
+
+        // Gérer les événements
+        const handleLogin = (user: any) => {
+          setUser(user);
+          window.location.href = '/dashboard';
+        };
+
+        const handleLogout = () => {
+          setUser(null);
+          window.location.href = '/dashboard';
+        };
+
+        netlifyIdentity.on('login', handleLogin);
+        netlifyIdentity.on('logout', handleLogout);
+
         const currentUser = netlifyIdentity.currentUser();
-        if (currentUser) setUser(currentUser);
+        if (currentUser) {
+          setUser(currentUser);
+        }
         setLoading(false);
+
+        return () => {
+          netlifyIdentity.off('login', handleLogin);
+          netlifyIdentity.off('logout', handleLogout);
+        };
       }
     }, 100);
 
-    return () => clearInterval(checkUser);
+    return () => clearInterval(checkIdentity);
   }, []);
 
-  const login = () => netlifyIdentity?.open();
-  const logout = () => netlifyIdentity?.logout();
-  const getToken = () => netlifyIdentity?.currentUser()?.token?.access_token;
+  const login = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      window.netlifyIdentity.open();
+    }
+  };
+
+  const logout = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      window.netlifyIdentity.logout();
+    }
+  };
+
+  const getToken = () => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      const user = window.netlifyIdentity.currentUser();
+      return user?.token?.access_token;
+    }
+    return null;
+  };
 
   return { user, loading, login, logout, getToken };
 }
