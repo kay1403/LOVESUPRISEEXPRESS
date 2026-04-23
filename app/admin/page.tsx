@@ -1,41 +1,41 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import netlifyIdentity from 'netlify-identity-widget';
+
+// Fonction pour récupérer le token
+const getToken = () => {
+  const user = netlifyIdentity.currentUser();
+  return user?.token?.access_token;
+};
+
+// Fonction fetch avec token
+const authFetch = async (url: string, options: RequestInit = {}) => {
+  const token = getToken();
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+};
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminKey, setAdminKey] = useState('');
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  const handleLogin = () => {
-    if (adminKey === 'loveexpress2024') {
-      setIsAuthenticated(true);
-      fetchData();
-    } else {
-      alert('Clé admin incorrecte');
-    }
-  };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const ordersRes = await fetch('/api/get-orders', {
-        headers: { 'Authorization': 'Bearer loveexpress2024' }
-      });
+      const ordersRes = await authFetch('/api/get-orders');
       const ordersData = await ordersRes.json();
       if (ordersData.success) setOrders(ordersData.commandes || []);
 
-      const avisRes = await fetch('/api/get-all-testimonials', {
-        headers: { 'Authorization': 'Bearer loveexpress2024' }
-      });
+      const avisRes = await authFetch('/api/get-all-testimonials');
       const avisData = await avisRes.json();
       if (avisData.success) setTestimonials(avisData.avis || []);
     } catch (error) {
@@ -44,25 +44,21 @@ export default function AdminPage() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const updateOrderStatus = async (id: string, status: string) => {
-    const res = await fetch('/api/update-order-status', {
+    const res = await authFetch('/api/update-order-status', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer loveexpress2024'
-      },
       body: JSON.stringify({ id, status })
     });
     if (res.ok) fetchData();
   };
 
   const moderateTestimonial = async (id: string, status: string) => {
-    const res = await fetch('/api/moderate-testimonial', {
+    const res = await authFetch('/api/moderate-testimonial', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer loveexpress2024'
-      },
       body: JSON.stringify({ id, status })
     });
     if (res.ok) fetchData();
@@ -95,54 +91,16 @@ export default function AdminPage() {
     totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
   };
 
-  if (!isMounted) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">Chargement...</div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-dark">Dashboard LoveExpress</h1>
-            <p className="text-gray-500 mt-2">Accès réservé à l'administration</p>
-          </div>
-          <input
-            type="password"
-            placeholder="Clé d'accès"
-            value={adminKey}
-            onChange={(e) => setAdminKey(e.target.value)}
-            className="w-full px-4 py-3 border rounded-lg mb-4"
-            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-          />
-          <button onClick={handleLogin} className="bg-primary text-white w-full py-3 rounded-lg font-semibold hover:bg-primary/90 transition">
-            Se connecter
-          </button>
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
-          <button onClick={() => setIsAuthenticated(false)} className="text-gray-500 hover:text-red-500 text-sm">
-            Déconnexion
-          </button>
-        </div>
-      </div>
-
+    <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-2xl font-bold">{stats.totalOrders}</p>
@@ -153,7 +111,7 @@ export default function AdminPage() {
           <p className="text-gray-500 text-sm">En attente</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-2xl font-bold text-accent">{stats.pendingTestimonials}</p>
+          <p className="text-2xl font-bold text-orange-500">{stats.pendingTestimonials}</p>
           <p className="text-gray-500 text-sm">Avis à modérer</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -174,9 +132,7 @@ export default function AdminPage() {
       </div>
 
       <div className="p-6">
-        {loading ? (
-          <div className="text-center py-12">Chargement...</div>
-        ) : activeTab === 'orders' ? (
+        {activeTab === 'orders' ? (
           <div className="space-y-4">
             {orders.length === 0 ? (
               <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucune commande</div>
@@ -231,10 +187,10 @@ export default function AdminPage() {
                     </div>
                     {testimonial.status === 'pending' && (
                       <div className="flex gap-2">
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">
                           Publier
                         </button>
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">
                           Supprimer
                         </button>
                       </div>

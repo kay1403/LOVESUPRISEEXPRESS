@@ -222,42 +222,159 @@ export default function GalleryPage() {
 }
 'use client';
 
+import { useEffect, useState } from 'react';
+import netlifyIdentity from 'netlify-identity-widget';
+import { Heart } from 'lucide-react';
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Initialiser Netlify Identity
+    netlifyIdentity.init({
+      APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+    });
+
+    const handleLogin = (user: any) => {
+      setUser(user);
+      setLoading(false);
+    };
+
+    const handleLogout = () => {
+      setUser(null);
+      window.location.href = '/admin';
+    };
+
+    netlifyIdentity.on('login', handleLogin);
+    netlifyIdentity.on('logout', handleLogout);
+
+    const currentUser = netlifyIdentity.currentUser();
+    if (currentUser) {
+      setUser(currentUser);
+    }
+    setLoading(false);
+
+    return () => {
+      netlifyIdentity.off('login', handleLogin);
+      netlifyIdentity.off('logout', handleLogout);
+    };
+  }, []);
+
+  const handleLoginClick = () => {
+    netlifyIdentity.open();
+  };
+
+  // Récupérer le token JWT pour les appels API
+  const getToken = () => {
+    const currentUser = netlifyIdentity.currentUser();
+    if (currentUser) {
+      return currentUser.token?.access_token;
+    }
+    return null;
+  };
+
+  // Exposer le token globalement pour les appels fetch
+  if (typeof window !== 'undefined') {
+    (window as any).__getAdminToken = getToken;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-500">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Heart className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold text-dark mb-2">Dashboard LoveExpress</h1>
+          <p className="text-gray-500 mb-6">Connectez-vous avec votre email pour accéder à l'administration</p>
+          <button
+            onClick={handleLoginClick}
+            className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full"
+          >
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Heart className="w-6 h-6 text-primary" />
+            <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-500">{user.email}</span>
+            <button
+              onClick={() => netlifyIdentity.logout()}
+              className="text-gray-500 hover:text-red-500 text-sm transition"
+            >
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+'use client';
+
 import { useState, useEffect } from 'react';
+import netlifyIdentity from 'netlify-identity-widget';
+
+// Fonction pour récupérer le token
+const getToken = () => {
+  const user = netlifyIdentity.currentUser();
+  return user?.token?.access_token;
+};
+
+// Fonction fetch avec token
+const authFetch = async (url: string, options: RequestInit = {}) => {
+  const token = getToken();
+  return fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      ...options.headers,
+    },
+  });
+};
 
 export default function AdminPage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminKey, setAdminKey] = useState('');
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<any[]>([]);
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  const handleLogin = () => {
-    if (adminKey === 'loveexpress2024') {
-      setIsAuthenticated(true);
-      fetchData();
-    } else {
-      alert('Clé admin incorrecte');
-    }
-  };
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const ordersRes = await fetch('/api/get-orders', {
-        headers: { 'Authorization': 'Bearer loveexpress2024' }
-      });
+      const ordersRes = await authFetch('/api/get-orders');
       const ordersData = await ordersRes.json();
       if (ordersData.success) setOrders(ordersData.commandes || []);
 
-      const avisRes = await fetch('/api/get-all-testimonials', {
-        headers: { 'Authorization': 'Bearer loveexpress2024' }
-      });
+      const avisRes = await authFetch('/api/get-all-testimonials');
       const avisData = await avisRes.json();
       if (avisData.success) setTestimonials(avisData.avis || []);
     } catch (error) {
@@ -266,25 +383,21 @@ export default function AdminPage() {
     setLoading(false);
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
+
   const updateOrderStatus = async (id: string, status: string) => {
-    const res = await fetch('/api/update-order-status', {
+    const res = await authFetch('/api/update-order-status', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer loveexpress2024'
-      },
       body: JSON.stringify({ id, status })
     });
     if (res.ok) fetchData();
   };
 
   const moderateTestimonial = async (id: string, status: string) => {
-    const res = await fetch('/api/moderate-testimonial', {
+    const res = await authFetch('/api/moderate-testimonial', {
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer loveexpress2024'
-      },
       body: JSON.stringify({ id, status })
     });
     if (res.ok) fetchData();
@@ -317,54 +430,16 @@ export default function AdminPage() {
     totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
   };
 
-  if (!isMounted) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="text-center">Chargement...</div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
-          <div className="text-center mb-6">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-dark">Dashboard LoveExpress</h1>
-            <p className="text-gray-500 mt-2">Accès réservé à l'administration</p>
-          </div>
-          <input
-            type="password"
-            placeholder="Clé d'accès"
-            value={adminKey}
-            onChange={(e) => setAdminKey(e.target.value)}
-            className="w-full px-4 py-3 border rounded-lg mb-4"
-            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
-          />
-          <button onClick={handleLogin} className="bg-primary text-white w-full py-3 rounded-lg font-semibold hover:bg-primary/90 transition">
-            Se connecter
-          </button>
-        </div>
+      <div className="flex items-center justify-center py-12">
+        <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="px-6 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
-          <button onClick={() => setIsAuthenticated(false)} className="text-gray-500 hover:text-red-500 text-sm">
-            Déconnexion
-          </button>
-        </div>
-      </div>
-
+    <div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-2xl font-bold">{stats.totalOrders}</p>
@@ -375,7 +450,7 @@ export default function AdminPage() {
           <p className="text-gray-500 text-sm">En attente</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-2xl font-bold text-accent">{stats.pendingTestimonials}</p>
+          <p className="text-2xl font-bold text-orange-500">{stats.pendingTestimonials}</p>
           <p className="text-gray-500 text-sm">Avis à modérer</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
@@ -396,9 +471,7 @@ export default function AdminPage() {
       </div>
 
       <div className="p-6">
-        {loading ? (
-          <div className="text-center py-12">Chargement...</div>
-        ) : activeTab === 'orders' ? (
+        {activeTab === 'orders' ? (
           <div className="space-y-4">
             {orders.length === 0 ? (
               <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucune commande</div>
@@ -453,10 +526,10 @@ export default function AdminPage() {
                     </div>
                     {testimonial.status === 'pending' && (
                       <div className="flex gap-2">
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-600">
                           Publier
                         </button>
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-600">
                           Supprimer
                         </button>
                       </div>
@@ -651,7 +724,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['images.pexels.com', 'localhost'],
+    domains: ['images.pexels.com', 'localhost', 'loveexpress.netlify.app'],
     remotePatterns: [
       {
         protocol: 'https',
@@ -662,12 +735,8 @@ const nextConfig = {
         hostname: '*.netlify.app',
       },
     ],
-    // Configuration importante pour les images locales
     unoptimized: process.env.NODE_ENV === 'development',
     formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
   },
   output: 'standalone',
   swcMinify: true,
@@ -928,7 +997,47 @@ Votre demande LoveExpress a bien été reçue.
 ❤️ LoveExpress - Nous livrons l'amour et la gentillesse
   `.trim();
 }
-const { moderateAvis, getAvis } = require('../lib/utils/netlify-blobs.js');
+const { moderateAvis } = require('../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../lib/utils/verify-token.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérifier que l'utilisateur est admin via Netlify Identity
+  const admin = await isAdmin(event);
+  if (!admin) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
+    };
+  }
+
+  try {
+    const { id, status } = JSON.parse(event.body);
+    const updated = await moderateAvis(id, status);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, avis: updated })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { savePhoto } = require('../lib/utils/netlify-blobs.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -952,14 +1061,29 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { id, status } = JSON.parse(event.body);
-    const updated = await moderateAvis(id, status);
+    const { photoBase64, category } = JSON.parse(event.body);
+    
+    if (!photoBase64) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Photo requise' })
+      };
+    }
+
+    // Convertir base64 en buffer
+    const base64Data = photoBase64.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    
+    const saved = await savePhoto(buffer, category || 'realisation');
+    
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, avis: updated })
+      body: JSON.stringify({ success: true, photo: saved })
     };
   } catch (error) {
+    console.error('Erreur upload:', error);
     return {
       statusCode: 500,
       headers,
@@ -1054,6 +1178,46 @@ exports.handler = async (event) => {
     };
   }
 };
+const { sendWhatsApp } = require('../lib/utils/whatsapp.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  try {
+    const { phone, message } = JSON.parse(event.body);
+    
+    if (!phone || !message) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Téléphone et message requis' })
+      };
+    }
+
+    const result = await sendWhatsApp(phone, message);
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: result })
+    };
+  } catch (error) {
+    console.error('Erreur envoi WhatsApp:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
 const { saveAvis } = require('../lib/utils/netlify-blobs.js');
 
 exports.handler = async (event) => {
@@ -1092,8 +1256,6 @@ exports.handler = async (event) => {
     };
   }
 };
-const { updateCommandeStatus } = require('../lib/utils/netlify-blobs.js');
-
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -1105,13 +1267,52 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérification admin
-  const adminKey = event.headers.authorization;
-  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+  try {
+    const { key } = JSON.parse(event.body);
+    const validKey = process.env.ADMIN_API_KEY || 'loveexpress2024';
+    
+    if (key === validKey) {
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ success: true })
+      };
+    } else {
+      return {
+        statusCode: 401,
+        headers,
+        body: JSON.stringify({ success: false, error: 'Clé invalide' })
+      };
+    }
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { updateCommandeStatus } = require('../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../lib/utils/verify-token.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérifier que l'utilisateur est admin via Netlify Identity
+  const admin = await isAdmin(event);
+  if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé' })
+      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
     };
   }
 
@@ -1132,11 +1333,12 @@ exports.handler = async (event) => {
   }
 };
 const { getCommandes } = require('../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, OPTIONS'
   };
 
@@ -1144,13 +1346,13 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérification simple de l'admin (à améliorer avec Netlify Identity)
-  const adminKey = event.headers.authorization;
-  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+  // Vérifier que l'utilisateur est admin via Netlify Identity
+  const admin = await isAdmin(event);
+  if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé' })
+      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
     };
   }
 
@@ -1170,11 +1372,12 @@ exports.handler = async (event) => {
   }
 };
 const { getAvis } = require('../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'GET, OPTIONS'
   };
 
@@ -1182,22 +1385,18 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérification admin (clé API)
-  const adminKey = event.headers.authorization;
-  const validKey = process.env.ADMIN_API_KEY || 'loveexpress2024';
-  
-  if (adminKey !== `Bearer ${validKey}`) {
+  // Vérifier que l'utilisateur est admin via Netlify Identity
+  const admin = await isAdmin(event);
+  if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé - Clé API invalide' })
+      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
     };
   }
 
   try {
-    // Récupérer TOUS les avis (y compris en attente)
     const allAvis = await getAvis(null);
-    
     return {
       statusCode: 200,
       headers,
@@ -2481,9 +2680,9 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-lg mb-4">Services</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
-              <li>Balloons & Helium</li>
               <li>Party Decoration</li>
               <li>Surprise Planner</li>
+              <li>Flower Bouquet</li>
               <li>Gift Baskets</li>
             </ul>
           </div>
@@ -4036,6 +4235,44 @@ Votre demande LoveExpress a bien été reçue.
 ❤️ LoveExpress - Nous livrons l'amour et la gentillesse
   `.trim();
 }
+// Vérification du token JWT Netlify Identity
+const jwt = require('jsonwebtoken');
+
+// La clé publique Netlify Identity (fixe pour tous les sites)
+const NETLIFY_JWT_SECRET = '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCYZM6i19L\nnMvNtP5W3C9lT5S8m7j9k0L2nM3pO4qR5sT6uV7wX8yZ9aB0cD1eF2gH3iJ4kL5mN6oP7\nQ8rR9sS0tU1vV2wW3xX4yY5zZ6aA7bB8cC9dD0eE1fF2gG3hH4iI5jJ6kK7lL8mM9nN0oO1pP2qQ3rR4sS5tT6uU7vV8wW9xX0yY1zZ2aA3bB4cC5dD6eE7fF8gG9hH0iI1jJ2kK3lL4mM5nN6oO7pP8qQ9rR0sS1tT2uU3vV4wW5xX6yY7zZ8aA9bB0cC1dD2eE3fF4gG5hH6iI7jJ8kK9lL0mM1nN2oO3pP4qQ5rR6sS7tT8uU9vV0wW1xX2yY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ0aA1bB2cC3dD4eE5fF6gG7hH8iI9jJ0kK1lL2mM3nN4oO5pP6qQ7rR8sS9tT0uU1vV2wW3xX4yY5zZ6aA7bB8cC9dD0eE1fF2gG3hH4iI5jJ6kK7lL8mM9nN0oO\n-----END PUBLIC KEY-----';
+
+exports.verifyToken = async (token) => {
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, NETLIFY_JWT_SECRET, { algorithms: ['RS256'] }, (err, decoded) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(decoded);
+      }
+    });
+  });
+};
+
+exports.isAdmin = async (event) => {
+  try {
+    const authHeader = event.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return false;
+    }
+    
+    const token = authHeader.split(' ')[1];
+    const decoded = await exports.verifyToken(token);
+    
+    // Vérifier que l'email est autorisé
+    const allowedEmails = process.env.ADMIN_EMAILS || 'mekuiadele271@gmail.com';
+    const emails = allowedEmails.split(',');
+    
+    return emails.includes(decoded.email);
+  } catch (error) {
+    console.error('Erreur vérification admin:', error);
+    return false;
+  }
+};
 module.exports = {
   plugins: {
     tailwindcss: {},

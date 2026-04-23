@@ -1,0 +1,438 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+export default function AdminPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminKey, setAdminKey] = useState('');
+  const [activeTab, setActiveTab] = useState('orders');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const handleLogin = () => {
+    if (adminKey === 'loveexpress2024') {
+      setIsAuthenticated(true);
+      fetchData();
+    } else {
+      alert('Clé admin incorrecte');
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const ordersRes = await fetch('/api/get-orders', {
+        headers: { 'Authorization': 'Bearer loveexpress2024' }
+      });
+      const ordersData = await ordersRes.json();
+      if (ordersData.success) setOrders(ordersData.commandes || []);
+
+      const avisRes = await fetch('/api/get-all-testimonials', {
+        headers: { 'Authorization': 'Bearer loveexpress2024' }
+      });
+      const avisData = await avisRes.json();
+      if (avisData.success) setTestimonials(avisData.avis || []);
+    } catch (error) {
+      console.error('Erreur chargement:', error);
+    }
+    setLoading(false);
+  };
+
+  const updateOrderStatus = async (id: string, status: string) => {
+    const res = await fetch('/api/update-order-status', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer loveexpress2024'
+      },
+      body: JSON.stringify({ id, status })
+    });
+    if (res.ok) fetchData();
+  };
+
+  const moderateTestimonial = async (id: string, status: string) => {
+    const res = await fetch('/api/moderate-testimonial', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer loveexpress2024'
+      },
+      body: JSON.stringify({ id, status })
+    });
+    if (res.ok) fetchData();
+  };
+
+  const getStatusBadge = (status: string) => {
+    const badges: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-700',
+      confirmed: 'bg-green-100 text-green-700',
+      delivered: 'bg-blue-100 text-blue-700',
+      cancelled: 'bg-red-100 text-red-700'
+    };
+    return badges[status] || badges.pending;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: 'En attente',
+      confirmed: 'Confirmée',
+      delivered: 'Livrée',
+      cancelled: 'Annulée'
+    };
+    return labels[status] || 'En attente';
+  };
+
+  const stats = {
+    totalOrders: orders.length,
+    pendingOrders: orders.filter(o => o.status === 'pending').length,
+    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
+    totalRevenue: orders.reduce((sum, o) => sum + (parseInt(o.budget) || 0), 0)
+  };
+
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">Chargement...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-bold text-dark">Dashboard LoveExpress</h1>
+            <p className="text-gray-500 mt-2">Accès réservé à l'administration</p>
+          </div>
+          <input
+            type="password"
+            placeholder="Clé d'accès"
+            value={adminKey}
+            onChange={(e) => setAdminKey(e.target.value)}
+            className="w-full px-4 py-3 border rounded-lg mb-4"
+            onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+          />
+          <button onClick={handleLogin} className="bg-primary text-white w-full py-3 rounded-lg font-semibold hover:bg-primary/90 transition">
+            Se connecter
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="px-6 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
+          <button onClick={() => setIsAuthenticated(false)} className="text-gray-500 hover:text-red-500 text-sm">
+            Déconnexion
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold">{stats.totalOrders}</p>
+          <p className="text-gray-500 text-sm">Commandes</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
+          <p className="text-gray-500 text-sm">En attente</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-accent">{stats.pendingTestimonials}</p>
+          <p className="text-gray-500 text-sm">Avis à modérer</p>
+        </div>
+        <div className="bg-white rounded-xl p-4 shadow-sm">
+          <p className="text-2xl font-bold text-green-600">{stats.totalRevenue.toLocaleString()} RWF</p>
+          <p className="text-gray-500 text-sm">CA total</p>
+        </div>
+      </div>
+
+      <div className="px-6">
+        <div className="flex gap-2 border-b">
+          <button onClick={() => setActiveTab('orders')} className={`px-4 py-2 font-medium ${activeTab === 'orders' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+            Commandes ({stats.totalOrders})
+          </button>
+          <button onClick={() => setActiveTab('testimonials')} className={`px-4 py-2 font-medium ${activeTab === 'testimonials' ? 'border-b-2 border-primary text-primary' : 'text-gray-500'}`}>
+            Avis clients ({stats.pendingTestimonials} en attente)
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6">
+        {loading ? (
+          <div className="text-center py-12">Chargement...</div>
+        ) : activeTab === 'orders' ? (
+          <div className="space-y-4">
+            {orders.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucune commande</div>
+            ) : (
+              orders.map((order) => (
+                <div key={order.id} className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start flex-wrap gap-3">
+                    <div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                      <p className="font-semibold mt-2">{order.clientName}</p>
+                      <p className="text-sm text-gray-500">→ {order.destName}</p>
+                      <p className="text-primary font-bold mt-1">{parseInt(order.budget).toLocaleString()} RWF</p>
+                    </div>
+                    <select
+                      value={order.status}
+                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                      className="px-3 py-2 text-sm border rounded-lg bg-white"
+                    >
+                      <option value="pending">En attente</option>
+                      <option value="confirmed">Confirmée</option>
+                      <option value="delivered">Livrée</option>
+                      <option value="cancelled">Annulée</option>
+                    </select>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {testimonials.length === 0 ? (
+              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">Aucun témoignage</div>
+            ) : (
+              testimonials.map((testimonial) => (
+                <div key={testimonial.id} className="bg-white rounded-xl shadow-sm p-4">
+                  <div className="flex justify-between items-start flex-wrap gap-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex gap-0.5">
+                          {[...Array(testimonial.note || 5)].map((_, i) => (
+                            <span key={i} className="text-accent">★</span>
+                          ))}
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${testimonial.status === 'published' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {testimonial.status === 'published' ? 'Publié' : 'En attente'}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 italic">"{testimonial.message}"</p>
+                      <p className="text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
+                    </div>
+                    {testimonial.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm">
+                          Publier
+                        </button>
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded-lg text-sm">
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+const { getCommandes } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification simple de l'admin (à améliorer avec Netlify Identity)
+  const adminKey = event.headers.authorization;
+  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const commandes = await getCommandes();
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, commandes })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { getAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification admin (clé API)
+  const adminKey = event.headers.authorization;
+  const validKey = process.env.ADMIN_API_KEY || 'loveexpress2024';
+  
+  if (adminKey !== `Bearer ${validKey}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé - Clé API invalide' })
+    };
+  }
+
+  try {
+    // Récupérer TOUS les avis (y compris en attente)
+    const allAvis = await getAvis(null);
+    
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ 
+        success: true, 
+        avis: allAvis,
+        stats: {
+          total: allAvis.length,
+          published: allAvis.filter(a => a.status === 'published').length,
+          pending: allAvis.filter(a => a.status === 'pending').length,
+          rejected: allAvis.filter(a => a.status === 'rejected').length
+        }
+      })
+    };
+  } catch (error) {
+    console.error('Erreur:', error);
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { updateCommandeStatus } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification admin
+  const adminKey = event.headers.authorization;
+  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const { id, status } = JSON.parse(event.body);
+    const updated = await updateCommandeStatus(id, status);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, commande: updated })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+const { moderateAvis, getAvis } = require('../lib/utils/netlify-blobs.js');
+
+exports.handler = async (event) => {
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+  };
+
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers, body: '' };
+  }
+
+  // Vérification admin
+  const adminKey = event.headers.authorization;
+  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({ error: 'Non autorisé' })
+    };
+  }
+
+  try {
+    const { id, status } = JSON.parse(event.body);
+    const updated = await moderateAvis(id, status);
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, avis: updated })
+    };
+  } catch (error) {
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ success: false, error: error.message })
+    };
+  }
+};
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[functions]
+  node_bundler = "esbuild"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin"
+  status = 200

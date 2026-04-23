@@ -1,9 +1,10 @@
 const { savePhoto } = require('../lib/utils/netlify-blobs.js');
+const { isAdmin } = require('../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
 
@@ -11,13 +12,13 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  // Vérification admin
-  const adminKey = event.headers.authorization;
-  if (adminKey !== `Bearer ${process.env.ADMIN_API_KEY}`) {
+  // Vérification admin via Netlify Identity
+  const admin = await isAdmin(event);
+  if (!admin) {
     return {
       statusCode: 401,
       headers,
-      body: JSON.stringify({ error: 'Non autorisé' })
+      body: JSON.stringify({ error: 'Non autorisé - Connectez-vous avec un compte admin' })
     };
   }
 
@@ -32,10 +33,8 @@ exports.handler = async (event) => {
       };
     }
 
-    // Convertir base64 en buffer
     const base64Data = photoBase64.replace(/^data:image\/\w+;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
-    
     const saved = await savePhoto(buffer, category || 'realisation');
     
     return {
