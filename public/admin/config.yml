@@ -1,0 +1,76 @@
+backend:
+  name: git-gateway
+  branch: main
+
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "commandes"
+    label: "📦 Commandes"
+    folder: "content/commandes"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Client", name: "clientName", widget: "string" }
+      - { label: "Téléphone", name: "clientPhone", widget: "string" }
+      - { label: "Email", name: "clientEmail", widget: "string", required: false }
+      - { label: "Destinataire", name: "destName", widget: "string" }
+      - { label: "Adresse", name: "destAddress", widget: "string" }
+      - { label: "Type d'événement", name: "eventType", widget: "string" }
+      - { label: "Date événement", name: "eventDate", widget: "date" }
+      - { label: "Budget", name: "budget", widget: "number" }
+      - { label: "Statut", name: "status", widget: "select", options: ["pending", "confirmed", "delivered", "cancelled"], default: "pending" }
+
+  - name: "avis"
+    label: "⭐ Avis clients"
+    folder: "content/avis"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Nom", name: "nom", widget: "string" }
+      - { label: "Note", name: "note", widget: "number", valueType: "int", min: 1, max: 5 }
+      - { label: "Message", name: "message", widget: "text" }
+      - { label: "Photo", name: "photo", widget: "image", required: false }
+      - { label: "Statut", name: "status", widget: "select", options: ["pending", "published", "rejected"], default: "pending" }
+
+  - name: "services"
+    label: "🎈 Services"
+    folder: "content/services"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Titre", name: "title", widget: "string" }
+      - { label: "Sous-titre", name: "subtitle", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Prix", name: "price", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Badge", name: "badge", widget: "string" }
+      - { label: "Caractéristiques", name: "features", widget: "list", field: { label: "Feature", name: "feature", widget: "string" } }
+
+  - name: "gift_baskets"
+    label: "🎁 Paniers cadeaux"
+    folder: "content/gift_baskets"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Nom", name: "name", widget: "string" }
+      - { label: "Sous-titre", name: "subtitle", widget: "string" }
+      - { label: "Badge", name: "badge", widget: "string" }
+      - { label: "Description", name: "description", widget: "text" }
+      - { label: "Description longue", name: "longDescription", widget: "text" }
+      - { label: "Prix standard", name: "priceStandard", widget: "number" }
+      - { label: "Prix premium", name: "pricePremium", widget: "number" }
+      - { label: "Image", name: "image", widget: "image" }
+      - { label: "Populaire", name: "popular", widget: "boolean", default: false }
+      - { label: "Contenu", name: "includes", widget: "list", field: { label: "Item", name: "item", widget: "string" } }
+
+  - name: "realisations"
+    label: "📸 Réalisations"
+    folder: "content/realisations"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Titre", name: "title", widget: "string" }
+      - { label: "Catégorie", name: "category", widget: "string" }
+      - { label: "Image", name: "image", widget: "image" }

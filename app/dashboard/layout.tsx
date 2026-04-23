@@ -2,8 +2,6 @@
 
 import { AdminAuthGuard, useNetlifyAuth } from './AdminIdentity';
 import { Heart } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 
 function AdminHeader() {
   const { user, logout } = useNetlifyAuth();
@@ -15,7 +13,7 @@ function AdminHeader() {
       <div className="px-6 py-4 flex justify-between items-center">
         <div className="flex items-center gap-3">
           <Heart className="w-6 h-6 text-primary" />
-          <h1 className="text-xl font-bold text-dark">LoveExpress Admin</h1>
+          <h1 className="text-xl font-bold text-dark">LoveExpress Dashboard</h1>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">{user.email}</span>
@@ -31,7 +29,7 @@ function AdminHeader() {
   );
 }
 
-export default function AdminLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
