@@ -3,30 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Déclaration du type pour éviter l'erreur TypeScript
-declare module 'netlify-identity-widget';
-
 let netlifyIdentity: any = null;
 
 const initIdentity = () => {
   if (typeof window !== 'undefined' && !netlifyIdentity) {
     import('netlify-identity-widget').then((module) => {
       netlifyIdentity = module.default || module;
-      
-      // Configuration importante : le chemin de redirection après confirmation
       netlifyIdentity.init({
         APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-        // Force la redirection vers /admin après login
-        redirectUrl: `${window.location.origin}/admin`,
       });
       
-      // Écouter l'événement de login et rediriger
       netlifyIdentity.on('login', (user: any) => {
         console.log('User logged in:', user?.email);
         window.location.href = '/admin';
       });
       
-      // Écouter l'événement de logout
       netlifyIdentity.on('logout', () => {
         window.location.href = '/admin';
       });
@@ -49,7 +40,6 @@ export function useNetlifyAuth() {
         const currentUser = netlifyIdentity.currentUser();
         if (currentUser) {
           setUser(currentUser);
-          // Si l'utilisateur est connecté mais pas sur /admin, rediriger
           if (typeof window !== 'undefined' && window.location.pathname !== '/admin') {
             router.push('/admin');
           }

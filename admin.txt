@@ -549,14 +549,13 @@ export async function getPhotos(category = null) {
   to = "/admin"
   status = 200
 
-# Redirection pour Netlify Identity callback
-[[redirects]]
-  from = "/.netlify/identity/*"
-  to = "/admin"
-  status = 200
+# Important: laisser Netlify Identity gérer ses propres routes
+# Ne pas rediriger /.netlify/identity/*
 
-# Redirection de confirmation d'invitation
+# Rediriger les tokens d'invitation vers /admin
 [[redirects]]
-  from = "/#invite_token_*"
+  from = "/*"
   to = "/admin"
   status = 200
+  force = true
+  conditions = { Query = { invite_token = [".*"] } }
