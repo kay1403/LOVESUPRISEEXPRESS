@@ -14,18 +14,17 @@ export default function IdentityProvider() {
         const module = await import('netlify-identity-widget');
         const netlifyIdentity = module.default || module;
         
-        // Configuration pour ne PAS afficher l'interface par défaut
+        // Initialisation SANS l'option 'open' qui n'existe pas
         netlifyIdentity.init({
           APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-          open: false, // ← DÉSACTIVE L'INTERFACE PAR DÉFAUT
         });
         
         (window as any).netlifyIdentity = netlifyIdentity;
         isIdentityInitialized = true;
         
-        console.log('✅ Netlify Identity initialisé (interface désactivée)');
+        console.log('✅ Netlify Identity initialisé');
         
-        // Gérer l'invitation automatique
+        // Gérer l'invitation automatique (l'invitation ouvre automatiquement la popup)
         const hash = window.location.hash;
         if (hash && hash.includes('invite_token')) {
           setTimeout(() => {
