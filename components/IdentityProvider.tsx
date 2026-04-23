@@ -2,62 +2,70 @@
 
 import { useEffect } from 'react';
 
-// Singleton pour éviter les doubles initialisations
-let isIdentityInitialized = false;
-let identityListenersAttached = false;
+let isInitialized = false;
 
 export default function IdentityProvider() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (isInitialized) return;
 
     const initIdentity = async () => {
-      // Éviter les doubles initialisations
-      if (isIdentityInitialized) return;
-      
       try {
-        // Charger le module
-        const module = await import('netlify-identity-widget');
-        const netlifyIdentity = module.default || module;
-        
-        // Initialiser UNE SEULE FOIS
-        netlifyIdentity.init({
-          APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-        });
-        
-        // Stocker globalement pour les autres composants
-        (window as any).netlifyIdentity = netlifyIdentity;
-        isIdentityInitialized = true;
-        
-        console.log('✅ Netlify Identity initialisé');
-        
-        // Gérer l'invitation automatique
-        const checkInvite = () => {
-          const hash = window.location.hash;
-          if (hash && hash.includes('invite_token')) {
-            setTimeout(() => {
-              netlifyIdentity.open();
-            }, 500);
-          }
+        // Vérifier si le script est déjà chargé
+        if (!document.querySelector('script[src*="netlify-identity-widget"]')) {
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://identity.netlify.com/v1/netlify-identity-widget.js';
+            script.async = true;
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+        }
+
+        // Attendre que le widget soit disponible
+        let attempts = 0;
+        const waitForIdentity = () => {
+          return new Promise((resolve) => {
+            const interval = setInterval(() => {
+              if ((window as any).netlifyIdentity) {
+                clearInterval(interval);
+                resolve(true);
+              } else if (attempts++ > 100) {
+                clearInterval(interval);
+                resolve(false);
+              }
+            }, 50);
+          });
         };
+
+        await waitForIdentity();
         
-        checkInvite();
+        const netlifyIdentity = (window as any).netlifyIdentity;
+        if (netlifyIdentity && !netlifyIdentity._initialized) {
+          netlifyIdentity.init({
+            APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+          });
+          netlifyIdentity._initialized = true;
+          console.log('✅ Netlify Identity initialisé');
+        }
+
+        // Gestion de l'invitation
+        const hash = window.location.hash;
+        if (hash && hash.includes('invite_token')) {
+          setTimeout(() => {
+            netlifyIdentity?.open();
+          }, 500);
+        }
         
-        // Écouter les changements de hash
-        window.addEventListener('hashchange', checkInvite);
-        
+        isInitialized = true;
       } catch (error) {
         console.error('Erreur chargement Netlify Identity:', error);
       }
     };
-    
-    // Attendre que le DOM soit prêt
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initIdentity);
-    } else {
-      initIdentity();
-    }
-    
+
+    initIdentity();
   }, []);
-  
+
   return null;
 }

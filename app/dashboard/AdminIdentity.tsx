@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 
 declare global {
   interface Window {
@@ -11,95 +11,112 @@ declare global {
 export function useNetlifyAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [identityReady, setIdentityReady] = useState(false);
+  const isMounted = useRef(true);
 
-  // Vérifier la disponibilité du widget
-  useEffect(() => {
-    const checkIdentity = () => {
-      if ((window as any).netlifyIdentity) {
-        setIdentityReady(true);
-        setLoading(false);
-        return true;
+  // Fonction pour récupérer l'utilisateur actuel
+  const refreshUser = useCallback(() => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      const currentUser = window.netlifyIdentity.currentUser();
+      if (isMounted.current) {
+        setUser(currentUser);
       }
-      return false;
-    };
-    
-    // Vérifier immédiatement
-    if (checkIdentity()) return;
-    
-    // Sinon, attendre avec un court délai
-    const interval = setInterval(() => {
-      if (checkIdentity()) {
-        clearInterval(interval);
-      }
-    }, 50);
-    
-    // Timeout de sécurité
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-      setLoading(false);
-      console.warn('Netlify Identity non disponible après délai');
-    }, 3000);
-    
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
+      return currentUser;
+    }
+    return null;
   }, []);
 
-  // Récupérer l'utilisateur et écouter les événements
+  // Initialisation et attente du widget
   useEffect(() => {
-    if (!identityReady) return;
-    
-    const identity = (window as any).netlifyIdentity;
-    if (!identity) return;
-    
-    // Récupérer l'utilisateur actuel
-    const currentUser = identity.currentUser();
-    setUser(currentUser);
-    
-    // Gestionnaire de login
+    if (typeof window === 'undefined') return;
+
+    isMounted.current = true;
+
+    const waitForIdentity = () => {
+      // Si déjà disponible
+      if (window.netlifyIdentity) {
+        refreshUser();
+        setLoading(false);
+        return;
+      }
+
+      // Sinon, attendre
+      let attempts = 0;
+      const maxAttempts = 100; // 5 secondes max
+      
+      const interval = setInterval(() => {
+        attempts++;
+        if (window.netlifyIdentity) {
+          clearInterval(interval);
+          refreshUser();
+          setLoading(false);
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          setLoading(false);
+          console.warn('Netlify Identity non disponible');
+        }
+      }, 50);
+      
+      return () => clearInterval(interval);
+    };
+
+    const cleanup = waitForIdentity();
+    return () => {
+      isMounted.current = false;
+      if (cleanup) cleanup();
+    };
+  }, [refreshUser]);
+
+  // Écouter les événements login/logout
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.netlifyIdentity) return;
+
+    const identity = window.netlifyIdentity;
+
     const handleLogin = (user: any) => {
-      console.log('🔐 Login event');
-      setUser(user);
-      // Rediriger vers dashboard après login
+      console.log('🔐 Login event', user?.email);
+      if (isMounted.current) {
+        setUser(user);
+      }
+      // Redirection après login SEULEMENT si pas déjà sur dashboard
       if (window.location.pathname !== '/dashboard') {
         window.location.href = '/dashboard';
       }
     };
-    
-    // Gestionnaire de logout
+
     const handleLogout = () => {
       console.log('🚪 Logout event');
-      setUser(null);
+      if (isMounted.current) {
+        setUser(null);
+      }
+      // Ne pas rediriger, rester sur la page pour voir le bouton "Se connecter"
     };
-    
+
     identity.on('login', handleLogin);
     identity.on('logout', handleLogout);
-    
+
     return () => {
       identity.off('login', handleLogin);
       identity.off('logout', handleLogout);
     };
-  }, [identityReady]);
+  }, []);
 
   const login = useCallback(() => {
-    const identity = (window as any).netlifyIdentity;
+    const identity = window.netlifyIdentity;
     if (identity) {
       identity.open();
     }
   }, []);
 
   const logout = useCallback(() => {
-    const identity = (window as any).netlifyIdentity;
+    const identity = window.netlifyIdentity;
     if (identity) {
       identity.logout();
-      setUser(null);
+      // L'état sera mis à jour par l'événement 'logout'
     }
   }, []);
 
   const getToken = useCallback(() => {
-    const identity = (window as any).netlifyIdentity;
+    const identity = window.netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
       return currentUser?.token?.access_token;
@@ -107,7 +124,7 @@ export function useNetlifyAuth() {
     return null;
   }, []);
 
-  return { user, loading, login, logout, getToken };
+  return { user, loading, login, logout, getToken, refreshUser };
 }
 
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
