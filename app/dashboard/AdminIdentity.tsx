@@ -29,19 +29,7 @@ export function useNetlifyAuth() {
           APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
         });
 
-        const handleLogin = (user: any) => {
-          setUser(user);
-          window.location.href = '/dashboard';
-        };
-
-        const handleLogout = () => {
-          setUser(null);
-          window.location.href = '/dashboard';
-        };
-
-        netlifyIdentity.on('login', handleLogin);
-        netlifyIdentity.on('logout', handleLogout);
-
+        // Vérifier si l'utilisateur est déjà connecté
         const currentUser = netlifyIdentity.currentUser();
         if (currentUser) {
           setUser(currentUser);
@@ -53,8 +41,34 @@ export function useNetlifyAuth() {
     };
 
     checkIdentity();
+  }, []);
 
-    return () => {};
+  // Enregistrer les événements séparément
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.netlifyIdentity) return;
+
+    const netlifyIdentity = window.netlifyIdentity;
+
+    const handleLogin = (user: any) => {
+      console.log('Login event received');
+      setUser(user);
+      window.location.href = '/dashboard';
+    };
+
+    const handleLogout = () => {
+      console.log('Logout event received');
+      setUser(null);
+      // Forcer la page à se recharger pour réinitialiser complètement
+      window.location.href = '/dashboard';
+    };
+
+    netlifyIdentity.on('login', handleLogin);
+    netlifyIdentity.on('logout', handleLogout);
+
+    return () => {
+      netlifyIdentity.off('login', handleLogin);
+      netlifyIdentity.off('logout', handleLogout);
+    };
   }, []);
 
   const login = () => {
@@ -65,14 +79,19 @@ export function useNetlifyAuth() {
 
   const logout = () => {
     if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      // Appeler d'abord la déconnexion
       window.netlifyIdentity.logout();
+      // Puis forcer le rechargement pour nettoyer l'état
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 100);
     }
   };
 
   const getToken = () => {
     if (typeof window !== 'undefined' && window.netlifyIdentity) {
-      const user = window.netlifyIdentity.currentUser();
-      return user?.token?.access_token;
+      const currentUser = window.netlifyIdentity.currentUser();
+      return currentUser?.token?.access_token;
     }
     return null;
   };
@@ -83,6 +102,7 @@ export function useNetlifyAuth() {
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, login } = useNetlifyAuth();
 
+  // Attendre le chargement initial
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -94,7 +114,9 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user) {
+  // Vérifier si l'utilisateur n'est PAS connecté APRÈS le chargement
+  // Utiliser user === null pour déterminer l'état non connecté
+  if (user === null) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
@@ -104,7 +126,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-dark mb-2">Dashboard LoveExpress</h1>
-          <p className="text-gray-500 mb-6">Connectez-vous avec votre email</p>
+          <p className="text-gray-500 mb-6">Connectez-vous avec votre email pour accéder à l'administration</p>
           <button onClick={login} className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full">
             Se connecter
           </button>
@@ -113,5 +135,6 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // Utilisateur connecté
   return <>{children}</>;
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { AdminAuthGuard, useNetlifyAuth } from './AdminIdentity';
-import { Heart } from 'lucide-react';
+import { Heart, LogOut } from 'lucide-react';
 
 function DashboardHeader() {
   const { user, logout } = useNetlifyAuth();
@@ -17,7 +17,11 @@ function DashboardHeader() {
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">{user.email}</span>
-          <button onClick={logout} className="text-gray-500 hover:text-red-500 text-sm transition">
+          <button 
+            onClick={logout} 
+            className="flex items-center gap-2 text-gray-500 hover:text-red-500 text-sm transition"
+          >
+            <LogOut size={16} />
             Déconnexion
           </button>
         </div>
