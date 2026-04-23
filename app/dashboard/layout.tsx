@@ -18,7 +18,13 @@ function DashboardHeader() {
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-500">{user.email}</span>
           <button 
-            onClick={logout} 
+            onClick={() => {
+              logout();
+              // Forcer un rechargement après 200ms pour réinitialiser complètement
+              setTimeout(() => {
+                window.location.href = '/dashboard';
+              }, 200);
+            }} 
             className="flex items-center gap-2 text-gray-500 hover:text-red-500 text-sm transition"
           >
             <LogOut size={16} />

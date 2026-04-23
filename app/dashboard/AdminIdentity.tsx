@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 declare global {
   interface Window {
@@ -12,54 +12,67 @@ export function useNetlifyAuth() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // Fonction pour initialiser et récupérer l'utilisateur
+  const refreshUser = useCallback(() => {
+    if (typeof window !== 'undefined' && window.netlifyIdentity) {
+      const currentUser = window.netlifyIdentity.currentUser();
+      setUser(currentUser);
+      setLoading(false);
+      return currentUser;
+    }
+    setLoading(false);
+    return null;
+  }, []);
+
+  // Initialisation au chargement
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const checkIdentity = () => {
-      if (window.netlifyIdentity) {
-        const netlifyIdentity = window.netlifyIdentity;
-        
-        if (!netlifyIdentity.init) {
-          console.error('netlifyIdentity.init is not a function');
-          setLoading(false);
-          return;
+    // Attendre que le widget soit disponible
+    const waitForIdentity = () => {
+      const interval = setInterval(() => {
+        if (window.netlifyIdentity) {
+          clearInterval(interval);
+          
+          const netlifyIdentity = window.netlifyIdentity;
+          
+          // Initialiser uniquement si ce n'est pas déjà fait
+          if (!netlifyIdentity._initialized) {
+            netlifyIdentity.init({
+              APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
+            });
+            netlifyIdentity._initialized = true;
+          }
+          
+          refreshUser();
         }
-
-        netlifyIdentity.init({
-          APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
-        });
-
-        // Vérifier si l'utilisateur est déjà connecté
-        const currentUser = netlifyIdentity.currentUser();
-        if (currentUser) {
-          setUser(currentUser);
-        }
-        setLoading(false);
-      } else {
-        setTimeout(checkIdentity, 50);
-      }
+      }, 100);
+      
+      return () => clearInterval(interval);
     };
+    
+    waitForIdentity();
+  }, [refreshUser]);
 
-    checkIdentity();
-  }, []);
-
-  // Enregistrer les événements séparément
+  // Écouter les événements de login/logout
   useEffect(() => {
     if (typeof window === 'undefined' || !window.netlifyIdentity) return;
 
     const netlifyIdentity = window.netlifyIdentity;
 
     const handleLogin = (user: any) => {
-      console.log('Login event received');
+      console.log('🔐 Login event');
       setUser(user);
-      window.location.href = '/dashboard';
+      // Redirection après login
+      if (window.location.pathname !== '/dashboard') {
+        window.location.href = '/dashboard';
+      }
     };
 
     const handleLogout = () => {
-      console.log('Logout event received');
+      console.log('🚪 Logout event');
       setUser(null);
-      // Forcer la page à se recharger pour réinitialiser complètement
-      window.location.href = '/dashboard';
+      // Ne pas rediriger immédiatement, laisser le temps au widget de se réinitialiser
     };
 
     netlifyIdentity.on('login', handleLogin);
@@ -79,12 +92,9 @@ export function useNetlifyAuth() {
 
   const logout = () => {
     if (typeof window !== 'undefined' && window.netlifyIdentity) {
-      // Appeler d'abord la déconnexion
       window.netlifyIdentity.logout();
-      // Puis forcer le rechargement pour nettoyer l'état
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 100);
+      // Forcer la réinitialisation de l'état
+      setUser(null);
     }
   };
 
@@ -96,13 +106,12 @@ export function useNetlifyAuth() {
     return null;
   };
 
-  return { user, loading, login, logout, getToken };
+  return { user, loading, login, logout, getToken, refreshUser };
 }
 
 export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading, login } = useNetlifyAuth();
 
-  // Attendre le chargement initial
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -114,9 +123,7 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Vérifier si l'utilisateur n'est PAS connecté APRÈS le chargement
-  // Utiliser user === null pour déterminer l'état non connecté
-  if (user === null) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
@@ -127,7 +134,10 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
           </div>
           <h1 className="text-2xl font-bold text-dark mb-2">Dashboard LoveExpress</h1>
           <p className="text-gray-500 mb-6">Connectez-vous avec votre email pour accéder à l'administration</p>
-          <button onClick={login} className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full">
+          <button 
+            onClick={login} 
+            className="bg-primary text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary/90 transition w-full"
+          >
             Se connecter
           </button>
         </div>
@@ -135,6 +145,5 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Utilisateur connecté
   return <>{children}</>;
 }
