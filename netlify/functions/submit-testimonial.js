@@ -1,4 +1,4 @@
-const { saveAvis } = require('../../lib/utils/netlify-blobs.js');
+const { saveAvis, savePhoto } = require('../../lib/utils/netlify-blobs.js');
 
 exports.handler = async (event) => {
   const headers = {
@@ -13,7 +13,28 @@ exports.handler = async (event) => {
 
   try {
     const avis = JSON.parse(event.body);
-    const savedAvis = await saveAvis(avis);
+    
+    // Gérer la photo si présente
+    let photoUrl = null;
+    if (avis.photoBase64 && avis.hasPhoto) {
+      try {
+        // Extraire le base64 et sauvegarder
+        const base64Data = avis.photoBase64.split(',')[1];
+        const buffer = Buffer.from(base64Data, 'base64');
+        const photo = await savePhoto(buffer, 'testimonials');
+        photoUrl = photo.url;
+      } catch (photoError) {
+        console.error('Erreur sauvegarde photo:', photoError);
+      }
+    }
+    
+    // Ne pas stocker la base64 dans l'avis (trop gros)
+    delete avis.photoBase64;
+    
+    const savedAvis = await saveAvis({
+      ...avis,
+      photoUrl
+    });
     
     return {
       statusCode: 200,
@@ -25,6 +46,7 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
+    console.error('Erreur:', error);
     return {
       statusCode: 500,
       headers,

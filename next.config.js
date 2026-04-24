@@ -11,6 +11,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.netlify.app',
       },
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
     ],
     unoptimized: process.env.NODE_ENV === 'development',
     formats: ['image/avif', 'image/webp'],

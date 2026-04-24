@@ -14,6 +14,12 @@ exports.handler = async (event) => {
 
   try {
     const commande = JSON.parse(event.body);
+    
+    // S'assurer que le budget est correctement défini
+    if (!commande.budget || commande.budget === 0) {
+      commande.budget = commande.totalPrice || 0;
+    }
+    
     const savedCommande = await saveCommand(commande);
     
     let googleSheetsSaved = false;
@@ -34,6 +40,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: true, commandeId: savedCommande.id })
     };
   } catch (error) {
+    console.error('Erreur:', error);
     return {
       statusCode: 500,
       headers,

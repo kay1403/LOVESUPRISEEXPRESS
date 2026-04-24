@@ -12,16 +12,23 @@ export default function AvisForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Vérifier la taille (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('La photo ne doit pas dépasser 5MB')
+        return
+      }
       setPhoto(file)
       const reader = new FileReader()
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string)
       }
       reader.readAsDataURL(file)
+      setError(null)
     }
   }
 
@@ -34,11 +41,12 @@ export default function AvisForm() {
     e.preventDefault()
     
     if (!message.trim()) {
-      alert('Veuillez écrire votre témoignage')
+      setError('Veuillez écrire votre témoignage')
       return
     }
 
     setIsSubmitting(true)
+    setError(null)
 
     try {
       let photoBase64 = null
@@ -62,7 +70,9 @@ export default function AvisForm() {
         })
       })
 
-      if (response.ok) {
+      const data = await response.json()
+
+      if (response.ok && data.success) {
         setIsSubmitted(true)
         setNote(5)
         setMessage('')
@@ -71,11 +81,11 @@ export default function AvisForm() {
         setPhotoPreview(null)
         setTimeout(() => setIsSubmitted(false), 5000)
       } else {
-        alert('Erreur lors de l\'envoi. Veuillez réessayer.')
+        setError(data.error || 'Erreur lors de l\'envoi. Veuillez réessayer.')
       }
     } catch (error) {
       console.error('Erreur:', error)
-      alert('Erreur lors de l\'envoi. Veuillez réessayer.')
+      setError('Erreur de connexion. Veuillez réessayer.')
     } finally {
       setIsSubmitting(false)
     }
@@ -129,6 +139,12 @@ export default function AvisForm() {
           onSubmit={handleSubmit}
           className="max-w-2xl mx-auto bg-primaryLight rounded-2xl p-8 shadow-sm"
         >
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+
           {/* Note étoiles */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -191,7 +207,7 @@ export default function AvisForm() {
                 <button
                   type="button"
                   onClick={removePhoto}
-                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition"
                 >
                   <X size={14} />
                 </button>
@@ -212,7 +228,7 @@ export default function AvisForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="btn-primary w-full flex items-center justify-center gap-2"
+            className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isSubmitting ? (
               'Envoi en cours...'
