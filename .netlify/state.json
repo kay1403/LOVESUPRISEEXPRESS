@@ -1,0 +1,19 @@
+{
+	"geolocation": {
+		"data": {
+			"city": "Kigali",
+			"country": {
+				"code": "RW",
+				"name": "Rwanda"
+			},
+			"subdivision": {
+				"code": "01",
+				"name": "Kigali"
+			},
+			"timezone": "Africa/Kigali",
+			"latitude": -1.944,
+			"longitude": 30.062
+		},
+		"timestamp": 1777020866433
+	}
+}
