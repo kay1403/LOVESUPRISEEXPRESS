@@ -28,42 +28,51 @@
   status = 200
 
 # ============ REDIRECTS DES FONCTIONS NETLIFY ============
+# Utilisation de /functions/ pour éviter conflit avec Next.js API routes
 [[redirects]]
-  from = "/api/submit-order"
+  from = "/functions/submit-order"
   to = "/.netlify/functions/submit-order"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/submit-testimonial"
+  from = "/functions/submit-testimonial"
   to = "/.netlify/functions/submit-testimonial"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/get-orders"
+  from = "/functions/get-orders"
   to = "/.netlify/functions/get-orders"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/get-testimonials"
+  from = "/functions/get-testimonials"
   to = "/.netlify/functions/get-testimonials"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/get-all-testimonials"
+  from = "/functions/get-all-testimonials"
   to = "/.netlify/functions/get-all-testimonials"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/moderate-testimonial"
+  from = "/functions/moderate-testimonial"
   to = "/.netlify/functions/moderate-testimonial"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/update-order-status"
+  from = "/functions/update-order-status"
   to = "/.netlify/functions/update-order-status"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/get-photo"
+  from = "/functions/get-photo"
   to = "/.netlify/functions/get-photo"
   status = 200
+  force = true
