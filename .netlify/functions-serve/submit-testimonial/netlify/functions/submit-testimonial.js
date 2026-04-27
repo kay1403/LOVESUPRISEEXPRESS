@@ -753,7 +753,12 @@ function generateId(prefix) {
 async function saveCommand(data) {
   const store = await getStore2("commandes");
   const id = generateId("CMD");
-  const commande = { id, ...data, status: "pending", createdAt: (/* @__PURE__ */ new Date()).toISOString() };
+  const commande = {
+    id,
+    ...data,
+    status: "pending",
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
   await store.set(id, commande);
   return commande;
 }
@@ -779,7 +784,13 @@ async function updateCommandeStatus(id, status) {
 async function saveAvis(avis) {
   const store = await getStore2("avis");
   const id = generateId("AVIS");
-  const nouvelAvis = { id, ...avis, status: "pending", createdAt: (/* @__PURE__ */ new Date()).toISOString() };
+  const nouvelAvis = {
+    id,
+    ...avis,
+    status: "pending",
+    photoUrl: avis.photoUrl || null,
+    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+  };
   await store.set(id, nouvelAvis);
   return nouvelAvis;
 }
@@ -807,8 +818,9 @@ async function moderateAvis(id, status) {
 async function savePhoto(file, category) {
   const store = await getStore2("photos");
   const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  await store.set(id, file);
-  return { id, url: `/.netlify/images/${id}` };
+  const base64Data = file.toString("base64");
+  await store.set(id, { data: base64Data, category });
+  return { id, url: `/api/get-photo?id=${id}` };
 }
 async function getPhotos(category = null) {
   const store = await getStore2("photos");
@@ -816,7 +828,7 @@ async function getPhotos(category = null) {
   const photos = [];
   for (const key of keys) {
     if (category === null || key.startsWith(category)) {
-      photos.push({ id: key, url: `/.netlify/images/${key}` });
+      photos.push({ id: key, url: `/api/get-photo?id=${key}` });
     }
   }
   return photos;
@@ -828,7 +840,7 @@ var init_netlify_blobs = __esm({
 });
 
 // netlify/functions/submit-testimonial.js
-var { saveAvis: saveAvis2 } = (init_netlify_blobs(), __toCommonJS(netlify_blobs_exports));
+var { saveAvis: saveAvis2, savePhoto: savePhoto2 } = (init_netlify_blobs(), __toCommonJS(netlify_blobs_exports));
 exports.handler = async (event) => {
   const headers = {
     "Access-Control-Allow-Origin": "*",
@@ -840,7 +852,22 @@ exports.handler = async (event) => {
   }
   try {
     const avis = JSON.parse(event.body);
-    const savedAvis = await saveAvis2(avis);
+    let photoUrl = null;
+    if (avis.photoBase64 && avis.hasPhoto) {
+      try {
+        const base64Data = avis.photoBase64.split(",")[1];
+        const buffer = Buffer.from(base64Data, "base64");
+        const photo = await savePhoto2(buffer, "testimonials");
+        photoUrl = photo.url;
+      } catch (photoError) {
+        console.error("Erreur sauvegarde photo:", photoError);
+      }
+    }
+    delete avis.photoBase64;
+    const savedAvis = await saveAvis2({
+      ...avis,
+      photoUrl
+    });
     return {
       statusCode: 200,
       headers,
@@ -851,6 +878,7 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
+    console.error("Erreur:", error);
     return {
       statusCode: 500,
       headers,
