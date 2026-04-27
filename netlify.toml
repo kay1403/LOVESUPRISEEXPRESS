@@ -23,14 +23,57 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Netlify CMS
+# Redirection Netlify CMS
 [[redirects]]
   from = "/admin/*"
   to = "/admin/index.html"
   status = 200
 
-# Redirection des fonctions API (IMPORTANT !)
+# ⚠️ IMPORTANT : Les routes CMS (Next.js API) doivent passer AVANT les fonctions Netlify
+# Les routes /api/cms/* ne sont PAS redirigées
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  from = "/api/cms/*"
+  to = "/api/cms/:splat"
+  status = 200
+  force = false
+
+# Redirection des fonctions API Netlify (seulement pour les fonctions)
+[[redirects]]
+  from = "/api/submit-order"
+  to = "/.netlify/functions/submit-order"
+  status = 200
+
+[[redirects]]
+  from = "/api/submit-testimonial"
+  to = "/.netlify/functions/submit-testimonial"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-orders"
+  to = "/.netlify/functions/get-orders"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-testimonials"
+  to = "/.netlify/functions/get-testimonials"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-all-testimonials"
+  to = "/.netlify/functions/get-all-testimonials"
+  status = 200
+
+[[redirects]]
+  from = "/api/moderate-testimonial"
+  to = "/.netlify/functions/moderate-testimonial"
+  status = 200
+
+[[redirects]]
+  from = "/api/update-order-status"
+  to = "/.netlify/functions/update-order-status"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-photo"
+  to = "/.netlify/functions/get-photo"
   status = 200
