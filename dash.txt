@@ -616,27 +616,39 @@ exports.handler = async (event) => {
   try {
     const avis = JSON.parse(event.body);
     
+    console.log('📝 Réception avis:', { note: avis.note, nom: avis.nom, hasPhoto: !!avis.photoBase64 });
+    
     // Gérer la photo si présente
     let photoUrl = null;
-    if (avis.photoBase64 && avis.hasPhoto) {
+    if (avis.photoBase64 && avis.hasPhoto && avis.photoBase64.includes(',')) {
       try {
-        // Extraire le base64 et sauvegarder
         const base64Data = avis.photoBase64.split(',')[1];
-        const buffer = Buffer.from(base64Data, 'base64');
-        const photo = await savePhoto(buffer, 'testimonials');
-        photoUrl = photo.url;
+        if (base64Data && base64Data.length > 100) {  // Au moins 100 caractères
+          const buffer = Buffer.from(base64Data, 'base64');
+          const photo = await savePhoto(buffer, 'testimonials');
+          photoUrl = photo.url;
+          console.log('✅ Photo sauvegardée:', photoUrl);
+        } else {
+          console.log('⚠️ Photo trop petite ou invalide');
+        }
       } catch (photoError) {
-        console.error('Erreur sauvegarde photo:', photoError);
+        console.error('❌ Erreur sauvegarde photo:', photoError.message);
+        // Continue sans photo
       }
     }
     
-    // Ne pas stocker la base64 dans l'avis (trop gros)
+    // Ne pas stocker la base64
     delete avis.photoBase64;
     
     const savedAvis = await saveAvis({
-      ...avis,
-      photoUrl
+      note: avis.note || 5,
+      message: avis.message || '',
+      nom: avis.nom || 'Client LoveExpress',
+      photoUrl: photoUrl,
+      status: 'pending'
     });
+    
+    console.log('✅ Avis sauvegardé:', savedAvis.id);
     
     return {
       statusCode: 200,
@@ -648,11 +660,15 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('❌ Erreur fatale:', error.message, error.stack);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ success: false, error: error.message })
+      body: JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        details: error.stack 
+      })
     };
   }
 };
@@ -890,140 +906,36 @@ exports.handler = async (event) => {
   }
 };
 === lib/utils/netlify-blobs.js ===
-export async function getStore(storeName) {
-  if (process.env.NODE_ENV === 'development') {
-    return {
-      get: async (key) => {
-        try {
-          const data = localStorage.getItem(`blob_${storeName}_${key}`);
-          return data ? JSON.parse(data) : null;
-        } catch (e) {
-          console.error('Erreur lecture localStorage:', e);
-          return null;
-        }
-      },
-      set: async (key, value) => {
-        try {
-          localStorage.setItem(`blob_${storeName}_${key}`, JSON.stringify(value));
-        } catch (e) {
-          console.error('Erreur écriture localStorage:', e);
-        }
-      },
-      list: async () => {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key?.startsWith(`blob_${storeName}_`)) {
-            keys.push(key.replace(`blob_${storeName}_`, ''));
-          }
-        }
-        return keys;
-      }
-    };
-  }
-
-  const { getStore: getNetlifyStore } = await import('@netlify/blobs');
-  return getNetlifyStore(storeName);
-}
-
-function generateId(prefix) {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    return `${prefix}_${Date.now()}_${crypto.randomUUID()}`;
-  }
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-export async function saveCommand(data) {
-  const store = await getStore('commandes');
-  const id = generateId('CMD');
-  const commande = { 
-    id, 
-    ...data, 
-    status: 'pending', 
-    createdAt: new Date().toISOString() 
-  };
-  await store.set(id, commande);
-  return commande;
-}
-
-export async function getCommandes() {
-  const store = await getStore('commandes');
-  const keys = await store.list();
-  const commandes = [];
-  for (const key of keys) {
-    const cmd = await store.get(key);
-    if (cmd) commandes.push(cmd);
-  }
-  return commandes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-}
-
-export async function updateCommandeStatus(id, status) {
-  const store = await getStore('commandes');
-  const commande = await store.get(id);
-  if (commande) {
-    commande.status = status;
-    await store.set(id, commande);
-  }
-  return commande;
-}
-
-export async function saveAvis(avis) {
-  const store = await getStore('avis');
-  const id = generateId('AVIS');
-  const nouvelAvis = { 
-    id, 
-    ...avis, 
-    status: 'pending',
-    photoUrl: avis.photoUrl || null,
-    createdAt: new Date().toISOString() 
-  };
-  await store.set(id, nouvelAvis);
-  return nouvelAvis;
-}
-
-export async function getAvis(status = null) {
-  const store = await getStore('avis');
-  const keys = await store.list();
-  const avis = [];
-  for (const key of keys) {
-    const a = await store.get(key);
-    if (a && (status === null || a.status === status)) {
-      avis.push(a);
-    }
-  }
-  return avis.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-}
-
-export async function moderateAvis(id, status) {
-  const store = await getStore('avis');
-  const avis = await store.get(id);
-  if (avis) {
-    avis.status = status;
-    await store.set(id, avis);
-  }
-  return avis;
-}
-
 export async function savePhoto(file, category) {
-  const store = await getStore('photos');
-  const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
-  // Convertir le buffer en base64 pour le stockage
-  const base64Data = file.toString('base64');
-  await store.set(id, { data: base64Data, category });
-  return { id, url: `/api/get-photo?id=${id}` };
-}
-
-export async function getPhotos(category = null) {
-  const store = await getStore('photos');
-  const keys = await store.list();
-  const photos = [];
-  for (const key of keys) {
-    if (category === null || key.startsWith(category)) {
-      photos.push({ id: key, url: `/api/get-photo?id=${key}` });
+  try {
+    const store = await getStore('photos');
+    const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Vérifier le type de file
+    let base64Data;
+    if (Buffer.isBuffer(file)) {
+      base64Data = file.toString('base64');
+    } else if (typeof file === 'string') {
+      base64Data = file;
+    } else if (file && file.data) {
+      base64Data = file.data;
+    } else {
+      console.error('Format de fichier non supporté:', typeof file);
+      return { id, url: null };
     }
+    
+    if (!base64Data || base64Data.length === 0) {
+      console.error('Données base64 vides');
+      return { id, url: null };
+    }
+    
+    await store.set(id, { data: base64Data, category, createdAt: new Date().toISOString() });
+    console.log('✅ Photo sauvegardée dans store photos:', id);
+    return { id, url: `/api/get-photo?id=${id}` };
+  } catch (error) {
+    console.error('❌ Erreur savePhoto:', error.message);
+    return { id: null, url: null };
   }
-  return photos;
 }
 === lib/utils/verify-token.js ===
 const jwt = require('jsonwebtoken');
@@ -2147,11 +2059,11 @@ export default function IdentityProvider() {
 
 [functions]
   node_bundler = "esbuild"
+  directory = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
 
-# Headers de sécurité
 [[headers]]
   for = "/*"
   [headers.values]
@@ -2165,10 +2077,50 @@ export default function IdentityProvider() {
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Netlify CMS
 [[redirects]]
   from = "/admin/*"
   to = "/admin/index.html"
+  status = 200
+
+# ============ REDIRECTS DES FONCTIONS NETLIFY ============
+[[redirects]]
+  from = "/api/submit-order"
+  to = "/.netlify/functions/submit-order"
+  status = 200
+
+[[redirects]]
+  from = "/api/submit-testimonial"
+  to = "/.netlify/functions/submit-testimonial"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-orders"
+  to = "/.netlify/functions/get-orders"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-testimonials"
+  to = "/.netlify/functions/get-testimonials"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-all-testimonials"
+  to = "/.netlify/functions/get-all-testimonials"
+  status = 200
+
+[[redirects]]
+  from = "/api/moderate-testimonial"
+  to = "/.netlify/functions/moderate-testimonial"
+  status = 200
+
+[[redirects]]
+  from = "/api/update-order-status"
+  to = "/.netlify/functions/update-order-status"
+  status = 200
+
+[[redirects]]
+  from = "/api/get-photo"
+  to = "/.netlify/functions/get-photo"
   status = 200
 === package.json ===
 {

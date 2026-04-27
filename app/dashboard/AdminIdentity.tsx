@@ -67,7 +67,6 @@ export function useNetlifyAuth() {
   const login = useCallback(() => {
     const identity = (window as any).netlifyIdentity;
     if (identity) {
-      // Ouvre la popup de connexion MANUELLEMENT
       identity.open();
     }
   }, []);
@@ -81,11 +80,30 @@ export function useNetlifyAuth() {
   }, []);
 
   const getToken = useCallback(() => {
+    // Essayer via netlifyIdentity
     const identity = (window as any).netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
-      return currentUser?.token?.access_token;
+      const token = currentUser?.token?.access_token;
+      if (token) return token;
     }
+    
+    // Fallback: lire directement depuis localStorage
+    try {
+      const gotrueUser = localStorage.getItem('gotrue.user');
+      if (gotrueUser) {
+        const user = JSON.parse(gotrueUser);
+        const token = user?.token?.access_token;
+        if (token) {
+          console.log('✅ Token récupéré depuis localStorage');
+          return token;
+        }
+      }
+    } catch (e) {
+      console.error('Erreur lecture token depuis localStorage:', e);
+    }
+    
+    console.log('❌ Aucun token trouvé');
     return null;
   }, []);
 
