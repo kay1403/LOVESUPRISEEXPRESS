@@ -28,3 +28,9 @@
   from = "/admin/*"
   to = "/admin/index.html"
   status = 200
+
+# Redirection des fonctions API (IMPORTANT !)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
