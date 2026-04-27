@@ -14,25 +14,33 @@ exports.handler = async (event) => {
 
   try {
     const commande = JSON.parse(event.body);
-    
-    // S'assurer que le budget est correctement défini
-    if (!commande.budget || commande.budget === 0) {
-      commande.budget = commande.totalPrice || 0;
-    }
+    console.log('📝 Commande reçue:', { 
+      clientName: commande.clientName, 
+      budget: commande.budget,
+      hasDestName: !!commande.destName 
+    });
     
     const savedCommande = await saveCommand(commande);
+    console.log('✅ Commande sauvegardée:', savedCommande.id);
     
-    let googleSheetsSaved = false;
+    // WhatsApp - optionnel, ne bloque pas si erreur
+    try {
+      const entreprisePhone = process.env.ENTREPRISE_WHATSAPP || '250799366007';
+      await sendWhatsApp(entreprisePhone, formatCommandeMessage(savedCommande));
+      if (commande.clientPhone) {
+        await sendWhatsApp(commande.clientPhone, formatConfirmationClient(savedCommande));
+      }
+    } catch (whatsappError) {
+      console.log('⚠️ WhatsApp non configuré:', whatsappError.message);
+    }
+    
+    // Google Sheets - optionnel
     try {
       const { addToGoogleSheets } = require('../../lib/googleSheets.js');
-      googleSheetsSaved = await addToGoogleSheets(commande);
+      await addToGoogleSheets(commande);
     } catch (e) {
       console.log('Google Sheets non configuré');
     }
-    
-    const entreprisePhone = process.env.ENTREPRISE_WHATSAPP || '250799366007';
-    await sendWhatsApp(entreprisePhone, formatCommandeMessage(savedCommande));
-    await sendWhatsApp(commande.clientPhone, formatConfirmationClient(savedCommande));
     
     return {
       statusCode: 200,
@@ -40,7 +48,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: true, commandeId: savedCommande.id })
     };
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('❌ Erreur:', error.message);
     return {
       statusCode: 500,
       headers,
