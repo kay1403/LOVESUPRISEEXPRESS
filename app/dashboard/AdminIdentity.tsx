@@ -80,7 +80,7 @@ export function useNetlifyAuth() {
   }, []);
 
   const getToken = useCallback(() => {
-    // Essayer via netlifyIdentity
+    // Méthode 1: via netlifyIdentity
     const identity = (window as any).netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
@@ -88,7 +88,7 @@ export function useNetlifyAuth() {
       if (token) return token;
     }
     
-    // Fallback: lire directement depuis localStorage
+    // Méthode 2: via localStorage (fallback fiable)
     try {
       const gotrueUser = localStorage.getItem('gotrue.user');
       if (gotrueUser) {
@@ -100,7 +100,7 @@ export function useNetlifyAuth() {
         }
       }
     } catch (e) {
-      console.error('Erreur lecture token depuis localStorage:', e);
+      console.error('Erreur lecture token:', e);
     }
     
     console.log('❌ Aucun token trouvé');
