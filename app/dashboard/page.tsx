@@ -52,7 +52,7 @@ export default function DashboardPage() {
     setError(null);
     try {
       console.log('🔍 Fetching orders...');
-      const ordersRes = await authFetch('/api/get-orders');
+      const ordersRes = await authFetch('/functions/get-orders');
       const ordersData = await ordersRes.json();
       console.log('📦 Orders response:', ordersData);
       
@@ -63,7 +63,7 @@ export default function DashboardPage() {
       }
 
       console.log('🔍 Fetching testimonials...');
-      const avisRes = await authFetch('/api/get-all-testimonials');
+      const avisRes = await authFetch('/functions/get-all-testimonials');
       const avisData = await avisRes.json();
       console.log('⭐ Testimonials response:', avisData);
       
@@ -88,7 +88,7 @@ export default function DashboardPage() {
 
   const updateOrderStatus = async (id: string, status: string) => {
     try {
-      const res = await authFetch('/api/update-order-status', {
+      const res = await authFetch('/functions/update-order-status', {
         method: 'POST',
         body: JSON.stringify({ id, status })
       });
@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
   const moderateTestimonial = async (id: string, status: string) => {
     try {
-      const res = await authFetch('/api/moderate-testimonial', {
+      const res = await authFetch('/functions/moderate-testimonial', {
         method: 'POST',
         body: JSON.stringify({ id, status })
       });

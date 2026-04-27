@@ -68,7 +68,6 @@ export function useNetlifyAuth() {
   const login = useCallback(() => {
     const identity = (window as any).netlifyIdentity;
     if (identity) {
-      // Ouvre la popup de connexion MANUELLEMENT
       identity.open();
     }
   }, []);
@@ -82,11 +81,30 @@ export function useNetlifyAuth() {
   }, []);
 
   const getToken = useCallback(() => {
+    // Méthode 1: via netlifyIdentity
     const identity = (window as any).netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
-      return currentUser?.token?.access_token;
+      const token = currentUser?.token?.access_token;
+      if (token) return token;
     }
+    
+    // Méthode 2: via localStorage (fallback fiable)
+    try {
+      const gotrueUser = localStorage.getItem('gotrue.user');
+      if (gotrueUser) {
+        const user = JSON.parse(gotrueUser);
+        const token = user?.token?.access_token;
+        if (token) {
+          console.log('✅ Token récupéré depuis localStorage');
+          return token;
+        }
+      }
+    } catch (e) {
+      console.error('Erreur lecture token:', e);
+    }
+    
+    console.log('❌ Aucun token trouvé');
     return null;
   }, []);
 
@@ -131,7 +149,6 @@ export function AdminAuthGuard({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
-
 === app/dashboard/layout.tsx ===
 'use client';
 
@@ -565,25 +582,33 @@ exports.handler = async (event) => {
 
   try {
     const commande = JSON.parse(event.body);
-    
-    // S'assurer que le budget est correctement défini
-    if (!commande.budget || commande.budget === 0) {
-      commande.budget = commande.totalPrice || 0;
-    }
+    console.log('📝 Commande reçue:', { 
+      clientName: commande.clientName, 
+      budget: commande.budget,
+      hasDestName: !!commande.destName 
+    });
     
     const savedCommande = await saveCommand(commande);
+    console.log('✅ Commande sauvegardée:', savedCommande.id);
     
-    let googleSheetsSaved = false;
+    // WhatsApp - optionnel, ne bloque pas si erreur
+    try {
+      const entreprisePhone = process.env.ENTREPRISE_WHATSAPP || '250799366007';
+      await sendWhatsApp(entreprisePhone, formatCommandeMessage(savedCommande));
+      if (commande.clientPhone) {
+        await sendWhatsApp(commande.clientPhone, formatConfirmationClient(savedCommande));
+      }
+    } catch (whatsappError) {
+      console.log('⚠️ WhatsApp non configuré:', whatsappError.message);
+    }
+    
+    // Google Sheets - optionnel
     try {
       const { addToGoogleSheets } = require('../../lib/googleSheets.js');
-      googleSheetsSaved = await addToGoogleSheets(commande);
+      await addToGoogleSheets(commande);
     } catch (e) {
       console.log('Google Sheets non configuré');
     }
-    
-    const entreprisePhone = process.env.ENTREPRISE_WHATSAPP || '250799366007';
-    await sendWhatsApp(entreprisePhone, formatCommandeMessage(savedCommande));
-    await sendWhatsApp(commande.clientPhone, formatConfirmationClient(savedCommande));
     
     return {
       statusCode: 200,
@@ -591,7 +616,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ success: true, commandeId: savedCommande.id })
     };
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('❌ Erreur:', error.message);
     return {
       statusCode: 500,
       headers,
@@ -616,28 +641,20 @@ exports.handler = async (event) => {
   try {
     const avis = JSON.parse(event.body);
     
-    console.log('📝 Réception avis:', { note: avis.note, nom: avis.nom, hasPhoto: !!avis.photoBase64 });
-    
-    // Gérer la photo si présente
     let photoUrl = null;
     if (avis.photoBase64 && avis.hasPhoto && avis.photoBase64.includes(',')) {
       try {
         const base64Data = avis.photoBase64.split(',')[1];
-        if (base64Data && base64Data.length > 100) {  // Au moins 100 caractères
+        if (base64Data && base64Data.length > 100) {
           const buffer = Buffer.from(base64Data, 'base64');
           const photo = await savePhoto(buffer, 'testimonials');
           photoUrl = photo.url;
-          console.log('✅ Photo sauvegardée:', photoUrl);
-        } else {
-          console.log('⚠️ Photo trop petite ou invalide');
         }
       } catch (photoError) {
-        console.error('❌ Erreur sauvegarde photo:', photoError.message);
-        // Continue sans photo
+        console.error('Erreur photo:', photoError.message);
       }
     }
     
-    // Ne pas stocker la base64
     delete avis.photoBase64;
     
     const savedAvis = await saveAvis({
@@ -648,27 +665,21 @@ exports.handler = async (event) => {
       status: 'pending'
     });
     
-    console.log('✅ Avis sauvegardé:', savedAvis.id);
-    
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
         avisId: savedAvis.id,
-        message: "Merci pour votre avis ! Il sera publié après validation."
+        message: "Merci pour votre avis !"
       })
     };
   } catch (error) {
-    console.error('❌ Erreur fatale:', error.message, error.stack);
+    console.error('Erreur:', error);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ 
-        success: false, 
-        error: error.message,
-        details: error.stack 
-      })
+      body: JSON.stringify({ success: false, error: error.message })
     };
   }
 };
@@ -906,68 +917,254 @@ exports.handler = async (event) => {
   }
 };
 === lib/utils/netlify-blobs.js ===
-export async function savePhoto(file, category) {
+const { getStore: getNetlifyStore } = require('@netlify/blobs');
+
+export async function getStore(storeName) {
+  // Mode développement (local)
+  if (process.env.NODE_ENV === 'development' || !process.env.NETLIFY) {
+    console.log(`💻 Dev mode: ${storeName} (localStorage)`);
+    return {
+      get: async (key) => {
+        try {
+          const data = localStorage.getItem(`blob_${storeName}_${key}`);
+          return data ? JSON.parse(data) : null;
+        } catch (e) {
+          return null;
+        }
+      },
+      set: async (key, value) => {
+        try {
+          localStorage.setItem(`blob_${storeName}_${key}`, JSON.stringify(value));
+        } catch (e) {
+          console.error('Erreur écriture localStorage:', e);
+        }
+      },
+      list: async () => {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key?.startsWith(`blob_${storeName}_`)) {
+            keys.push(key.replace(`blob_${storeName}_`, ''));
+          }
+        }
+        return keys;
+      }
+    };
+  }
+
+  // Mode production (Netlify)
+  console.log(`☁️ Production mode: ${storeName}`);
   try {
-    const store = await getStore('photos');
-    const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Vérifier le type de file
-    let base64Data;
-    if (Buffer.isBuffer(file)) {
-      base64Data = file.toString('base64');
-    } else if (typeof file === 'string') {
-      base64Data = file;
-    } else if (file && file.data) {
-      base64Data = file.data;
-    } else {
-      console.error('Format de fichier non supporté:', typeof file);
-      return { id, url: null };
-    }
-    
-    if (!base64Data || base64Data.length === 0) {
-      console.error('Données base64 vides');
-      return { id, url: null };
-    }
-    
-    await store.set(id, { data: base64Data, category, createdAt: new Date().toISOString() });
-    console.log('✅ Photo sauvegardée dans store photos:', id);
-    return { id, url: `/api/get-photo?id=${id}` };
+    return getNetlifyStore(storeName);
   } catch (error) {
-    console.error('❌ Erreur savePhoto:', error.message);
-    return { id: null, url: null };
+    console.error(`❌ Erreur accès store ${storeName}:`, error.message);
+    throw error;
   }
 }
-=== lib/utils/verify-token.js ===
-const jwt = require('jsonwebtoken');
 
-// Récupérer la clé publique depuis les variables d'environnement
-const NETLIFY_JWT_SECRET = process.env.NETLIFY_JWT_SECRET || '-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu1SU1LfVLPHCYZM6i19L\nnMvNtP5W3C9lT5S8m7j9k0L2nM3pO4qR5sT6uV7wX8yZ9aB0cD1eF2gH3iJ4kL5mN6oP7\nQ8rR9sS0tU1vV2wW3xX4yY5zZ6aA7bB8cC9dD0eE1fF2gG3hH4iI5jJ6kK7lL8mM9nN0oO1pP2qQ3rR4sS5tT6uU7vV8wW9xX0yY1zZ2aA3bB4cC5dD6eE7fF8gG9hH0iI1jJ2kK3lL4mM5nN6oO7pP8qQ9rR0sS1tT2uU3vV4wW5xX6yY7zZ8aA9bB0cC1dD2eE3fF4gG5hH6iI7jJ8kK9lL0mM1nN2oO3pP4qQ5rR6sS7tT8uU9vV0wW1xX2yY3zZ4aA5bB6cC7dD8eE9fF0gG1hH2iI3jJ4kK5lL6mM7nN8oO9pP0qQ1rR2sS3tT4uU5vV6wW7xX8yY9zZ0aA1bB2cC3dD4eE5fF6gG7hH8iI9jJ0kK1lL2mM3nN4oO5pP6qQ7rR8sS9tT0uU1vV2wW3xX4yY5zZ6aA7bB8cC9dD0eE1fF2gG3hH4iI5jJ6kK7lL8mM9nN0oO\n-----END PUBLIC KEY-----';
+function generateId(prefix) {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substr(2, 9);
+  return `${prefix}_${timestamp}_${random}`;
+}
+
+export async function saveCommand(data) {
+  const store = await getStore('commandes');
+  const id = generateId('CMD');
+  const commande = {
+    id,
+    clientName: data.clientName || 'Client inconnu',
+    clientPhone: data.clientPhone || 'Non renseigné',
+    clientEmail: data.clientEmail || '',
+    destName: data.destName || 'Destinataire inconnu',
+    destPhone: data.destPhone || '',
+    destAddress: data.destAddress || 'Adresse non renseignée',
+    destAge: data.destAge || '',
+    eventType: data.eventType || 'Autre',
+    eventDate: data.eventDate || new Date().toISOString().split('T')[0],
+    eventTime: data.eventTime || '12:00',
+    eventLocation: data.eventLocation || 'Kigali',
+    selectedServices: data.selectedServices || [],
+    selectedPacks: data.selectedPacks || [],
+    selectedBaskets: data.selectedBaskets || [],
+    budget: data.budget || data.totalPrice || 0,
+    deliveryMethod: data.deliveryMethod || 'delivery',
+    message: data.message || '',
+    specialInstructions: data.specialInstructions || '',
+    isDiscreet: data.isDiscreet || false,
+    needsPersonPresent: data.needsPersonPresent || false,
+    additionalNotes: data.additionalNotes || '',
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+  await store.set(id, commande);
+  console.log('✅ Commande sauvegardée:', id);
+  return commande;
+}
+
+export async function getCommandes() {
+  const store = await getStore('commandes');
+  const keys = await store.list();
+  const commandes = [];
+  for (const key of keys) {
+    const cmd = await store.get(key);
+    if (cmd) commandes.push(cmd);
+  }
+  return commandes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+export async function updateCommandeStatus(id, status) {
+  const store = await getStore('commandes');
+  const commande = await store.get(id);
+  if (commande) {
+    commande.status = status;
+    await store.set(id, commande);
+  }
+  return commande;
+}
+
+export async function saveAvis(avis) {
+  const store = await getStore('avis');
+  const id = generateId('AVIS');
+  const nouvelAvis = {
+    id,
+    note: avis.note || 5,
+    message: avis.message || '',
+    nom: avis.nom || 'Client LoveExpress',
+    photoUrl: avis.photoUrl || null,
+    status: 'pending',
+    createdAt: new Date().toISOString()
+  };
+  await store.set(id, nouvelAvis);
+  console.log('✅ Avis sauvegardé:', id);
+  return nouvelAvis;
+}
+
+export async function getAvis(status = null) {
+  const store = await getStore('avis');
+  const keys = await store.list();
+  const avis = [];
+  for (const key of keys) {
+    const a = await store.get(key);
+    if (a && (status === null || a.status === status)) {
+      avis.push(a);
+    }
+  }
+  return avis.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
+export async function moderateAvis(id, status) {
+  const store = await getStore('avis');
+  const avis = await store.get(id);
+  if (avis) {
+    avis.status = status;
+    await store.set(id, avis);
+  }
+  return avis;
+}
+
+export async function savePhoto(file, category) {
+  const store = await getStore('photos');
+  const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  let base64Data;
+  if (Buffer.isBuffer(file)) {
+    base64Data = file.toString('base64');
+  } else if (typeof file === 'string') {
+    base64Data = file;
+  } else {
+    return { id, url: null };
+  }
+  
+  await store.set(id, { data: base64Data, category, createdAt: new Date().toISOString() });
+  return { id, url: `/api/get-photo?id=${id}` };
+}
+
+export async function getPhotos(category = null) {
+  const store = await getStore('photos');
+  const keys = await store.list();
+  const photos = [];
+  for (const key of keys) {
+    if (category === null || key.startsWith(category)) {
+      photos.push({ id: key, url: `/api/get-photo?id=${key}` });
+    }
+  }
+  return photos;
+}
+=== lib/utils/verify-token.js ===
+// lib/utils/verify-token.js
+const jwt = require('jsonwebtoken');
 
 exports.verifyToken = async (token) => {
   return new Promise((resolve, reject) => {
-    jwt.verify(token, NETLIFY_JWT_SECRET, { algorithms: ['RS256'] }, (err, decoded) => {
-      if (err) reject(err);
-      else resolve(decoded);
-    });
+    try {
+      console.log('🔍 verifyToken - début');
+      console.log('📝 Token reçu (début):', token.substring(0, 30) + '...');
+      console.log('📝 Token longueur:', token.length);
+      
+      // Décoder le token
+      const decoded = jwt.decode(token);
+      console.log('📝 Decoded:', JSON.stringify(decoded, null, 2));
+      
+      if (!decoded) {
+        console.log('❌ Decoded est null');
+        return reject(new Error('Impossible de décoder le token'));
+      }
+      
+      if (!decoded.email) {
+        console.log('❌ Pas d\'email dans le token');
+        return reject(new Error('Token sans email'));
+      }
+      
+      // Vérifier expiration
+      const now = Math.floor(Date.now() / 1000);
+      console.log(`📅 Now: ${now}, Exp: ${decoded.exp}, Diff: ${decoded.exp - now}s`);
+      if (decoded.exp && decoded.exp < now) {
+        console.log('❌ Token expiré');
+        return reject(new Error('Token expiré'));
+      }
+      
+      console.log('✅ Token valide:', decoded.email);
+      resolve(decoded);
+    } catch (err) {
+      console.error('❌ Erreur verifyToken:', err.message);
+      reject(err);
+    }
   });
 };
 
 exports.isAdmin = async (event) => {
   try {
+    console.log('🔍 isAdmin appelé');
+    
     const authHeader = event.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return false;
+    console.log('📋 Auth header présent?', !!authHeader);
+    console.log('📋 Auth header:', authHeader ? authHeader.substring(0, 50) + '...' : 'null');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ Pas de Bearer token - retour false');
+      return false;
+    }
     
     const token = authHeader.split(' ')[1];
+    console.log('🔑 Token extrait (début):', token.substring(0, 30) + '...');
+    
     const decoded = await exports.verifyToken(token);
+    console.log('📧 Email décodé:', decoded.email);
     
     const allowedEmails = process.env.ADMIN_EMAILS || 'mekuiadele271@gmail.com';
-    return allowedEmails.split(',').includes(decoded.email);
+    const allowedList = allowedEmails.split(',');
+    console.log('📧 Emails autorisés:', allowedList);
+    
+    const isAllowed = allowedList.includes(decoded.email);
+    
+    console.log(`✅ ${decoded.email} est admin: ${isAllowed}`);
+    return isAllowed;
   } catch (error) {
-    console.error('Erreur vérification admin:', error);
+    console.error('❌ Erreur isAdmin:', error.message);
     return false;
   }
 };
-
 === lib/utils/whatsapp.js ===
 const CALLMEBOT_API = 'https://api.callmebot.com/whatsapp.php';
 

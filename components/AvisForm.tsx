@@ -58,7 +58,7 @@ export default function AvisForm() {
         })
       }
 
-      const response = await fetch('/api/submit-testimonial', {
+      const response = await fetch('/functions/submit-testimonial', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

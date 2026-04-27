@@ -172,7 +172,7 @@ export default function ContactForm() {
     
     setIsSubmitting(true)
     try {
-      const response = await fetch('/api/submit-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...formData, totalPrice, budget: formData.budget || totalPrice }) })
+      const response = await fetch('/functions/submit-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...formData, totalPrice, budget: formData.budget || totalPrice }) })
       if (response.ok) {
         setTimeout(() => downloadPDF(), 500)
         setIsSubmitted(true)
