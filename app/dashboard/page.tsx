@@ -37,6 +37,8 @@ export default function DashboardPage() {
 
   const authFetch = async (url: string, options: RequestInit = {}) => {
     const token = getToken();
+    console.log('🔑 Token disponible?', !!token);
+    
     return fetch(url, {
       ...options,
       headers: {
@@ -51,26 +53,52 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
+      // 1. Récupération des commandes
       console.log('🔍 Fetching orders...');
       const ordersRes = await authFetch('/functions/get-orders');
-      const ordersData = await ordersRes.json();
-      console.log('📦 Orders response:', ordersData);
+      console.log('📊 Orders Status:', ordersRes.status);
       
-      if (ordersData.success) {
-        setOrders(ordersData.commandes || []);
+      if (!ordersRes.ok) {
+        console.error('Orders HTTP error:', ordersRes.status);
+        const errorText = await ordersRes.text();
+        console.error('Orders error body:', errorText);
+        if (ordersRes.status === 401) {
+          setError('Session expirée. Veuillez vous reconnecter.');
+          setLoading(false);
+          return;
+        }
       } else {
-        console.error('Orders error:', ordersData.error);
+        const ordersData = await ordersRes.json();
+        console.log('📦 Orders response:', ordersData);
+        
+        if (ordersData.success) {
+          setOrders(ordersData.commandes || []);
+        } else {
+          console.error('Orders error:', ordersData.error);
+        }
       }
 
+      // 2. Récupération des avis
       console.log('🔍 Fetching testimonials...');
       const avisRes = await authFetch('/functions/get-all-testimonials');
-      const avisData = await avisRes.json();
-      console.log('⭐ Testimonials response:', avisData);
+      console.log('📊 Avis Status:', avisRes.status);
       
-      if (avisData.success) {
-        setTestimonials(avisData.avis || []);
+      if (!avisRes.ok) {
+        console.error('Avis HTTP error:', avisRes.status);
+        if (avisRes.status === 401) {
+          setError('Session expirée. Veuillez vous reconnecter.');
+          setLoading(false);
+          return;
+        }
       } else {
-        console.error('Testimonials error:', avisData.error);
+        const avisData = await avisRes.json();
+        console.log('⭐ Testimonials response:', avisData);
+        
+        if (avisData.success) {
+          setTestimonials(avisData.avis || []);
+        } else {
+          console.error('Testimonials error:', avisData.error);
+        }
       }
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -82,7 +110,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
+      console.log('👤 User connecté:', user.email);
       fetchData();
+    } else {
+      console.log('👤 Aucun utilisateur connecté');
     }
   }, [user]);
 
@@ -169,7 +200,10 @@ export default function DashboardPage() {
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
           <p className="text-red-600">{error}</p>
           <button 
-            onClick={fetchData} 
+            onClick={() => {
+              if (user) fetchData();
+              else window.location.href = '/dashboard';
+            }} 
             className="mt-3 bg-primary text-white px-4 py-2 rounded-lg text-sm"
           >
             Réessayer

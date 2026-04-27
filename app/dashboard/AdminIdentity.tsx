@@ -80,15 +80,19 @@ export function useNetlifyAuth() {
   }, []);
 
   const getToken = useCallback(() => {
-    // Méthode 1: via netlifyIdentity
+    // Méthode 1: via netlifyIdentity avec jwt()
     const identity = (window as any).netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
-      const token = currentUser?.token?.access_token;
-      if (token) return token;
+      // ✅ CORRECTION: utiliser jwt() au lieu de token.access_token
+      const token = currentUser?.jwt?.();
+      if (token) {
+        console.log('✅ Token récupéré via jwt()');
+        return token;
+      }
     }
     
-    // Méthode 2: via localStorage (fallback fiable)
+    // Méthode 2: via localStorage (fallback)
     try {
       const gotrueUser = localStorage.getItem('gotrue.user');
       if (gotrueUser) {
