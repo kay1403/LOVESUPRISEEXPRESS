@@ -14,27 +14,39 @@ exports.handler = async (event) => {
   try {
     const avis = JSON.parse(event.body);
     
+    console.log('📝 Réception avis:', { note: avis.note, nom: avis.nom, hasPhoto: !!avis.photoBase64 });
+    
     // Gérer la photo si présente
     let photoUrl = null;
-    if (avis.photoBase64 && avis.hasPhoto) {
+    if (avis.photoBase64 && avis.hasPhoto && avis.photoBase64.includes(',')) {
       try {
-        // Extraire le base64 et sauvegarder
         const base64Data = avis.photoBase64.split(',')[1];
-        const buffer = Buffer.from(base64Data, 'base64');
-        const photo = await savePhoto(buffer, 'testimonials');
-        photoUrl = photo.url;
+        if (base64Data && base64Data.length > 100) {  // Au moins 100 caractères
+          const buffer = Buffer.from(base64Data, 'base64');
+          const photo = await savePhoto(buffer, 'testimonials');
+          photoUrl = photo.url;
+          console.log('✅ Photo sauvegardée:', photoUrl);
+        } else {
+          console.log('⚠️ Photo trop petite ou invalide');
+        }
       } catch (photoError) {
-        console.error('Erreur sauvegarde photo:', photoError);
+        console.error('❌ Erreur sauvegarde photo:', photoError.message);
+        // Continue sans photo
       }
     }
     
-    // Ne pas stocker la base64 dans l'avis (trop gros)
+    // Ne pas stocker la base64
     delete avis.photoBase64;
     
     const savedAvis = await saveAvis({
-      ...avis,
-      photoUrl
+      note: avis.note || 5,
+      message: avis.message || '',
+      nom: avis.nom || 'Client LoveExpress',
+      photoUrl: photoUrl,
+      status: 'pending'
     });
+    
+    console.log('✅ Avis sauvegardé:', savedAvis.id);
     
     return {
       statusCode: 200,
@@ -46,11 +58,15 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('❌ Erreur fatale:', error.message, error.stack);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ success: false, error: error.message })
+      body: JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        details: error.stack 
+      })
     };
   }
 };
