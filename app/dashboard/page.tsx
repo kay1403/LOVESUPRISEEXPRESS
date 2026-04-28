@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNetlifyAuth } from './AdminIdentity';
 
 interface Order {
@@ -35,10 +35,14 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
-  // ✅ CORRECTION: authFetch doit attendre le token asynchrone
-  const authFetch = async (url: string, options: RequestInit = {}) => {
+  // ✅ BUG 2 CORRIGÉ: useCallback pour stabiliser authFetch
+  const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const token = await getToken();
-    console.log('🔑 Token disponible?', !!token);
+    console.log('🔑 Token disponible?', !!token, token ? token.substring(0, 20) + '...' : 'NULL');
+    
+    if (!token) {
+      console.warn('⚠️ Appel sans token — sera rejeté 401');
+    }
     
     return fetch(url, {
       ...options,
@@ -48,9 +52,9 @@ export default function DashboardPage() {
         ...options.headers,
       },
     });
-  };
+  }, [getToken]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -107,16 +111,21 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authFetch]);
 
+  // ✅ BUG 1 CORRIGÉ: délai pour laisser identity s'initialiser
   useEffect(() => {
-    if (user) {
-      console.log('👤 User connecté:', user.email);
+    if (!user) return;
+    
+    console.log('👤 User connecté:', user.email);
+    
+    // Petit délai pour laisser le temps à jwt() d'être prêt après login
+    const timer = setTimeout(() => {
       fetchData();
-    } else {
-      console.log('👤 Aucun utilisateur connecté');
-    }
-  }, [user]);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [user, fetchData]);
 
   const updateOrderStatus = async (id: string, status: string) => {
     try {

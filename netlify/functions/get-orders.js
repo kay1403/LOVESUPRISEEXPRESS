@@ -12,9 +12,22 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  console.log('🔍 get-orders appelée');
-  console.log('🔍 Headers keys:', Object.keys(event.headers || {}));
+  // 🔍 DEBUG TEMPORAIRE — à retirer après
+  console.log('🔍 AUTH HEADER:', event.headers?.authorization?.substring(0, 60));
+  console.log('🔍 ALL HEADERS:', JSON.stringify(Object.keys(event.headers || {})));
+  
+  // Test direct de Blobs
+  try {
+    const { getStore } = require('../../lib/utils/netlify-blobs.js');
+    const testStore = await getStore('commandes');
+    const testResult = await testStore.list();
+    console.log('🔍 BLOBS STRUCTURE:', JSON.stringify(Object.keys(testResult)));
+    console.log('🔍 BLOBS COUNT:', (testResult.blobs ?? testResult.items ?? []).length);
+  } catch (err) {
+    console.error('🔍 BLOBS TEST ERROR:', err.message);
+  }
 
+  console.log('🔍 isAdmin check...');
   const admin = await isAdmin(event);
   console.log('👑 Est admin?', admin);
   
