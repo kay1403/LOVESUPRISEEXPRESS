@@ -79,20 +79,25 @@ export function useNetlifyAuth() {
     }
   }, []);
 
-  const getToken = useCallback(() => {
-    // Méthode 1: via netlifyIdentity avec jwt()
+  // ✅ CORRECTION: getToken devient asynchrone
+  const getToken = useCallback(async (): Promise<string | null> => {
     const identity = (window as any).netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
-      // ✅ CORRECTION: utiliser jwt() au lieu de token.access_token
-      const token = currentUser?.jwt?.();
-      if (token) {
-        console.log('✅ Token récupéré via jwt()');
-        return token;
+      if (currentUser?.jwt) {
+        try {
+          // ✅ CORRECTION: await obligatoire
+          const token = await currentUser.jwt();
+          if (token) {
+            console.log('✅ Token récupéré via jwt()');
+            return token;
+          }
+        } catch (e) {
+          console.error('Erreur jwt():', e);
+        }
       }
     }
-    
-    // Méthode 2: via localStorage (fallback)
+
     try {
       const gotrueUser = localStorage.getItem('gotrue.user');
       if (gotrueUser) {
@@ -106,7 +111,7 @@ export function useNetlifyAuth() {
     } catch (e) {
       console.error('Erreur lecture token:', e);
     }
-    
+
     console.log('❌ Aucun token trouvé');
     return null;
   }, []);

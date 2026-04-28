@@ -736,8 +736,14 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
+  console.log('🔍 get-orders appelée');
+  console.log('🔍 Headers keys:', Object.keys(event.headers || {}));
+
   const admin = await isAdmin(event);
+  console.log('👑 Est admin?', admin);
+  
   if (!admin) {
+    console.log('❌ Non autorisé - retour 401');
     return {
       statusCode: 401,
       headers,
@@ -747,12 +753,14 @@ exports.handler = async (event) => {
 
   try {
     const commandes = await getCommandes();
+    console.log(`✅ ${commandes.length} commandes retournées`);
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ success: true, commandes })
     };
   } catch (error) {
+    console.error('❌ Erreur getCommandes:', error.message);
     return {
       statusCode: 500,
       headers,
@@ -760,7 +768,6 @@ exports.handler = async (event) => {
     };
   }
 };
-
 === netlify/functions/get-all-testimonials.js ===
 const { getAvis } = require('../../lib/utils/netlify-blobs.js');
 const { isAdmin } = require('../../lib/utils/verify-token.js');
@@ -776,8 +783,13 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
+  console.log('🔍 get-all-testimonials appelée');
+
   const admin = await isAdmin(event);
+  console.log('👑 Est admin?', admin);
+  
   if (!admin) {
+    console.log('❌ Non autorisé - retour 401');
     return {
       statusCode: 401,
       headers,
@@ -787,6 +799,7 @@ exports.handler = async (event) => {
 
   try {
     const allAvis = await getAvis(null);
+    console.log(`✅ ${allAvis.length} avis retournés`);
     return {
       statusCode: 200,
       headers,
@@ -802,6 +815,7 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
+    console.error('❌ Erreur getAvis:', error.message);
     return {
       statusCode: 500,
       headers,
@@ -809,7 +823,6 @@ exports.handler = async (event) => {
     };
   }
 };
-
 === netlify/functions/moderate-testimonial.js ===
 const { moderateAvis } = require('../../lib/utils/netlify-blobs.js');
 const { isAdmin } = require('../../lib/utils/verify-token.js');
@@ -955,36 +968,41 @@ exports.handler = async (event) => {
   }
 };
 === lib/utils/netlify-blobs.js ===
-// lib/utils/netlify-blobs.js - Version avec configuration manuelle forcée
+// lib/utils/netlify-blobs.js - VERSION FINALE STABLE
 const { getStore: getNetlifyStore } = require('@netlify/blobs');
 
-// Configuration obligatoire pour Next.js + esbuild
+// Configuration - Ces variables doivent être définies dans Netlify Dashboard
 const SITE_ID = process.env.NETLIFY_SITE_ID || '2ad6edd4-3a49-4e3c-b68a-ee3ee992f448';
-const TOKEN = process.env.NETLIFY_AUTH_TOKEN;
 
 async function getStore(storeName) {
   console.log(`🔍 Accès store: ${storeName}`);
+  console.log(`🔍 SITE_ID: ${SITE_ID ? 'défini' : 'MANQUANT'}`);
+  console.log(`🔍 NETLIFY_AUTH_TOKEN: ${process.env.NETLIFY_AUTH_TOKEN ? 'défini' : 'MANQUANT'}`);
 
-  if (!TOKEN) {
-    console.error('❌ NETLIFY_AUTH_TOKEN non défini');
-    throw new Error('Missing NETLIFY_AUTH_TOKEN environment variable');
-  }
-
+  // Essayer d'abord sans token (auto-détection Netlify)
   try {
+    console.log('🔄 Tentative auto-détection Netlify...');
+    const store = getNetlifyStore({ name: storeName });
+    await store.list({ limit: 1 });
+    console.log(`✅ Store ${storeName} accessible (auto-détection)`);
+    return store;
+  } catch (autoError) {
+    console.log(`⚠️ Auto-détection échouée: ${autoError.message}`);
+    
+    // Fallback: configuration manuelle avec token
+    if (!process.env.NETLIFY_AUTH_TOKEN) {
+      throw new Error('NETLIFY_AUTH_TOKEN non défini et auto-détection échouée');
+    }
+    
+    console.log('🔄 Tentative configuration manuelle...');
     const store = getNetlifyStore({
       name: storeName,
       siteID: SITE_ID,
-      token: TOKEN
+      token: process.env.NETLIFY_AUTH_TOKEN
     });
-
-    // Test d'accès immédiat
     await store.list({ limit: 1 });
-    console.log(`✅ Store ${storeName} accessible`);
-
+    console.log(`✅ Store ${storeName} accessible (manuel)`);
     return store;
-  } catch (error) {
-    console.error(`❌ Erreur store ${storeName}:`, error.message);
-    throw error;
   }
 }
 

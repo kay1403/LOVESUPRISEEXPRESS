@@ -35,8 +35,9 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
+  // ✅ CORRECTION: authFetch doit attendre le token asynchrone
   const authFetch = async (url: string, options: RequestInit = {}) => {
-    const token = getToken();
+    const token = await getToken();
     console.log('🔑 Token disponible?', !!token);
     
     return fetch(url, {
