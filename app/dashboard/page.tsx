@@ -27,13 +27,18 @@ interface TestimonialItem {
   createdAt: string;
 }
 
-// ✅ Fonction utilitaire pour les URLs de photos
-const getImageUrl = (photoUrl: string | undefined): string | null => {
-  if (!photoUrl) return null;
-  if (photoUrl.startsWith('http')) return photoUrl;
-  // Construction de l'URL absolue pour Netlify
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovesupriseexpress.netlify.app';
-  return `${baseUrl}${photoUrl}`;
+// ✅ Fonction pour obtenir l'URL absolue des photos
+const getImageUrl = (photoUrl: string | undefined): string => {
+  if (!photoUrl) return '';
+  // Si c'est déjà une URL absolue, la retourner
+  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+    return photoUrl;
+  }
+  // Sinon, construire l'URL absolue
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://lovesupriseexpress.netlify.app';
+  // S'assurer que le chemin commence par /
+  const path = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
+  return `${baseUrl}${path}`;
 };
 
 export default function DashboardPage() {
@@ -44,14 +49,9 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
-  // ✅ useCallback pour stabiliser authFetch
   const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const token = await getToken();
-    console.log('🔑 Token disponible?', !!token, token ? token.substring(0, 20) + '...' : 'NULL');
-    
-    if (!token) {
-      console.warn('⚠️ Appel sans token — sera rejeté 401');
-    }
+    console.log('🔑 Token disponible?', !!token);
     
     return fetch(url, {
       ...options,
@@ -67,15 +67,12 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      // 1. Récupération des commandes
       console.log('🔍 Fetching orders...');
       const ordersRes = await authFetch('/functions/get-orders');
       console.log('📊 Orders Status:', ordersRes.status);
       
       if (!ordersRes.ok) {
         console.error('Orders HTTP error:', ordersRes.status);
-        const errorText = await ordersRes.text();
-        console.error('Orders error body:', errorText);
         if (ordersRes.status === 401) {
           setError('Session expirée. Veuillez vous reconnecter.');
           setLoading(false);
@@ -92,7 +89,6 @@ export default function DashboardPage() {
         }
       }
 
-      // 2. Récupération des avis
       console.log('🔍 Fetching testimonials...');
       const avisRes = await authFetch('/functions/get-all-testimonials');
       console.log('📊 Avis Status:', avisRes.status);
@@ -122,16 +118,12 @@ export default function DashboardPage() {
     }
   }, [authFetch]);
 
-  // ✅ délai pour laisser identity s'initialiser après login
   useEffect(() => {
     if (!user) return;
-    
     console.log('👤 User connecté:', user.email);
-    
     const timer = setTimeout(() => {
       fetchData();
     }, 100);
-    
     return () => clearTimeout(timer);
   }, [user, fetchData]);
 
@@ -233,7 +225,6 @@ export default function DashboardPage() {
 
   return (
     <div>
-      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-2xl font-bold">{stats.totalOrders}</p>
@@ -253,7 +244,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="px-6">
         <div className="flex gap-2 border-b">
           <button 
@@ -279,7 +269,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="p-6">
         {activeTab === 'orders' ? (
           <div className="space-y-4">
@@ -351,22 +340,18 @@ export default function DashboardPage() {
                             ? 'bg-red-100 text-red-700'
                             : 'bg-yellow-100 text-yellow-700'
                         }`}>
-                          {testimonial.status === 'published' 
-                            ? '✓ Publié' 
-                            : testimonial.status === 'rejected'
-                            ? '✗ Rejeté'
-                            : '⏳ En attente'}
+                          {testimonial.status === 'published' ? '✓ Publié' : testimonial.status === 'rejected' ? '✗ Rejeté' : '⏳ En attente'}
                         </span>
                         <span className="text-xs text-gray-400">
                           {new Date(testimonial.createdAt).toLocaleDateString('fr-FR')}
                         </span>
                       </div>
                       
-                      {/* ✅ CORRECTION: Affichage des photos avec URL absolue */}
+                      {/* ✅ AFFICHAGE PHOTO CORRIGÉ */}
                       {testimonial.photoUrl && (
                         <div className="mb-2">
                           <img 
-                            src={getImageUrl(testimonial.photoUrl)!} 
+                            src={getImageUrl(testimonial.photoUrl)} 
                             alt={`Photo de ${testimonial.nom}`}
                             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
                             onError={(e) => {
@@ -383,35 +368,23 @@ export default function DashboardPage() {
                     
                     {testimonial.status === 'pending' && (
                       <div className="flex gap-2">
-                        <button 
-                          onClick={() => moderateTestimonial(testimonial.id, 'published')} 
-                          className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition"
-                        >
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition">
                           ✓ Publier
                         </button>
-                        <button 
-                          onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
-                          className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition"
-                        >
+                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition">
                           ✗ Rejeter
                         </button>
                       </div>
                     )}
                     
                     {testimonial.status === 'published' && (
-                      <button 
-                        onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
-                        className="bg-gray-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-gray-600 transition"
-                      >
+                      <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-gray-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-gray-600 transition">
                         Retirer
                       </button>
                     )}
                     
                     {testimonial.status === 'rejected' && (
-                      <button 
-                        onClick={() => moderateTestimonial(testimonial.id, 'published')} 
-                        className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition"
-                      >
+                      <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition">
                         Restaurer
                       </button>
                     )}

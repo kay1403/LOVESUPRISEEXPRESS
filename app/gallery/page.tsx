@@ -17,11 +17,15 @@ interface Testimonial {
 
 const ITEMS_PER_PAGE = 9;
 
-// Fonction utilitaire pour les URLs de photos
-const getImageUrl = (photoUrl: string | undefined) => {
-  if (!photoUrl) return null;
-  if (photoUrl.startsWith('http')) return photoUrl;
-  return `https://lovesupriseexpress.netlify.app${photoUrl}`;
+// ✅ Fonction pour obtenir l'URL absolue des photos
+const getImageUrl = (photoUrl: string | undefined): string => {
+  if (!photoUrl) return '';
+  if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
+    return photoUrl;
+  }
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://lovesupriseexpress.netlify.app';
+  const path = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
+  return `${baseUrl}${path}`;
 };
 
 export default function GalleryPage() {
@@ -49,7 +53,6 @@ export default function GalleryPage() {
     }
   }
 
-  // Pagination
   const totalPages = Math.ceil(testimonials.length / ITEMS_PER_PAGE)
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const paginatedTestimonials = testimonials.slice(startIndex, startIndex + ITEMS_PER_PAGE)
@@ -121,8 +124,16 @@ export default function GalleryPage() {
                   >
                     <div className="relative h-56 overflow-hidden">
                       {item.photoUrl ? (
-                        // ✅ CORRECTION: utiliser getImageUrl
-                        <img src={getImageUrl(item.photoUrl)!} alt={item.nom} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        // ✅ CORRECTION: utilisation de getImageUrl
+                        <img 
+                          src={getImageUrl(item.photoUrl)} 
+                          alt={item.nom} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            console.error('Erreur chargement photo:', item.photoUrl);
+                            e.currentTarget.src = '';
+                          }}
+                        />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
                           <Heart size={48} className="text-primary/40" />
@@ -157,7 +168,6 @@ export default function GalleryPage() {
                 ))}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-12">
                   <button
@@ -190,7 +200,6 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* Modal */}
       <AnimatePresence>
         {selectedTestimonial && (
           <motion.div
@@ -210,8 +219,16 @@ export default function GalleryPage() {
             >
               <div className="relative">
                 {selectedTestimonial.photoUrl ? (
-                  // ✅ CORRECTION: utiliser getImageUrl
-                  <img src={getImageUrl(selectedTestimonial.photoUrl)!} alt={selectedTestimonial.nom} className="w-full h-80 object-cover" />
+                  // ✅ CORRECTION: utilisation de getImageUrl
+                  <img 
+                    src={getImageUrl(selectedTestimonial.photoUrl)} 
+                    alt={selectedTestimonial.nom} 
+                    className="w-full h-80 object-cover"
+                    onError={(e) => {
+                      console.error('Erreur chargement photo modal:', selectedTestimonial.photoUrl);
+                      e.currentTarget.src = '';
+                    }}
+                  />
                 ) : (
                   <div className="w-full h-80 bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
                     <Heart size={64} className="text-primary/40" />
@@ -256,5 +273,5 @@ export default function GalleryPage() {
         )}
       </AnimatePresence>
     </main>
-  )
+  );
 }
