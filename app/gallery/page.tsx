@@ -130,11 +130,11 @@ export default function GalleryPage() {
                     transition={{ delay: (index % ITEMS_PER_PAGE) * 0.05 }}
                     whileHover={{ y: -5 }}
                     onClick={() => setSelectedTestimonial(item)}
-                    className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl flex flex-col h-full"
+                    className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl flex flex-col"
                   >
-                    {/* ✅ Zone image avec hauteur fixe */}
-                    <div className="relative h-56 flex-shrink-0 overflow-hidden">
-                      {item.photoUrl ? (
+                    {/* ✅ Zone image - complètement supprimée si pas de photo */}
+                    {item.photoUrl && (
+                      <div className="relative h-56 flex-shrink-0 overflow-hidden">
                         <>
                           <img 
                             src={getImageUrl(item.photoUrl)} 
@@ -148,37 +148,44 @@ export default function GalleryPage() {
                           >
                             <Maximize2 size={16} className="text-white" />
                           </button>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
+                          <div className="absolute bottom-3 left-3 flex gap-0.5">
+                            {[...Array(item.note || 5)].map((_, i) => (
+                              <Star key={i} size={12} className="fill-accent text-accent" />
+                            ))}
+                          </div>
+                          <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <Heart size={40} className="text-white drop-shadow-lg" />
+                          </div>
                         </>
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
-                          <Heart size={48} className="text-primary/40" />
+                      </div>
+                    )}
+                    
+                    {/* ✅ Zone texte - avec padding adapté */}
+                    <div className={`p-5 flex flex-col flex-grow ${!item.photoUrl ? 'pt-8' : ''}`}>
+                      {/* ✅ Affichage des étoiles si pas de photo */}
+                      {!item.photoUrl && (
+                        <div className="flex gap-0.5 mb-3">
+                          {[...Array(item.note || 5)].map((_, i) => (
+                            <Star key={i} size={16} className="fill-accent text-accent" />
+                          ))}
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-                      <div className="absolute bottom-3 left-3 flex gap-0.5">
-                        {[...Array(item.note || 5)].map((_, i) => (
-                          <Star key={i} size={12} className="fill-accent text-accent" />
-                        ))}
-                      </div>
-                      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <Heart size={40} className="text-white drop-shadow-lg" />
-                      </div>
-                    </div>
-                    
-                    {/* ✅ Zone texte avec flex-grow pour uniformiser */}
-                    <div className="p-5 flex flex-col flex-grow">
+                      
                       <div className="flex items-center gap-2 mb-2">
                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <User size={14} className="text-primary" />
                         </div>
                         <h3 className="font-semibold text-dark truncate">{item.nom}</h3>
                       </div>
+                      
                       <div className="flex items-center gap-2 mb-3">
                         <Calendar size={12} className="text-gray-400 flex-shrink-0" />
                         <span className="text-xs text-gray-400">
                           {new Date(item.createdAt).toLocaleDateString('fr-FR')}
                         </span>
                       </div>
+                      
                       <p className="text-gray-600 text-sm italic line-clamp-3 flex-grow">"{item.message}"</p>
                     </div>
                   </motion.div>
