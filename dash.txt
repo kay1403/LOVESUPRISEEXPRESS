@@ -205,7 +205,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 === app/dashboard/page.tsx ===
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNetlifyAuth } from './AdminIdentity';
 
 interface Order {
@@ -240,10 +240,14 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
-  // ✅ CORRECTION: authFetch doit attendre le token asynchrone
-  const authFetch = async (url: string, options: RequestInit = {}) => {
+  // ✅ BUG 2 CORRIGÉ: useCallback pour stabiliser authFetch
+  const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const token = await getToken();
-    console.log('🔑 Token disponible?', !!token);
+    console.log('🔑 Token disponible?', !!token, token ? token.substring(0, 20) + '...' : 'NULL');
+    
+    if (!token) {
+      console.warn('⚠️ Appel sans token — sera rejeté 401');
+    }
     
     return fetch(url, {
       ...options,
@@ -253,9 +257,9 @@ export default function DashboardPage() {
         ...options.headers,
       },
     });
-  };
+  }, [getToken]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -312,16 +316,21 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [authFetch]);
 
+  // ✅ BUG 1 CORRIGÉ: délai pour laisser identity s'initialiser
   useEffect(() => {
-    if (user) {
-      console.log('👤 User connecté:', user.email);
+    if (!user) return;
+    
+    console.log('👤 User connecté:', user.email);
+    
+    // Petit délai pour laisser le temps à jwt() d'être prêt après login
+    const timer = setTimeout(() => {
       fetchData();
-    } else {
-      console.log('👤 Aucun utilisateur connecté');
-    }
-  }, [user]);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [user, fetchData]);
 
   const updateOrderStatus = async (id: string, status: string) => {
     try {
@@ -742,9 +751,22 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
-  console.log('🔍 get-orders appelée');
-  console.log('🔍 Headers keys:', Object.keys(event.headers || {}));
+  // 🔍 DEBUG TEMPORAIRE — à retirer après
+  console.log('🔍 AUTH HEADER:', event.headers?.authorization?.substring(0, 60));
+  console.log('🔍 ALL HEADERS:', JSON.stringify(Object.keys(event.headers || {})));
+  
+  // Test direct de Blobs
+  try {
+    const { getStore } = require('../../lib/utils/netlify-blobs.js');
+    const testStore = await getStore('commandes');
+    const testResult = await testStore.list();
+    console.log('🔍 BLOBS STRUCTURE:', JSON.stringify(Object.keys(testResult)));
+    console.log('🔍 BLOBS COUNT:', (testResult.blobs ?? testResult.items ?? []).length);
+  } catch (err) {
+    console.error('🔍 BLOBS TEST ERROR:', err.message);
+  }
 
+  console.log('🔍 isAdmin check...');
   const admin = await isAdmin(event);
   console.log('👑 Est admin?', admin);
   
@@ -974,19 +996,29 @@ exports.handler = async (event) => {
   }
 };
 === lib/utils/netlify-blobs.js ===
-// lib/utils/netlify-blobs.js - Version avec correction de store.list()
+// lib/utils/netlify-blobs.js - Version avec cache et compatibilité multi-versions
 const { getStore: getNetlifyStore } = require('@netlify/blobs');
 
 const SITE_ID = process.env.NETLIFY_SITE_ID || '2ad6edd4-3a49-4e3c-b68a-ee3ee992f448';
 
+// ✅ BUG 3 CORRIGÉ: Cache des stores pour éviter appels réseau inutiles
+const storeCache = new Map();
+
 async function getStore(storeName) {
-  console.log(`🔍 Accès store: ${storeName}`);
+  // Vérifier le cache d'abord
+  if (storeCache.has(storeName)) {
+    console.log(`🔍 Store ${storeName} (caché)`);
+    return storeCache.get(storeName);
+  }
+
+  console.log(`🔍 Initialisation store: ${storeName}`);
 
   // Essayer auto-détection d'abord
   try {
     const store = getNetlifyStore({ name: storeName });
     await store.list({ limit: 1 });
     console.log(`✅ Store ${storeName} accessible (auto-détection)`);
+    storeCache.set(storeName, store);
     return store;
   } catch (autoError) {
     console.log(`⚠️ Auto-détection échouée: ${autoError.message}`);
@@ -1002,6 +1034,7 @@ async function getStore(storeName) {
     });
     await store.list({ limit: 1 });
     console.log(`✅ Store ${storeName} accessible (manuel)`);
+    storeCache.set(storeName, store);
     return store;
   }
 }
@@ -1049,25 +1082,27 @@ async function saveCommand(data) {
   return commande;
 }
 
+// ✅ BUG 4 CORRIGÉ: Compatible avec v6 (items) et v7 (blobs)
 async function getCommandes() {
   console.log('📦 getCommandes');
   const store = await getStore('commandes');
+  const result = await store.list();
   
-  // ✅ CORRECTION: destructurer pour obtenir blobs
-  const { blobs } = await store.list();
-  console.log(`🔑 Clés trouvées: ${blobs.length}`);
+  // Compatibilité multi-versions
+  const entries = result.blobs ?? result.items ?? [];
+  console.log(`🔑 Entrées trouvées: ${entries.length}`, 'Structure:', Object.keys(result));
 
   const commandes = [];
-  for (const blob of blobs) {
+  for (const entry of entries) {
     try {
-      // ✅ CORRECTION: utiliser blob.key
-      const cmd = await store.get(blob.key);
+      const key = entry.key ?? entry;  // fallback si c'est une string directe
+      const cmd = await store.get(key);
       if (cmd) {
         const parsed = typeof cmd === 'string' ? JSON.parse(cmd) : cmd;
         commandes.push(parsed);
       }
     } catch (e) {
-      console.error(`Erreur lecture commande ${blob.key}:`, e.message);
+      console.error(`Erreur lecture ${entry.key ?? entry}:`, e.message);
     }
   }
 
@@ -1107,19 +1142,21 @@ async function saveAvis(avis) {
   return nouvelAvis;
 }
 
+// ✅ BUG 4 CORRIGÉ: Compatible avec v6 (items) et v7 (blobs)
 async function getAvis(status = null) {
   console.log(`⭐ getAvis - status: ${status}`);
   const store = await getStore('avis');
+  const result = await store.list();
   
-  // ✅ CORRECTION: destructurer pour obtenir blobs
-  const { blobs } = await store.list();
-  console.log(`🔑 Clés avis: ${blobs.length}`);
+  // Compatibilité multi-versions
+  const entries = result.blobs ?? result.items ?? [];
+  console.log(`🔑 Entrées avis: ${entries.length}`);
 
   const avis = [];
-  for (const blob of blobs) {
+  for (const entry of entries) {
     try {
-      // ✅ CORRECTION: utiliser blob.key
-      const a = await store.get(blob.key);
+      const key = entry.key ?? entry;
+      const a = await store.get(key);
       if (a) {
         const parsed = typeof a === 'string' ? JSON.parse(a) : a;
         if (status === null || parsed.status === status) {
@@ -1127,7 +1164,7 @@ async function getAvis(status = null) {
         }
       }
     } catch (e) {
-      console.error(`Erreur lecture avis ${blob.key}:`, e.message);
+      console.error(`Erreur lecture avis ${entry.key ?? entry}:`, e.message);
     }
   }
 
@@ -1167,12 +1204,14 @@ async function savePhoto(file, category) {
 
 async function getPhotos(category = null) {
   const store = await getStore('photos');
-  const { blobs } = await store.list();
+  const result = await store.list();
+  const entries = result.blobs ?? result.items ?? [];
 
   const photos = [];
-  for (const blob of blobs) {
-    if (category === null || blob.key.startsWith(category)) {
-      photos.push({ id: blob.key, url: `/functions/get-photo?id=${blob.key}` });
+  for (const entry of entries) {
+    const key = entry.key ?? entry;
+    if (category === null || key.startsWith(category)) {
+      photos.push({ id: key, url: `/functions/get-photo?id=${key}` });
     }
   }
   return photos;
