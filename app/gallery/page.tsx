@@ -124,14 +124,13 @@ export default function GalleryPage() {
                   >
                     <div className="relative h-56 overflow-hidden">
                       {item.photoUrl ? (
-                        // ✅ CORRECTION: utilisation de getImageUrl
                         <img 
                           src={getImageUrl(item.photoUrl)} 
                           alt={item.nom} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           onError={(e) => {
                             console.error('Erreur chargement photo:', item.photoUrl);
-                            e.currentTarget.src = '';
+                            e.currentTarget.style.display = 'none';
                           }}
                         />
                       ) : (
@@ -219,14 +218,13 @@ export default function GalleryPage() {
             >
               <div className="relative">
                 {selectedTestimonial.photoUrl ? (
-                  // ✅ CORRECTION: utilisation de getImageUrl
                   <img 
                     src={getImageUrl(selectedTestimonial.photoUrl)} 
                     alt={selectedTestimonial.nom} 
                     className="w-full h-80 object-cover"
                     onError={(e) => {
                       console.error('Erreur chargement photo modal:', selectedTestimonial.photoUrl);
-                      e.currentTarget.src = '';
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 ) : (

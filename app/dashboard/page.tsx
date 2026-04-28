@@ -30,13 +30,10 @@ interface TestimonialItem {
 // ✅ Fonction pour obtenir l'URL absolue des photos
 const getImageUrl = (photoUrl: string | undefined): string => {
   if (!photoUrl) return '';
-  // Si c'est déjà une URL absolue, la retourner
   if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
     return photoUrl;
   }
-  // Sinon, construire l'URL absolue
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://lovesupriseexpress.netlify.app';
-  // S'assurer que le chemin commence par /
   const path = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
   return `${baseUrl}${path}`;
 };
