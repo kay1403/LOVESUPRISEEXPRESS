@@ -273,7 +273,7 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* ✅ Modal avis complet - CORRIGÉ pour les avis sans photo */}
+      {/* ✅ Modal avis complet - CORRIGÉ : bouton X toujours présent */}
       <AnimatePresence>
         {selectedTestimonial && (
           <motion.div
@@ -288,9 +288,17 @@ export default function GalleryPage() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 50, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="max-w-2xl w-full bg-white rounded-xl md:rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+              className="max-w-2xl w-full bg-white rounded-xl md:rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto relative"
               onClick={(e) => e.stopPropagation()}
             >
+              {/* ✅ Bouton X - TOUJOURS présent */}
+              <button 
+                onClick={() => setSelectedTestimonial(null)} 
+                className="absolute top-3 right-3 z-20 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-black/70 transition"
+              >
+                <X size={18} className="text-white" />
+              </button>
+
               {/* ✅ Zone photo - UNIQUEMENT si photo existe */}
               {selectedTestimonial.photoUrl && (
                 <div className="relative">
@@ -301,12 +309,6 @@ export default function GalleryPage() {
                     onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <button 
-                    onClick={() => setSelectedTestimonial(null)} 
-                    className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-black/70 transition"
-                  >
-                    <X size={18} className="text-white" />
-                  </button>
                   <button
                     onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
                     className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-primary/80 transition"
