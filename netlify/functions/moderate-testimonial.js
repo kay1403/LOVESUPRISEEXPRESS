@@ -43,13 +43,15 @@ exports.handler = async (event) => {
     }
     
     const updated = await moderateAvis(id, status);
+    console.log(`✅ Avis ${id} modéré en ${status}`);
+    
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ success: true, avis: updated })
     };
   } catch (error) {
-    console.error('Erreur:', error);
+    console.error('Erreur modération:', error);
     return {
       statusCode: 500,
       headers,

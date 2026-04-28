@@ -154,6 +154,7 @@ export default function DashboardPage() {
     }
   };
 
+  // ✅ CORRECTION: moderateTestimonial avec gestion correcte des statuts
   const moderateTestimonial = async (id: string, status: string) => {
     try {
       const res = await authFetch('/functions/moderate-testimonial', {
@@ -162,6 +163,7 @@ export default function DashboardPage() {
       });
       if (res.ok) {
         await fetchData();
+        alert(`Avis ${status === 'published' ? 'publié' : status === 'rejected' ? 'rejeté' : 'restauré'} avec succès`);
       } else {
         const error = await res.json();
         console.error('Erreur modération:', error);
@@ -181,6 +183,7 @@ export default function DashboardPage() {
     cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
     pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
     publishedTestimonials: testimonials.filter(t => t.status === 'published').length,
+    rejectedTestimonials: testimonials.filter(t => t.status === 'rejected').length,
     totalRevenue: orders.reduce((sum, o) => sum + (Number(o.budget) || 0), 0)
   }), [orders, testimonials]);
 
@@ -202,6 +205,24 @@ export default function DashboardPage() {
       cancelled: 'Annulée'
     };
     return labels[status] || 'En attente';
+  };
+
+  // ✅ Fonction pour obtenir le libellé du statut d'avis
+  const getTestimonialStatusLabel = (status: string) => {
+    switch(status) {
+      case 'published': return 'Publié';
+      case 'rejected': return 'Rejeté';
+      default: return 'En attente';
+    }
+  };
+
+  // ✅ Fonction pour obtenir le style du statut d'avis
+  const getTestimonialStatusStyle = (status: string) => {
+    switch(status) {
+      case 'published': return 'bg-green-100 text-green-700';
+      case 'rejected': return 'bg-red-100 text-red-700';
+      default: return 'bg-yellow-100 text-yellow-700';
+    }
   };
 
   if (loading) {
@@ -240,7 +261,7 @@ export default function DashboardPage() {
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
-          <p className="text-gray-500 text-sm">En attente</p>
+          <p className="text-gray-500 text-sm">Commandes en attente</p>
         </div>
         <div className="bg-white rounded-xl p-4 shadow-sm">
           <p className="text-2xl font-bold text-orange-500">{stats.pendingTestimonials}</p>
@@ -272,7 +293,7 @@ export default function DashboardPage() {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Avis clients ({stats.pendingTestimonials} en attente)
+            Avis clients ({stats.pendingTestimonials} en attente, {stats.publishedTestimonials} publiés, {stats.rejectedTestimonials} rejetés)
           </button>
         </div>
       </div>
@@ -341,14 +362,8 @@ export default function DashboardPage() {
                             <span key={i} className="text-accent text-lg">★</span>
                           ))}
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          testimonial.status === 'published' 
-                            ? 'bg-green-100 text-green-700' 
-                            : testimonial.status === 'rejected'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {testimonial.status === 'published' ? '✓ Publié' : testimonial.status === 'rejected' ? '✗ Rejeté' : '⏳ En attente'}
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTestimonialStatusStyle(testimonial.status)}`}>
+                          {getTestimonialStatusLabel(testimonial.status)}
                         </span>
                         <span className="text-xs text-gray-400">
                           {new Date(testimonial.createdAt).toLocaleDateString('fr-FR')}
@@ -377,28 +392,43 @@ export default function DashboardPage() {
                       <p className="text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
                     </div>
                     
-                    {testimonial.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition">
-                          ✓ Publier
+                    {/* ✅ Boutons de modération selon le statut */}
+                    <div className="flex gap-2">
+                      {testimonial.status === 'pending' && (
+                        <>
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'published')} 
+                            className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition"
+                          >
+                            ✓ Publier
+                          </button>
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
+                            className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition"
+                          >
+                            ✗ Rejeter
+                          </button>
+                        </>
+                      )}
+                      
+                      {testimonial.status === 'published' && (
+                        <button 
+                          onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
+                          className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition"
+                        >
+                          Retirer (Rejeter)
                         </button>
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition">
-                          ✗ Rejeter
+                      )}
+                      
+                      {testimonial.status === 'rejected' && (
+                        <button 
+                          onClick={() => moderateTestimonial(testimonial.id, 'published')} 
+                          className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition"
+                        >
+                          Restaurer (Publier)
                         </button>
-                      </div>
-                    )}
-                    
-                    {testimonial.status === 'published' && (
-                      <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-gray-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-gray-600 transition">
-                        Retirer
-                      </button>
-                    )}
-                    
-                    {testimonial.status === 'rejected' && (
-                      <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition">
-                        Restaurer
-                      </button>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

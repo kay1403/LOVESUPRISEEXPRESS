@@ -44,7 +44,9 @@ export default function GalleryPage() {
       const response = await fetch('/functions/get-testimonials')
       const data = await response.json()
       if (data.success && data.avis) {
-        setTestimonials(data.avis)
+        // ✅ Ne montrer que les avis publiés
+        const publishedAvis = data.avis.filter((a: Testimonial) => a.status === 'published');
+        setTestimonials(publishedAvis)
       }
     } catch (error) {
       console.error('Erreur chargement témoignages:', error)
@@ -114,7 +116,7 @@ export default function GalleryPage() {
           {testimonials.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-2xl">
               <Heart size={48} className="text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Aucun témoignage pour le moment</p>
+              <p className="text-gray-500">Aucun témoignage publié pour le moment</p>
               <p className="text-sm text-gray-400 mt-2">Soyez le premier à partager votre expérience !</p>
             </div>
           ) : (
@@ -128,9 +130,10 @@ export default function GalleryPage() {
                     transition={{ delay: (index % ITEMS_PER_PAGE) * 0.05 }}
                     whileHover={{ y: -5 }}
                     onClick={() => setSelectedTestimonial(item)}
-                    className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl"
+                    className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl flex flex-col h-full"
                   >
-                    <div className="relative h-56 overflow-hidden">
+                    {/* ✅ Zone image avec hauteur fixe */}
+                    <div className="relative h-56 flex-shrink-0 overflow-hidden">
                       {item.photoUrl ? (
                         <>
                           <img 
@@ -138,7 +141,6 @@ export default function GalleryPage() {
                             alt={item.nom} 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           />
-                          {/* ✅ Bouton pour agrandir la photo */}
                           <button
                             onClick={(e) => openPhotoModal(item.photoUrl, e)}
                             className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-primary/80 z-10"
@@ -162,20 +164,22 @@ export default function GalleryPage() {
                         <Heart size={40} className="text-white drop-shadow-lg" />
                       </div>
                     </div>
-                    <div className="p-5">
+                    
+                    {/* ✅ Zone texte avec flex-grow pour uniformiser */}
+                    <div className="p-5 flex flex-col flex-grow">
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <User size={14} className="text-primary" />
                         </div>
-                        <h3 className="font-semibold text-dark">{item.nom}</h3>
+                        <h3 className="font-semibold text-dark truncate">{item.nom}</h3>
                       </div>
                       <div className="flex items-center gap-2 mb-3">
-                        <Calendar size={12} className="text-gray-400" />
+                        <Calendar size={12} className="text-gray-400 flex-shrink-0" />
                         <span className="text-xs text-gray-400">
                           {new Date(item.createdAt).toLocaleDateString('fr-FR')}
                         </span>
                       </div>
-                      <p className="text-gray-600 text-sm italic line-clamp-2">"{item.message}"</p>
+                      <p className="text-gray-600 text-sm italic line-clamp-3 flex-grow">"{item.message}"</p>
                     </div>
                   </motion.div>
                 ))}
@@ -248,7 +252,6 @@ export default function GalleryPage() {
                 <button onClick={() => setSelectedTestimonial(null)} className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition">
                   <X size={20} className="text-white" />
                 </button>
-                {/* ✅ Bouton pour agrandir la photo dans le modal */}
                 {selectedTestimonial.photoUrl && (
                   <button
                     onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
@@ -293,7 +296,7 @@ export default function GalleryPage() {
         )}
       </AnimatePresence>
 
-      {/* ✅ Modal photo plein écran */}
+      {/* Modal photo plein écran */}
       <AnimatePresence>
         {selectedPhoto && (
           <motion.div
