@@ -15,7 +15,7 @@ interface Testimonial {
   status: string
 }
 
-const ITEMS_PER_PAGE = 9; // 9 items par page pour desktop (3x3)
+const ITEMS_PER_PAGE = 9;
 
 // Fonction pour obtenir l'URL absolue des photos
 const getImageUrl = (photoUrl: string | undefined): string => {
@@ -144,7 +144,7 @@ export default function GalleryPage() {
             </div>
           ) : (
             <>
-              {/* Grille responsive - Mobile:1, Tablette:2, Desktop:3 */}
+              {/* Grille responsive */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 lg:gap-8">
                 {paginatedTestimonials.map((item, index) => (
                   <motion.div
@@ -156,8 +156,8 @@ export default function GalleryPage() {
                     onClick={() => setSelectedTestimonial(item)}
                     className="bg-white rounded-xl md:rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl flex flex-col h-full"
                   >
-                    {/* ✅ Zone image - UNIQUEMENT si photo existe */}
-                    {item.photoUrl ? (
+                    {/* Zone image - UNIQUEMENT si photo existe */}
+                    {item.photoUrl && (
                       <div className="relative h-52 sm:h-56 md:h-60 lg:h-64 flex-shrink-0 overflow-hidden">
                         <img 
                           src={getImageUrl(item.photoUrl)} 
@@ -181,14 +181,11 @@ export default function GalleryPage() {
                           <Heart size={40} className="text-white drop-shadow-lg" />
                         </div>
                       </div>
-                    ) : (
-                      // ✅ Pas de photo - pas de div, juste un padding top
-                      <div className="pt-4 md:pt-5"></div>
                     )}
                     
                     {/* Zone texte */}
-                    <div className={`p-4 md:p-5 flex flex-col flex-grow ${!item.photoUrl ? 'pt-0' : ''}`}>
-                      {/* Étoiles - toujours visibles */}
+                    <div className={`p-4 md:p-5 flex flex-col flex-grow ${!item.photoUrl ? 'pt-5' : ''}`}>
+                      {/* Étoiles */}
                       <div className="flex gap-0.5 mb-2 md:mb-3">
                         {[...Array(item.note || 5)].map((_, i) => (
                           <Star key={i} size={16} className="fill-accent text-accent" />
@@ -211,7 +208,7 @@ export default function GalleryPage() {
                         </span>
                       </div>
                       
-                      {/* Message avec gestion des textes longs */}
+                      {/* Message */}
                       <div className="flex-grow">
                         <TruncatedText text={item.message} maxLength={100} />
                       </div>
@@ -233,7 +230,6 @@ export default function GalleryPage() {
                   
                   {[...Array(totalPages)].map((_, i) => {
                     const pageNum = i + 1;
-                    // Affichage intelligent des pages
                     const isNear = Math.abs(pageNum - currentPage) <= 1;
                     const isFirst = pageNum === 1;
                     const isLast = pageNum === totalPages;
@@ -277,7 +273,7 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* Modal avis complet */}
+      {/* ✅ Modal avis complet - CORRIGÉ pour les avis sans photo */}
       <AnimatePresence>
         {selectedTestimonial && (
           <motion.div
@@ -295,27 +291,22 @@ export default function GalleryPage() {
               className="max-w-2xl w-full bg-white rounded-xl md:rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative">
-                {selectedTestimonial.photoUrl ? (
+              {/* ✅ Zone photo - UNIQUEMENT si photo existe */}
+              {selectedTestimonial.photoUrl && (
+                <div className="relative">
                   <img 
                     src={getImageUrl(selectedTestimonial.photoUrl)} 
                     alt={selectedTestimonial.nom} 
                     className="w-full h-60 md:h-80 object-cover cursor-pointer"
                     onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
                   />
-                ) : (
-                  <div className="w-full h-40 md:h-48 bg-gradient-to-br from-primary/10 to-primaryLight flex items-center justify-center">
-                    <Heart size={48} className="text-primary/30" />
-                  </div>
-                )}
-                <div className={`absolute inset-0 bg-gradient-to-t from-black/60 to-transparent ${!selectedTestimonial.photoUrl ? 'hidden' : ''}`} />
-                <button 
-                  onClick={() => setSelectedTestimonial(null)} 
-                  className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-black/70 transition"
-                >
-                  <X size={18} className="text-white" />
-                </button>
-                {selectedTestimonial.photoUrl && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <button 
+                    onClick={() => setSelectedTestimonial(null)} 
+                    className="absolute top-3 right-3 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-black/70 transition"
+                  >
+                    <X size={18} className="text-white" />
+                  </button>
                   <button
                     onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
                     className="absolute bottom-3 right-3 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-primary/80 transition"
@@ -323,14 +314,25 @@ export default function GalleryPage() {
                   >
                     <Maximize2 size={16} className="text-white" />
                   </button>
-                )}
-                <div className="absolute bottom-3 left-3 flex gap-0.5">
-                  {[...Array(selectedTestimonial.note || 5)].map((_, i) => (
-                    <Star key={i} size={16} className="fill-accent text-accent" />
-                  ))}
+                  <div className="absolute bottom-3 left-3 flex gap-0.5">
+                    {[...Array(selectedTestimonial.note || 5)].map((_, i) => (
+                      <Star key={i} size={16} className="fill-accent text-accent" />
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="p-5 md:p-6">
+              )}
+              
+              {/* ✅ Contenu - padding différent selon présence de photo */}
+              <div className={`p-5 md:p-6 ${!selectedTestimonial.photoUrl ? 'pt-6 md:pt-8' : ''}`}>
+                {/* ✅ Étoiles en haut si pas de photo */}
+                {!selectedTestimonial.photoUrl && (
+                  <div className="flex gap-0.5 mb-4 justify-center">
+                    {[...Array(selectedTestimonial.note || 5)].map((_, i) => (
+                      <Star key={i} size={20} className="fill-accent text-accent" />
+                    ))}
+                  </div>
+                )}
+                
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <User size={16} className="text-primary" />
@@ -345,7 +347,9 @@ export default function GalleryPage() {
                     </div>
                   </div>
                 </div>
+                
                 <p className="text-gray-600 italic text-base md:text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
+                
                 <div className="mt-6 pt-4 border-t flex justify-center">
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
