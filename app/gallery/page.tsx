@@ -15,7 +15,7 @@ interface Testimonial {
   status: string
 }
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 6; // Réduit à 6 pour mobile (3x2 sur desktop)
 
 // ✅ Fonction pour obtenir l'URL absolue des photos
 const getImageUrl = (photoUrl: string | undefined): string => {
@@ -26,6 +26,29 @@ const getImageUrl = (photoUrl: string | undefined): string => {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://lovesupriseexpress.netlify.app';
   const path = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
   return `${baseUrl}${path}`;
+};
+
+// ✅ Composant pour tronquer les longs textes sur mobile
+const TruncatedText = ({ text, maxLength = 80 }: { text: string; maxLength?: number }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text.length > maxLength;
+  
+  if (!isLong) return <p className="text-gray-600 text-sm italic">"{text}"</p>;
+  
+  return (
+    <div>
+      <p className="text-gray-600 text-sm italic">
+        "{expanded ? text : text.substring(0, maxLength)}"
+        {!expanded && '...'}
+      </p>
+      <button 
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+        className="text-primary text-xs mt-1 hover:underline"
+      >
+        {expanded ? 'Voir moins' : 'Voir plus'}
+      </button>
+    </div>
+  );
 };
 
 export default function GalleryPage() {
@@ -84,44 +107,47 @@ export default function GalleryPage() {
 
   return (
     <main className="min-h-screen bg-primaryLight">
+      {/* Header responsive */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="container-custom py-4">
+        <div className="container-custom py-3 md:py-4 px-4 md:px-6">
           <Link href="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition group">
-            <ArrowLeft size={18} className="group-hover:-translate-x-1 transition" />
-            Retour à l'accueil
+            <ArrowLeft size={16} className="md:size-18 group-hover:-translate-x-1 transition" />
+            <span className="text-sm md:text-base">Retour à l'accueil</span>
           </Link>
         </div>
       </div>
 
-      <section className="py-16">
-        <div className="container-custom">
+      <section className="py-8 md:py-16">
+        <div className="container-custom px-4 md:px-6">
+          {/* Titre responsive */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center mb-8 md:mb-12"
           >
-            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-4 py-2 rounded-full mb-4 shadow-sm">
-              <Heart size={14} className="text-primary" />
-              <span className="text-xs font-medium text-primary uppercase tracking-wider">Ils nous ont fait confiance</span>
+            <div className="inline-flex items-center gap-2 bg-white/80 backdrop-blur-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full mb-4 shadow-sm">
+              <Heart size={12} className="md:size-14 text-primary" />
+              <span className="text-xs md:text-sm font-medium text-primary uppercase tracking-wider">Ils nous ont fait confiance</span>
             </div>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-dark mb-4">
+            <h1 className="font-display text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-dark mb-3 md:mb-4">
               Avis Clients
             </h1>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            <p className="text-gray-500 text-sm md:text-base lg:text-lg max-w-2xl mx-auto px-4">
               Découvrez les sourires et la joie de nos clients après leurs surprises
             </p>
           </motion.div>
 
           {testimonials.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-2xl">
-              <Heart size={48} className="text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Aucun témoignage publié pour le moment</p>
-              <p className="text-sm text-gray-400 mt-2">Soyez le premier à partager votre expérience !</p>
+            <div className="text-center py-12 bg-white rounded-2xl mx-4">
+              <Heart size={40} className="md:size-48 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500 text-sm md:text-base">Aucun témoignage publié pour le moment</p>
+              <p className="text-xs md:text-sm text-gray-400 mt-2">Soyez le premier à partager votre expérience !</p>
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Grille responsive - 1 colonne mobile, 2 tablette, 3 desktop */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                 {paginatedTestimonials.map((item, index) => (
                   <motion.div
                     key={item.id}
@@ -130,11 +156,11 @@ export default function GalleryPage() {
                     transition={{ delay: (index % ITEMS_PER_PAGE) * 0.05 }}
                     whileHover={{ y: -5 }}
                     onClick={() => setSelectedTestimonial(item)}
-                    className="bg-white rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl flex flex-col"
+                    className="bg-white rounded-xl md:rounded-2xl overflow-hidden shadow-lg cursor-pointer group transition-all duration-300 hover:shadow-2xl flex flex-col"
                   >
-                    {/* ✅ Zone image - complètement supprimée si pas de photo */}
+                    {/* Zone image - hauteur adaptée pour mobile */}
                     {item.photoUrl && (
-                      <div className="relative h-56 flex-shrink-0 overflow-hidden">
+                      <div className="relative h-48 sm:h-52 md:h-56 flex-shrink-0 overflow-hidden">
                         <>
                           <img 
                             src={getImageUrl(item.photoUrl)} 
@@ -146,76 +172,101 @@ export default function GalleryPage() {
                             className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-primary/80 z-10"
                             title="Agrandir la photo"
                           >
-                            <Maximize2 size={16} className="text-white" />
+                            <Maximize2 size={14} className="md:size-16 text-white" />
                           </button>
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
                           <div className="absolute bottom-3 left-3 flex gap-0.5">
                             {[...Array(item.note || 5)].map((_, i) => (
-                              <Star key={i} size={12} className="fill-accent text-accent" />
+                              <Star key={i} size={10} className="md:size-12 fill-accent text-accent" />
                             ))}
                           </div>
                           <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                            <Heart size={40} className="text-white drop-shadow-lg" />
+                            <Heart size={32} className="md:size-40 text-white drop-shadow-lg" />
                           </div>
                         </>
                       </div>
                     )}
                     
-                    {/* ✅ Zone texte - avec padding adapté */}
-                    <div className={`p-5 flex flex-col flex-grow ${!item.photoUrl ? 'pt-8' : ''}`}>
-                      {/* ✅ Affichage des étoiles si pas de photo */}
+                    {/* Zone texte - padding adapté */}
+                    <div className={`p-4 md:p-5 flex flex-col flex-grow ${!item.photoUrl ? 'pt-6 md:pt-8' : ''}`}>
+                      {/* Étoiles si pas de photo */}
                       {!item.photoUrl && (
-                        <div className="flex gap-0.5 mb-3">
+                        <div className="flex gap-0.5 mb-2 md:mb-3">
                           {[...Array(item.note || 5)].map((_, i) => (
-                            <Star key={i} size={16} className="fill-accent text-accent" />
+                            <Star key={i} size={14} className="md:size-16 fill-accent text-accent" />
                           ))}
                         </div>
                       )}
                       
+                      {/* Nom et avatar */}
                       <div className="flex items-center gap-2 mb-2">
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <User size={14} className="text-primary" />
+                        <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <User size={12} className="md:size-14 text-primary" />
                         </div>
-                        <h3 className="font-semibold text-dark truncate">{item.nom}</h3>
+                        <h3 className="font-semibold text-dark text-sm md:text-base truncate">{item.nom}</h3>
                       </div>
                       
-                      <div className="flex items-center gap-2 mb-3">
-                        <Calendar size={12} className="text-gray-400 flex-shrink-0" />
+                      {/* Date */}
+                      <div className="flex items-center gap-2 mb-2 md:mb-3">
+                        <Calendar size={10} className="md:size-12 text-gray-400 flex-shrink-0" />
                         <span className="text-xs text-gray-400">
                           {new Date(item.createdAt).toLocaleDateString('fr-FR')}
                         </span>
                       </div>
                       
-                      <p className="text-gray-600 text-sm italic line-clamp-3 flex-grow">"{item.message}"</p>
+                      {/* Message avec gestion des textes longs */}
+                      <TruncatedText text={item.message} maxLength={80} />
                     </div>
                   </motion.div>
                 ))}
               </div>
 
+              {/* Pagination responsive */}
               {totalPages > 1 && (
-                <div className="flex justify-center items-center gap-2 mt-12">
+                <div className="flex justify-center items-center gap-2 mt-8 md:mt-12">
                   <button
                     onClick={() => goToPage(currentPage - 1)}
                     disabled={currentPage === 1}
                     className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 transition"
                   >
-                    <ChevronLeft size={20} />
+                    <ChevronLeft size={16} className="md:size-20" />
                   </button>
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => goToPage(i + 1)}
-                      className={`w-10 h-10 rounded-lg transition ${currentPage === i + 1 ? 'bg-primary text-white' : 'border border-gray-300 hover:bg-primary/10'}`}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
+                  <div className="flex gap-1 md:gap-2">
+                    {[...Array(totalPages)].map((_, i) => {
+                      // Afficher seulement les pages proches sur mobile
+                      const shouldShow = totalPages <= 5 || 
+                                        i + 1 === 1 || 
+                                        i + 1 === totalPages || 
+                                        Math.abs(i + 1 - currentPage) <= 1;
+                      
+                      if (!shouldShow && totalPages > 5) {
+                        if (i + 1 === 2 || i + 1 === totalPages - 1) {
+                          return <span key={i} className="px-2 text-gray-400">...</span>;
+                        }
+                        return null;
+                      }
+                      
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => goToPage(i + 1)}
+                          className={`w-8 h-8 md:w-10 md:h-10 rounded-lg text-sm md:text-base transition ${
+                            currentPage === i + 1 
+                              ? 'bg-primary text-white' 
+                              : 'border border-gray-300 hover:bg-primary/10'
+                          }`}
+                        >
+                          {i + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
                   <button
                     onClick={() => goToPage(currentPage + 1)}
                     disabled={currentPage === totalPages}
                     className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 transition"
                   >
-                    <ChevronRight size={20} />
+                    <ChevronRight size={16} className="md:size-20" />
                   </button>
                 </div>
               )}
@@ -224,14 +275,14 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* Modal avis complet */}
+      {/* Modal avis complet - responsive */}
       <AnimatePresence>
         {selectedTestimonial && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-3 md:p-4"
             onClick={() => setSelectedTestimonial(null)}
           >
             <motion.div
@@ -239,7 +290,7 @@ export default function GalleryPage() {
               animate={{ scale: 1, y: 0, opacity: 1 }}
               exit={{ scale: 0.9, y: 50, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="max-w-2xl w-full bg-white rounded-2xl overflow-hidden"
+              className="max-w-2xl w-full bg-white rounded-xl md:rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative">
@@ -247,53 +298,56 @@ export default function GalleryPage() {
                   <img 
                     src={getImageUrl(selectedTestimonial.photoUrl)} 
                     alt={selectedTestimonial.nom} 
-                    className="w-full h-80 object-cover cursor-pointer"
+                    className="w-full h-56 sm:h-64 md:h-80 object-cover cursor-pointer"
                     onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
                   />
                 ) : (
-                  <div className="w-full h-80 bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
-                    <Heart size={64} className="text-primary/40" />
+                  <div className="w-full h-56 sm:h-64 md:h-80 bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
+                    <Heart size={48} className="md:size-64 text-primary/40" />
                   </div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <button onClick={() => setSelectedTestimonial(null)} className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition">
-                  <X size={20} className="text-white" />
+                <button 
+                  onClick={() => setSelectedTestimonial(null)} 
+                  className="absolute top-3 right-3 md:top-4 md:right-4 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-black/70 transition"
+                >
+                  <X size={16} className="md:size-20 text-white" />
                 </button>
                 {selectedTestimonial.photoUrl && (
                   <button
                     onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
-                    className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-primary/80 transition"
+                    className="absolute bottom-3 right-3 md:bottom-4 md:right-4 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-primary/80 transition"
                     title="Agrandir la photo"
                   >
-                    <Maximize2 size={18} className="text-white" />
+                    <Maximize2 size={14} className="md:size-18 text-white" />
                   </button>
                 )}
-                <div className="absolute bottom-4 left-4 flex gap-0.5">
+                <div className="absolute bottom-3 left-3 md:bottom-4 md:left-4 flex gap-0.5">
                   {[...Array(selectedTestimonial.note || 5)].map((_, i) => (
-                    <Star key={i} size={16} className="fill-accent text-accent" />
+                    <Star key={i} size={14} className="md:size-16 fill-accent text-accent" />
                   ))}
                 </div>
               </div>
-              <div className="p-6">
+              <div className="p-4 md:p-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User size={18} className="text-primary" />
+                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User size={14} className="md:size-18 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-dark">{selectedTestimonial.nom}</h3>
+                    <h3 className="text-lg md:text-xl font-bold text-dark">{selectedTestimonial.nom}</h3>
                     <div className="flex items-center gap-2">
-                      <Calendar size={12} className="text-gray-400" />
+                      <Calendar size={10} className="md:size-12 text-gray-400" />
                       <span className="text-xs text-gray-500">
                         {new Date(selectedTestimonial.createdAt).toLocaleDateString('fr-FR')}
                       </span>
                     </div>
                   </div>
                 </div>
-                <p className="text-gray-600 italic text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
+                <p className="text-gray-600 italic text-base md:text-lg leading-relaxed">"{selectedTestimonial.message}"</p>
                 <div className="mt-6 pt-4 border-t flex justify-center">
                   <div className="flex gap-1">
                     {[...Array(5)].map((_, i) => (
-                      <Heart key={i} size={16} className="fill-primary text-primary" />
+                      <Heart key={i} size={14} className="md:size-16 fill-primary text-primary" />
                     ))}
                   </div>
                 </div>
@@ -310,7 +364,7 @@ export default function GalleryPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 cursor-pointer"
+            className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-3 md:p-4 cursor-pointer"
             onClick={() => setSelectedPhoto(null)}
           >
             <motion.div
@@ -328,9 +382,9 @@ export default function GalleryPage() {
               />
               <button
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
+                className="absolute top-3 right-3 md:top-4 md:right-4 bg-black/50 backdrop-blur-sm p-1.5 md:p-2 rounded-full hover:bg-black/70 transition"
               >
-                <X size={24} className="text-white" />
+                <X size={20} className="md:size-24 text-white" />
               </button>
             </motion.div>
           </motion.div>
