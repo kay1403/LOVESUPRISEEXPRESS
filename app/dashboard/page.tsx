@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNetlifyAuth } from './AdminIdentity';
-import { X, Maximize2 } from 'lucide-react';
+import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -29,7 +29,7 @@ interface TestimonialItem {
   createdAt: string;
 }
 
-// ✅ Fonction pour obtenir l'URL absolue des photos
+// Fonction pour obtenir l'URL absolue des photos
 const getImageUrl = (photoUrl: string | undefined): string => {
   if (!photoUrl) return '';
   if (photoUrl.startsWith('http://') || photoUrl.startsWith('https://')) {
@@ -38,6 +38,29 @@ const getImageUrl = (photoUrl: string | undefined): string => {
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://lovesupriseexpress.netlify.app';
   const path = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
   return `${baseUrl}${path}`;
+};
+
+// Composant pour tronquer les longs textes sur mobile
+const TruncatedText = ({ text, maxLength = 100 }: { text: string; maxLength?: number }) => {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text.length > maxLength;
+  
+  if (!isLong) return <p className="text-gray-700 italic">"{text}"</p>;
+  
+  return (
+    <div>
+      <p className="text-gray-700 italic">
+        "{expanded ? text : text.substring(0, maxLength)}"
+        {!expanded && '...'}
+      </p>
+      <button 
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+        className="text-primary text-xs mt-1 hover:underline"
+      >
+        {expanded ? 'Voir moins' : 'Voir plus'}
+      </button>
+    </div>
+  );
 };
 
 export default function DashboardPage() {
@@ -49,7 +72,30 @@ export default function DashboardPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
-  // ✅ Fonction pour ouvrir la photo en plein écran
+  // Pagination pour les commandes
+  const [ordersCurrentPage, setOrdersCurrentPage] = useState(1);
+  const ordersPerPage = 5;
+  const ordersTotalPages = Math.ceil(orders.length / ordersPerPage);
+  const paginatedOrders = orders.slice(
+    (ordersCurrentPage - 1) * ordersPerPage,
+    ordersCurrentPage * ordersPerPage
+  );
+
+  // Pagination pour les avis
+  const [avisCurrentPage, setAvisCurrentPage] = useState(1);
+  const avisPerPage = 5;
+  const avisTotalPages = Math.ceil(testimonials.length / avisPerPage);
+  const paginatedTestimonials = testimonials.slice(
+    (avisCurrentPage - 1) * avisPerPage,
+    avisCurrentPage * avisPerPage
+  );
+
+  // Réinitialiser la page quand on change d'onglet
+  useEffect(() => {
+    setOrdersCurrentPage(1);
+    setAvisCurrentPage(1);
+  }, [activeTab]);
+
   const openPhotoModal = (photoUrl: string | undefined, e: React.MouseEvent) => {
     e.stopPropagation();
     if (photoUrl) {
@@ -60,7 +106,6 @@ export default function DashboardPage() {
   const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const token = await getToken();
     console.log('🔑 Token disponible?', !!token);
-    
     return fetch(url, {
       ...options,
       headers: {
@@ -89,7 +134,6 @@ export default function DashboardPage() {
       } else {
         const ordersData = await ordersRes.json();
         console.log('📦 Orders response:', ordersData);
-        
         if (ordersData.success) {
           setOrders(ordersData.commandes || []);
         } else {
@@ -111,7 +155,6 @@ export default function DashboardPage() {
       } else {
         const avisData = await avisRes.json();
         console.log('⭐ Testimonials response:', avisData);
-        
         if (avisData.success) {
           setTestimonials(avisData.avis || []);
         } else {
@@ -154,7 +197,6 @@ export default function DashboardPage() {
     }
   };
 
-  // ✅ CORRECTION: moderateTestimonial avec gestion correcte des statuts
   const moderateTestimonial = async (id: string, status: string) => {
     try {
       const res = await authFetch('/functions/moderate-testimonial', {
@@ -207,7 +249,6 @@ export default function DashboardPage() {
     return labels[status] || 'En attente';
   };
 
-  // ✅ Fonction pour obtenir le libellé du statut d'avis
   const getTestimonialStatusLabel = (status: string) => {
     switch(status) {
       case 'published': return 'Publié';
@@ -216,13 +257,39 @@ export default function DashboardPage() {
     }
   };
 
-  // ✅ Fonction pour obtenir le style du statut d'avis
   const getTestimonialStatusStyle = (status: string) => {
     switch(status) {
       case 'published': return 'bg-green-100 text-green-700';
       case 'rejected': return 'bg-red-100 text-red-700';
       default: return 'bg-yellow-100 text-yellow-700';
     }
+  };
+
+  // Composant de pagination réutilisable
+  const Pagination = ({ currentPage, totalPages, onPageChange }: { currentPage: number; totalPages: number; onPageChange: (page: number) => void }) => {
+    if (totalPages <= 1) return null;
+    
+    return (
+      <div className="flex justify-center items-center gap-2 mt-6">
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+          className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 transition"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <span className="text-sm text-gray-500">
+          Page {currentPage} sur {totalPages}
+        </span>
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+          className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/10 transition"
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+    );
   };
 
   if (loading) {
@@ -235,9 +302,9 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-          <p className="text-red-600">{error}</p>
+          <p className="text-red-600 text-sm md:text-base">{error}</p>
           <button 
             onClick={() => {
               if (user) fetchData();
@@ -253,31 +320,33 @@ export default function DashboardPage() {
   }
 
   return (
-    <div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6">
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-2xl font-bold">{stats.totalOrders}</p>
-          <p className="text-gray-500 text-sm">Commandes totales</p>
+    <div className="pb-8">
+      {/* Stats Cards - Responsive: 2 colonnes sur mobile, 4 sur desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 p-4 md:p-6">
+        <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm">
+          <p className="text-xl md:text-2xl font-bold">{stats.totalOrders}</p>
+          <p className="text-gray-500 text-xs md:text-sm">Commandes totales</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
-          <p className="text-gray-500 text-sm">Commandes en attente</p>
+        <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm">
+          <p className="text-xl md:text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
+          <p className="text-gray-500 text-xs md:text-sm">En attente</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-2xl font-bold text-orange-500">{stats.pendingTestimonials}</p>
-          <p className="text-gray-500 text-sm">Avis à modérer</p>
+        <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm">
+          <p className="text-xl md:text-2xl font-bold text-orange-500">{stats.pendingTestimonials}</p>
+          <p className="text-gray-500 text-xs md:text-sm">Avis à modérer</p>
         </div>
-        <div className="bg-white rounded-xl p-4 shadow-sm">
-          <p className="text-2xl font-bold text-green-600">{stats.totalRevenue.toLocaleString()} RWF</p>
-          <p className="text-gray-500 text-sm">CA total</p>
+        <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm">
+          <p className="text-xl md:text-2xl font-bold text-green-600">{stats.totalRevenue.toLocaleString()} RWF</p>
+          <p className="text-gray-500 text-xs md:text-sm">CA total</p>
         </div>
       </div>
 
-      <div className="px-6">
-        <div className="flex gap-2 border-b">
+      {/* Tabs - Responsive */}
+      <div className="px-4 md:px-6">
+        <div className="flex gap-2 border-b overflow-x-auto">
           <button 
             onClick={() => setActiveTab('orders')} 
-            className={`px-4 py-2 font-medium transition ${
+            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
               activeTab === 'orders' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-gray-500 hover:text-gray-700'
@@ -287,157 +356,169 @@ export default function DashboardPage() {
           </button>
           <button 
             onClick={() => setActiveTab('testimonials')} 
-            className={`px-4 py-2 font-medium transition ${
+            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
               activeTab === 'testimonials' 
                 ? 'border-b-2 border-primary text-primary' 
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Avis clients ({stats.pendingTestimonials} en attente, {stats.publishedTestimonials} publiés, {stats.rejectedTestimonials} rejetés)
+            Avis clients ({stats.pendingTestimonials} en attente)
           </button>
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         {activeTab === 'orders' ? (
-          <div className="space-y-4">
-            {orders.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
-                Aucune commande pour le moment
-              </div>
-            ) : (
-              orders.map((order) => (
-                <div key={order.id} className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition">
-                  <div className="flex justify-between items-start flex-wrap gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status)}`}>
-                          {getStatusLabel(order.status)}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(order.createdAt).toLocaleDateString('fr-FR')}
-                        </span>
-                      </div>
-                      <p className="font-semibold text-dark">{order.clientName}</p>
-                      <p className="text-sm text-gray-500">→ {order.destName}</p>
-                      {order.destAddress && (
-                        <p className="text-xs text-gray-400 mt-1">📍 {order.destAddress}</p>
-                      )}
-                      <p className="text-primary font-bold mt-2">
-                        {Number(order.budget).toLocaleString()} RWF
-                      </p>
-                      {order.message && (
-                        <p className="text-sm text-gray-600 italic mt-2">"{order.message}"</p>
-                      )}
-                    </div>
-                    <select
-                      value={order.status}
-                      onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                      className="px-3 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="pending">📋 En attente</option>
-                      <option value="confirmed">✅ Confirmée</option>
-                      <option value="delivered">🚚 Livrée</option>
-                      <option value="cancelled">❌ Annulée</option>
-                    </select>
-                  </div>
+          <>
+            <div className="space-y-3 md:space-y-4">
+              {paginatedOrders.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
+                  Aucune commande pour le moment
                 </div>
-              ))
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {testimonials.length === 0 ? (
-              <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
-                Aucun témoignage pour le moment
-              </div>
-            ) : (
-              testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition">
-                  <div className="flex justify-between items-start flex-wrap gap-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <div className="flex gap-0.5">
-                          {[...Array(testimonial.note || 5)].map((_, i) => (
-                            <span key={i} className="text-accent text-lg">★</span>
-                          ))}
+              ) : (
+                paginatedOrders.map((order) => (
+                  <div key={order.id} className="bg-white rounded-xl shadow-sm p-3 md:p-4 hover:shadow-md transition">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-3">
+                      <div className="flex-1 w-full">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(order.status)}`}>
+                            {getStatusLabel(order.status)}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+                          </span>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTestimonialStatusStyle(testimonial.status)}`}>
-                          {getTestimonialStatusLabel(testimonial.status)}
-                        </span>
-                        <span className="text-xs text-gray-400">
-                          {new Date(testimonial.createdAt).toLocaleDateString('fr-FR')}
-                        </span>
+                        <p className="font-semibold text-dark text-sm md:text-base">{order.clientName}</p>
+                        <p className="text-xs md:text-sm text-gray-500 break-words">→ {order.destName}</p>
+                        {order.destAddress && (
+                          <p className="text-xs text-gray-400 mt-1 break-words">📍 {order.destAddress}</p>
+                        )}
+                        <p className="text-primary font-bold mt-2 text-sm md:text-base">
+                          {Number(order.budget).toLocaleString()} RWF
+                        </p>
+                        {order.message && (
+                          <TruncatedText text={order.message} maxLength={80} />
+                        )}
+                      </div>
+                      <select
+                        value={order.status}
+                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                        className="px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary w-full md:w-auto"
+                      >
+                        <option value="pending">📋 En attente</option>
+                        <option value="confirmed">✅ Confirmée</option>
+                        <option value="delivered">🚚 Livrée</option>
+                        <option value="cancelled">❌ Annulée</option>
+                      </select>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <Pagination 
+              currentPage={ordersCurrentPage}
+              totalPages={ordersTotalPages}
+              onPageChange={setOrdersCurrentPage}
+            />
+          </>
+        ) : (
+          <>
+            <div className="space-y-3 md:space-y-4">
+              {paginatedTestimonials.length === 0 ? (
+                <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
+                  Aucun témoignage pour le moment
+                </div>
+              ) : (
+                paginatedTestimonials.map((testimonial) => (
+                  <div key={testimonial.id} className="bg-white rounded-xl shadow-sm p-3 md:p-4 hover:shadow-md transition">
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-3">
+                      <div className="flex-1 w-full">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <div className="flex gap-0.5">
+                            {[...Array(testimonial.note || 5)].map((_, i) => (
+                              <span key={i} className="text-accent text-sm md:text-lg">★</span>
+                            ))}
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTestimonialStatusStyle(testimonial.status)}`}>
+                            {getTestimonialStatusLabel(testimonial.status)}
+                          </span>
+                          <span className="text-xs text-gray-400">
+                            {new Date(testimonial.createdAt).toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                        
+                        {testimonial.photoUrl && (
+                          <div className="mb-2 relative group inline-block">
+                            <img 
+                              src={getImageUrl(testimonial.photoUrl)} 
+                              alt={`Photo de ${testimonial.nom}`}
+                              className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition"
+                              onClick={(e) => openPhotoModal(testimonial.photoUrl, e)}
+                            />
+                            <button
+                              onClick={(e) => openPhotoModal(testimonial.photoUrl, e)}
+                              className="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+                            >
+                              <Maximize2 size={14} className="text-white" />
+                            </button>
+                          </div>
+                        )}
+                        
+                        <TruncatedText text={testimonial.message} maxLength={100} />
+                        <p className="text-xs md:text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
                       </div>
                       
-                      {/* ✅ AFFICHAGE PHOTO AVEC CLIC POUR ZOOM */}
-                      {testimonial.photoUrl && (
-                        <div className="mb-2 relative group">
-                          <img 
-                            src={getImageUrl(testimonial.photoUrl)} 
-                            alt={`Photo de ${testimonial.nom}`}
-                            className="w-16 h-16 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition"
-                            onClick={(e) => openPhotoModal(testimonial.photoUrl, e)}
-                          />
-                          <button
-                            onClick={(e) => openPhotoModal(testimonial.photoUrl, e)}
-                            className="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
-                          >
-                            <Maximize2 size={16} className="text-white" />
-                          </button>
-                        </div>
-                      )}
-                      
-                      <p className="text-gray-700 italic">"{testimonial.message}"</p>
-                      <p className="text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
-                    </div>
-                    
-                    {/* ✅ Boutons de modération selon le statut */}
-                    <div className="flex gap-2">
-                      {testimonial.status === 'pending' && (
-                        <>
-                          <button 
-                            onClick={() => moderateTestimonial(testimonial.id, 'published')} 
-                            className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition"
-                          >
-                            ✓ Publier
-                          </button>
+                      <div className="flex gap-2 w-full md:w-auto">
+                        {testimonial.status === 'pending' && (
+                          <>
+                            <button 
+                              onClick={() => moderateTestimonial(testimonial.id, 'published')} 
+                              className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-green-600 transition flex-1 md:flex-none"
+                            >
+                              ✓ Publier
+                            </button>
+                            <button 
+                              onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
+                              className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-red-600 transition flex-1 md:flex-none"
+                            >
+                              ✗ Rejeter
+                            </button>
+                          </>
+                        )}
+                        
+                        {testimonial.status === 'published' && (
                           <button 
                             onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
-                            className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition"
+                            className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-red-600 transition w-full"
                           >
-                            ✗ Rejeter
+                            Retirer
                           </button>
-                        </>
-                      )}
-                      
-                      {testimonial.status === 'published' && (
-                        <button 
-                          onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
-                          className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition"
-                        >
-                          Retirer (Rejeter)
-                        </button>
-                      )}
-                      
-                      {testimonial.status === 'rejected' && (
-                        <button 
-                          onClick={() => moderateTestimonial(testimonial.id, 'published')} 
-                          className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition"
-                        >
-                          Restaurer (Publier)
-                        </button>
-                      )}
+                        )}
+                        
+                        {testimonial.status === 'rejected' && (
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'published')} 
+                            className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-green-600 transition w-full"
+                          >
+                            Restaurer
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
+                ))
+              )}
+            </div>
+            <Pagination 
+              currentPage={avisCurrentPage}
+              totalPages={avisTotalPages}
+              onPageChange={setAvisCurrentPage}
+            />
+          </>
         )}
       </div>
 
-      {/* ✅ Modal photo plein écran */}
+      {/* Modal photo plein écran */}
       <AnimatePresence>
         {selectedPhoto && (
           <motion.div
