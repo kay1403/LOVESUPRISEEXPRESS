@@ -80,20 +80,25 @@ export function useNetlifyAuth() {
     }
   }, []);
 
-  const getToken = useCallback(() => {
-    // Méthode 1: via netlifyIdentity avec jwt()
+  // ✅ CORRECTION: getToken devient asynchrone
+  const getToken = useCallback(async (): Promise<string | null> => {
     const identity = (window as any).netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
-      // ✅ CORRECTION: utiliser jwt() au lieu de token.access_token
-      const token = currentUser?.jwt?.();
-      if (token) {
-        console.log('✅ Token récupéré via jwt()');
-        return token;
+      if (currentUser?.jwt) {
+        try {
+          // ✅ CORRECTION: await obligatoire
+          const token = await currentUser.jwt();
+          if (token) {
+            console.log('✅ Token récupéré via jwt()');
+            return token;
+          }
+        } catch (e) {
+          console.error('Erreur jwt():', e);
+        }
       }
     }
-    
-    // Méthode 2: via localStorage (fallback)
+
     try {
       const gotrueUser = localStorage.getItem('gotrue.user');
       if (gotrueUser) {
@@ -107,7 +112,7 @@ export function useNetlifyAuth() {
     } catch (e) {
       console.error('Erreur lecture token:', e);
     }
-    
+
     console.log('❌ Aucun token trouvé');
     return null;
   }, []);
@@ -235,8 +240,9 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
+  // ✅ CORRECTION: authFetch doit attendre le token asynchrone
   const authFetch = async (url: string, options: RequestInit = {}) => {
-    const token = getToken();
+    const token = await getToken();
     console.log('🔑 Token disponible?', !!token);
     
     return fetch(url, {
@@ -968,20 +974,16 @@ exports.handler = async (event) => {
   }
 };
 === lib/utils/netlify-blobs.js ===
-// lib/utils/netlify-blobs.js - VERSION FINALE STABLE
+// lib/utils/netlify-blobs.js - Version avec correction de store.list()
 const { getStore: getNetlifyStore } = require('@netlify/blobs');
 
-// Configuration - Ces variables doivent être définies dans Netlify Dashboard
 const SITE_ID = process.env.NETLIFY_SITE_ID || '2ad6edd4-3a49-4e3c-b68a-ee3ee992f448';
 
 async function getStore(storeName) {
   console.log(`🔍 Accès store: ${storeName}`);
-  console.log(`🔍 SITE_ID: ${SITE_ID ? 'défini' : 'MANQUANT'}`);
-  console.log(`🔍 NETLIFY_AUTH_TOKEN: ${process.env.NETLIFY_AUTH_TOKEN ? 'défini' : 'MANQUANT'}`);
 
-  // Essayer d'abord sans token (auto-détection Netlify)
+  // Essayer auto-détection d'abord
   try {
-    console.log('🔄 Tentative auto-détection Netlify...');
     const store = getNetlifyStore({ name: storeName });
     await store.list({ limit: 1 });
     console.log(`✅ Store ${storeName} accessible (auto-détection)`);
@@ -989,12 +991,10 @@ async function getStore(storeName) {
   } catch (autoError) {
     console.log(`⚠️ Auto-détection échouée: ${autoError.message}`);
     
-    // Fallback: configuration manuelle avec token
     if (!process.env.NETLIFY_AUTH_TOKEN) {
       throw new Error('NETLIFY_AUTH_TOKEN non défini et auto-détection échouée');
     }
     
-    console.log('🔄 Tentative configuration manuelle...');
     const store = getNetlifyStore({
       name: storeName,
       siteID: SITE_ID,
@@ -1052,15 +1052,22 @@ async function saveCommand(data) {
 async function getCommandes() {
   console.log('📦 getCommandes');
   const store = await getStore('commandes');
-  const keys = await store.list();
-  console.log(`🔑 Clés trouvées: ${keys.length}`);
+  
+  // ✅ CORRECTION: destructurer pour obtenir blobs
+  const { blobs } = await store.list();
+  console.log(`🔑 Clés trouvées: ${blobs.length}`);
 
   const commandes = [];
-  for (const key of keys) {
-    const cmd = await store.get(key);
-    if (cmd) {
-      const parsed = typeof cmd === 'string' ? JSON.parse(cmd) : cmd;
-      commandes.push(parsed);
+  for (const blob of blobs) {
+    try {
+      // ✅ CORRECTION: utiliser blob.key
+      const cmd = await store.get(blob.key);
+      if (cmd) {
+        const parsed = typeof cmd === 'string' ? JSON.parse(cmd) : cmd;
+        commandes.push(parsed);
+      }
+    } catch (e) {
+      console.error(`Erreur lecture commande ${blob.key}:`, e.message);
     }
   }
 
@@ -1103,17 +1110,24 @@ async function saveAvis(avis) {
 async function getAvis(status = null) {
   console.log(`⭐ getAvis - status: ${status}`);
   const store = await getStore('avis');
-  const keys = await store.list();
-  console.log(`🔑 Clés avis: ${keys.length}`);
+  
+  // ✅ CORRECTION: destructurer pour obtenir blobs
+  const { blobs } = await store.list();
+  console.log(`🔑 Clés avis: ${blobs.length}`);
 
   const avis = [];
-  for (const key of keys) {
-    const a = await store.get(key);
-    if (a) {
-      const parsed = typeof a === 'string' ? JSON.parse(a) : a;
-      if (status === null || parsed.status === status) {
-        avis.push(parsed);
+  for (const blob of blobs) {
+    try {
+      // ✅ CORRECTION: utiliser blob.key
+      const a = await store.get(blob.key);
+      if (a) {
+        const parsed = typeof a === 'string' ? JSON.parse(a) : a;
+        if (status === null || parsed.status === status) {
+          avis.push(parsed);
+        }
       }
+    } catch (e) {
+      console.error(`Erreur lecture avis ${blob.key}:`, e.message);
     }
   }
 
@@ -1153,12 +1167,12 @@ async function savePhoto(file, category) {
 
 async function getPhotos(category = null) {
   const store = await getStore('photos');
-  const keys = await store.list();
+  const { blobs } = await store.list();
 
   const photos = [];
-  for (const key of keys) {
-    if (category === null || key.startsWith(category)) {
-      photos.push({ id: key, url: `/functions/get-photo?id=${key}` });
+  for (const blob of blobs) {
+    if (category === null || blob.key.startsWith(category)) {
+      photos.push({ id: blob.key, url: `/functions/get-photo?id=${blob.key}` });
     }
   }
   return photos;
