@@ -49,7 +49,6 @@ export default function DashboardPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
-  // ✅ Fonction pour ouvrir la photo en plein écran
   const openPhotoModal = (photoUrl: string | undefined, e: React.MouseEvent) => {
     e.stopPropagation();
     if (photoUrl) {
@@ -154,7 +153,13 @@ export default function DashboardPage() {
     }
   };
 
+  // ✅ MODIFICATION: moderateTestimonial avec confirmation
   const moderateTestimonial = async (id: string, status: string) => {
+    const actionText = status === 'published' ? 'publier' : (status === 'rejected' ? 'rejeter' : 'restaurer en attente');
+    if (!confirm(`Êtes-vous sûr de vouloir ${actionText} cet avis ?`)) {
+      return;
+    }
+    
     try {
       const res = await authFetch('/functions/moderate-testimonial', {
         method: 'POST',
@@ -162,6 +167,7 @@ export default function DashboardPage() {
       });
       if (res.ok) {
         await fetchData();
+        alert(`Avis ${actionText} avec succès !`);
       } else {
         const error = await res.json();
         console.error('Erreur modération:', error);
@@ -181,6 +187,7 @@ export default function DashboardPage() {
     cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
     pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
     publishedTestimonials: testimonials.filter(t => t.status === 'published').length,
+    rejectedTestimonials: testimonials.filter(t => t.status === 'rejected').length,
     totalRevenue: orders.reduce((sum, o) => sum + (Number(o.budget) || 0), 0)
   }), [orders, testimonials]);
 
@@ -202,6 +209,24 @@ export default function DashboardPage() {
       cancelled: 'Annulée'
     };
     return labels[status] || 'En attente';
+  };
+
+  const getTestimonialStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: '⏳ En attente',
+      published: '✓ Publié',
+      rejected: '✗ Rejeté'
+    };
+    return labels[status] || '⏳ En attente';
+  };
+
+  const getTestimonialStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-700',
+      published: 'bg-green-100 text-green-700',
+      rejected: 'bg-red-100 text-red-700'
+    };
+    return colors[status] || 'bg-yellow-100 text-yellow-700';
   };
 
   if (loading) {
@@ -272,7 +297,7 @@ export default function DashboardPage() {
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
-            Avis clients ({stats.pendingTestimonials} en attente)
+            Avis clients ({stats.pendingTestimonials} en attente, {stats.publishedTestimonials} publiés)
           </button>
         </div>
       </div>
@@ -341,23 +366,17 @@ export default function DashboardPage() {
                             <span key={i} className="text-accent text-lg">★</span>
                           ))}
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          testimonial.status === 'published' 
-                            ? 'bg-green-100 text-green-700' 
-                            : testimonial.status === 'rejected'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                          {testimonial.status === 'published' ? '✓ Publié' : testimonial.status === 'rejected' ? '✗ Rejeté' : '⏳ En attente'}
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTestimonialStatusColor(testimonial.status)}`}>
+                          {getTestimonialStatusLabel(testimonial.status)}
                         </span>
                         <span className="text-xs text-gray-400">
                           {new Date(testimonial.createdAt).toLocaleDateString('fr-FR')}
                         </span>
                       </div>
                       
-                      {/* ✅ AFFICHAGE PHOTO AVEC CLIC POUR ZOOM */}
-                      {testimonial.photoUrl && (
-                        <div className="mb-2 relative group">
+                      {/* ✅ AFFICHAGE PHOTO HARMONISÉ */}
+                      {testimonial.photoUrl ? (
+                        <div className="mb-2 relative group inline-block">
                           <img 
                             src={getImageUrl(testimonial.photoUrl)} 
                             alt={`Photo de ${testimonial.nom}`}
@@ -371,34 +390,69 @@ export default function DashboardPage() {
                             <Maximize2 size={16} className="text-white" />
                           </button>
                         </div>
+                      ) : (
+                        <div className="mb-2 w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center border border-gray-200">
+                          <span className="text-2xl">📷</span>
+                        </div>
                       )}
                       
                       <p className="text-gray-700 italic">"{testimonial.message}"</p>
                       <p className="text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
                     </div>
                     
-                    {testimonial.status === 'pending' && (
-                      <div className="flex gap-2">
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition">
-                          ✓ Publier
-                        </button>
-                        <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition">
-                          ✗ Rejeter
-                        </button>
-                      </div>
-                    )}
-                    
-                    {testimonial.status === 'published' && (
-                      <button onClick={() => moderateTestimonial(testimonial.id, 'rejected')} className="bg-gray-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-gray-600 transition">
-                        Retirer
-                      </button>
-                    )}
-                    
-                    {testimonial.status === 'rejected' && (
-                      <button onClick={() => moderateTestimonial(testimonial.id, 'published')} className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition">
-                        Restaurer
-                      </button>
-                    )}
+                    {/* ✅ BOUTONS DE MODÉRATION CORRIGÉS */}
+                    <div className="flex flex-col gap-2">
+                      {testimonial.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'published')} 
+                            className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition"
+                          >
+                            ✓ Publier
+                          </button>
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
+                            className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition"
+                          >
+                            ✗ Rejeter
+                          </button>
+                        </div>
+                      )}
+                      
+                      {testimonial.status === 'published' && (
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'pending')} 
+                            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-orange-600 transition"
+                          >
+                            Retirer de la galerie
+                          </button>
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
+                            className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition"
+                          >
+                            ✗ Supprimer
+                          </button>
+                        </div>
+                      )}
+                      
+                      {testimonial.status === 'rejected' && (
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'pending')} 
+                            className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition"
+                          >
+                            ↻ Remettre en attente
+                          </button>
+                          <button 
+                            onClick={() => moderateTestimonial(testimonial.id, 'published')} 
+                            className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition"
+                          >
+                            Publier directement
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))
@@ -407,7 +461,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* ✅ Modal photo plein écran */}
+      {/* Modal photo plein écran */}
       <AnimatePresence>
         {selectedPhoto && (
           <motion.div
