@@ -81,15 +81,19 @@ export function useNetlifyAuth() {
   }, []);
 
   const getToken = useCallback(() => {
-    // Méthode 1: via netlifyIdentity
+    // Méthode 1: via netlifyIdentity avec jwt()
     const identity = (window as any).netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
-      const token = currentUser?.token?.access_token;
-      if (token) return token;
+      // ✅ CORRECTION: utiliser jwt() au lieu de token.access_token
+      const token = currentUser?.jwt?.();
+      if (token) {
+        console.log('✅ Token récupéré via jwt()');
+        return token;
+      }
     }
     
-    // Méthode 2: via localStorage (fallback fiable)
+    // Méthode 2: via localStorage (fallback)
     try {
       const gotrueUser = localStorage.getItem('gotrue.user');
       if (gotrueUser) {
@@ -233,6 +237,8 @@ export default function DashboardPage() {
 
   const authFetch = async (url: string, options: RequestInit = {}) => {
     const token = getToken();
+    console.log('🔑 Token disponible?', !!token);
+    
     return fetch(url, {
       ...options,
       headers: {
@@ -247,26 +253,52 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
+      // 1. Récupération des commandes
       console.log('🔍 Fetching orders...');
       const ordersRes = await authFetch('/functions/get-orders');
-      const ordersData = await ordersRes.json();
-      console.log('📦 Orders response:', ordersData);
+      console.log('📊 Orders Status:', ordersRes.status);
       
-      if (ordersData.success) {
-        setOrders(ordersData.commandes || []);
+      if (!ordersRes.ok) {
+        console.error('Orders HTTP error:', ordersRes.status);
+        const errorText = await ordersRes.text();
+        console.error('Orders error body:', errorText);
+        if (ordersRes.status === 401) {
+          setError('Session expirée. Veuillez vous reconnecter.');
+          setLoading(false);
+          return;
+        }
       } else {
-        console.error('Orders error:', ordersData.error);
+        const ordersData = await ordersRes.json();
+        console.log('📦 Orders response:', ordersData);
+        
+        if (ordersData.success) {
+          setOrders(ordersData.commandes || []);
+        } else {
+          console.error('Orders error:', ordersData.error);
+        }
       }
 
+      // 2. Récupération des avis
       console.log('🔍 Fetching testimonials...');
       const avisRes = await authFetch('/functions/get-all-testimonials');
-      const avisData = await avisRes.json();
-      console.log('⭐ Testimonials response:', avisData);
+      console.log('📊 Avis Status:', avisRes.status);
       
-      if (avisData.success) {
-        setTestimonials(avisData.avis || []);
+      if (!avisRes.ok) {
+        console.error('Avis HTTP error:', avisRes.status);
+        if (avisRes.status === 401) {
+          setError('Session expirée. Veuillez vous reconnecter.');
+          setLoading(false);
+          return;
+        }
       } else {
-        console.error('Testimonials error:', avisData.error);
+        const avisData = await avisRes.json();
+        console.log('⭐ Testimonials response:', avisData);
+        
+        if (avisData.success) {
+          setTestimonials(avisData.avis || []);
+        } else {
+          console.error('Testimonials error:', avisData.error);
+        }
       }
     } catch (error) {
       console.error('Erreur chargement:', error);
@@ -278,7 +310,10 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user) {
+      console.log('👤 User connecté:', user.email);
       fetchData();
+    } else {
+      console.log('👤 Aucun utilisateur connecté');
     }
   }, [user]);
 
@@ -365,7 +400,10 @@ export default function DashboardPage() {
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
           <p className="text-red-600">{error}</p>
           <button 
-            onClick={fetchData} 
+            onClick={() => {
+              if (user) fetchData();
+              else window.location.href = '/dashboard';
+            }} 
             className="mt-3 bg-primary text-white px-4 py-2 rounded-lg text-sm"
           >
             Réessayer
@@ -917,47 +955,35 @@ exports.handler = async (event) => {
   }
 };
 === lib/utils/netlify-blobs.js ===
+// lib/utils/netlify-blobs.js - Version avec configuration manuelle forcée
 const { getStore: getNetlifyStore } = require('@netlify/blobs');
 
-export async function getStore(storeName) {
-  // Mode développement (local)
-  if (process.env.NODE_ENV === 'development' || !process.env.NETLIFY) {
-    console.log(`💻 Dev mode: ${storeName} (localStorage)`);
-    return {
-      get: async (key) => {
-        try {
-          const data = localStorage.getItem(`blob_${storeName}_${key}`);
-          return data ? JSON.parse(data) : null;
-        } catch (e) {
-          return null;
-        }
-      },
-      set: async (key, value) => {
-        try {
-          localStorage.setItem(`blob_${storeName}_${key}`, JSON.stringify(value));
-        } catch (e) {
-          console.error('Erreur écriture localStorage:', e);
-        }
-      },
-      list: async () => {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          if (key?.startsWith(`blob_${storeName}_`)) {
-            keys.push(key.replace(`blob_${storeName}_`, ''));
-          }
-        }
-        return keys;
-      }
-    };
+// Configuration obligatoire pour Next.js + esbuild
+const SITE_ID = process.env.NETLIFY_SITE_ID || '2ad6edd4-3a49-4e3c-b68a-ee3ee992f448';
+const TOKEN = process.env.NETLIFY_AUTH_TOKEN;
+
+async function getStore(storeName) {
+  console.log(`🔍 Accès store: ${storeName}`);
+
+  if (!TOKEN) {
+    console.error('❌ NETLIFY_AUTH_TOKEN non défini');
+    throw new Error('Missing NETLIFY_AUTH_TOKEN environment variable');
   }
 
-  // Mode production (Netlify)
-  console.log(`☁️ Production mode: ${storeName}`);
   try {
-    return getNetlifyStore(storeName);
+    const store = getNetlifyStore({
+      name: storeName,
+      siteID: SITE_ID,
+      token: TOKEN
+    });
+
+    // Test d'accès immédiat
+    await store.list({ limit: 1 });
+    console.log(`✅ Store ${storeName} accessible`);
+
+    return store;
   } catch (error) {
-    console.error(`❌ Erreur accès store ${storeName}:`, error.message);
+    console.error(`❌ Erreur store ${storeName}:`, error.message);
     throw error;
   }
 }
@@ -968,9 +994,11 @@ function generateId(prefix) {
   return `${prefix}_${timestamp}_${random}`;
 }
 
-export async function saveCommand(data) {
+async function saveCommand(data) {
+  console.log('💾 saveCommand');
   const store = await getStore('commandes');
   const id = generateId('CMD');
+
   const commande = {
     id,
     clientName: data.clientName || 'Client inconnu',
@@ -997,35 +1025,48 @@ export async function saveCommand(data) {
     status: 'pending',
     createdAt: new Date().toISOString()
   };
-  await store.set(id, commande);
-  console.log('✅ Commande sauvegardée:', id);
+
+  await store.set(id, JSON.stringify(commande));
+  console.log(`✅ Commande sauvegardée: ${id}`);
   return commande;
 }
 
-export async function getCommandes() {
+async function getCommandes() {
+  console.log('📦 getCommandes');
   const store = await getStore('commandes');
   const keys = await store.list();
+  console.log(`🔑 Clés trouvées: ${keys.length}`);
+
   const commandes = [];
   for (const key of keys) {
     const cmd = await store.get(key);
-    if (cmd) commandes.push(cmd);
+    if (cmd) {
+      const parsed = typeof cmd === 'string' ? JSON.parse(cmd) : cmd;
+      commandes.push(parsed);
+    }
   }
+
+  console.log(`📦 Total commandes: ${commandes.length}`);
   return commandes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
-export async function updateCommandeStatus(id, status) {
+async function updateCommandeStatus(id, status) {
   const store = await getStore('commandes');
   const commande = await store.get(id);
   if (commande) {
-    commande.status = status;
-    await store.set(id, commande);
+    const parsed = typeof commande === 'string' ? JSON.parse(commande) : commande;
+    parsed.status = status;
+    await store.set(id, JSON.stringify(parsed));
+    return parsed;
   }
-  return commande;
+  return null;
 }
 
-export async function saveAvis(avis) {
+async function saveAvis(avis) {
+  console.log('💾 saveAvis');
   const store = await getStore('avis');
   const id = generateId('AVIS');
+
   const nouvelAvis = {
     id,
     note: avis.note || 5,
@@ -1035,38 +1076,49 @@ export async function saveAvis(avis) {
     status: 'pending',
     createdAt: new Date().toISOString()
   };
-  await store.set(id, nouvelAvis);
-  console.log('✅ Avis sauvegardé:', id);
+
+  await store.set(id, JSON.stringify(nouvelAvis));
+  console.log(`✅ Avis sauvegardé: ${id}`);
   return nouvelAvis;
 }
 
-export async function getAvis(status = null) {
+async function getAvis(status = null) {
+  console.log(`⭐ getAvis - status: ${status}`);
   const store = await getStore('avis');
   const keys = await store.list();
+  console.log(`🔑 Clés avis: ${keys.length}`);
+
   const avis = [];
   for (const key of keys) {
     const a = await store.get(key);
-    if (a && (status === null || a.status === status)) {
-      avis.push(a);
+    if (a) {
+      const parsed = typeof a === 'string' ? JSON.parse(a) : a;
+      if (status === null || parsed.status === status) {
+        avis.push(parsed);
+      }
     }
   }
+
+  console.log(`⭐ Total avis: ${avis.length}`);
   return avis.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 }
 
-export async function moderateAvis(id, status) {
+async function moderateAvis(id, status) {
   const store = await getStore('avis');
   const avis = await store.get(id);
   if (avis) {
-    avis.status = status;
-    await store.set(id, avis);
+    const parsed = typeof avis === 'string' ? JSON.parse(avis) : avis;
+    parsed.status = status;
+    await store.set(id, JSON.stringify(parsed));
+    return parsed;
   }
-  return avis;
+  return null;
 }
 
-export async function savePhoto(file, category) {
+async function savePhoto(file, category) {
   const store = await getStore('photos');
   const id = `${category}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  
+
   let base64Data;
   if (Buffer.isBuffer(file)) {
     base64Data = file.toString('base64');
@@ -1075,14 +1127,16 @@ export async function savePhoto(file, category) {
   } else {
     return { id, url: null };
   }
-  
-  await store.set(id, { data: base64Data, category, createdAt: new Date().toISOString() });
+
+  await store.set(id, JSON.stringify({ data: base64Data, category }));
+  console.log(`✅ Photo sauvegardée: ${id}`);
   return { id, url: `/functions/get-photo?id=${id}` };
 }
 
-export async function getPhotos(category = null) {
+async function getPhotos(category = null) {
   const store = await getStore('photos');
   const keys = await store.list();
+
   const photos = [];
   for (const key of keys) {
     if (category === null || key.startsWith(category)) {
@@ -1091,6 +1145,18 @@ export async function getPhotos(category = null) {
   }
   return photos;
 }
+
+module.exports = {
+  getStore,
+  saveCommand,
+  getCommandes,
+  updateCommandeStatus,
+  saveAvis,
+  getAvis,
+  moderateAvis,
+  savePhoto,
+  getPhotos
+};
 === lib/utils/verify-token.js ===
 // lib/utils/verify-token.js
 const jwt = require('jsonwebtoken');
@@ -1099,8 +1165,13 @@ exports.verifyToken = async (token) => {
   return new Promise((resolve, reject) => {
     try {
       console.log('🔍 verifyToken - début');
-      console.log('📝 Token reçu (début):', token.substring(0, 30) + '...');
-      console.log('📝 Token longueur:', token.length);
+      console.log('📝 Token reçu (début):', token ? token.substring(0, 30) + '...' : 'null');
+      console.log('📝 Token longueur:', token ? token.length : 0);
+      
+      if (!token) {
+        console.log('❌ Token est null');
+        return reject(new Error('Token manquant'));
+      }
       
       // Décoder le token
       const decoded = jwt.decode(token);
@@ -1136,10 +1207,11 @@ exports.verifyToken = async (token) => {
 exports.isAdmin = async (event) => {
   try {
     console.log('🔍 isAdmin appelé');
+    console.log('📋 Headers reçus:', Object.keys(event.headers || {}));
     
-    const authHeader = event.headers.authorization;
+    const authHeader = event.headers?.authorization;
     console.log('📋 Auth header présent?', !!authHeader);
-    console.log('📋 Auth header:', authHeader ? authHeader.substring(0, 50) + '...' : 'null');
+    console.log('📋 Auth header début:', authHeader ? authHeader.substring(0, 50) + '...' : 'null');
     
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       console.log('❌ Pas de Bearer token - retour false');
@@ -1147,7 +1219,12 @@ exports.isAdmin = async (event) => {
     }
     
     const token = authHeader.split(' ')[1];
-    console.log('🔑 Token extrait (début):', token.substring(0, 30) + '...');
+    console.log('🔑 Token extrait (début):', token.substring(0, 50) + '...');
+    console.log('🔑 Token longueur:', token.length);
+    
+    // Debug: décoder sans vérification pour voir la structure
+    const debugDecoded = jwt.decode(token);
+    console.log('📝 Debug decoded (structure):', debugDecoded ? JSON.stringify(debugDecoded, null, 2) : 'null');
     
     const decoded = await exports.verifyToken(token);
     console.log('📧 Email décodé:', decoded.email);
@@ -1157,11 +1234,11 @@ exports.isAdmin = async (event) => {
     console.log('📧 Emails autorisés:', allowedList);
     
     const isAllowed = allowedList.includes(decoded.email);
-    
     console.log(`✅ ${decoded.email} est admin: ${isAllowed}`);
     return isAllowed;
   } catch (error) {
     console.error('❌ Erreur isAdmin:', error.message);
+    console.error('❌ Stack:', error.stack);
     return false;
   }
 };
@@ -2280,45 +2357,54 @@ export default function IdentityProvider() {
   status = 200
 
 # ============ REDIRECTS DES FONCTIONS NETLIFY ============
+# Utilisation de /functions/ pour éviter conflit avec Next.js API routes
 [[redirects]]
-  from = "/api/submit-order"
+  from = "/functions/submit-order"
   to = "/.netlify/functions/submit-order"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/submit-testimonial"
+  from = "/functions/submit-testimonial"
   to = "/.netlify/functions/submit-testimonial"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/get-orders"
+  from = "/functions/get-orders"
   to = "/.netlify/functions/get-orders"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/get-testimonials"
+  from = "/functions/get-testimonials"
   to = "/.netlify/functions/get-testimonials"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/get-all-testimonials"
+  from = "/functions/get-all-testimonials"
   to = "/.netlify/functions/get-all-testimonials"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/moderate-testimonial"
+  from = "/functions/moderate-testimonial"
   to = "/.netlify/functions/moderate-testimonial"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/update-order-status"
+  from = "/functions/update-order-status"
   to = "/.netlify/functions/update-order-status"
   status = 200
+  force = true
 
 [[redirects]]
-  from = "/api/get-photo"
+  from = "/functions/get-photo"
   to = "/.netlify/functions/get-photo"
   status = 200
+  force = true
 === package.json ===
 {
   "name": "loveexpress",

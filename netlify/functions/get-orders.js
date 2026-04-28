@@ -12,8 +12,14 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
+  console.log('🔍 get-orders appelée');
+  console.log('🔍 Headers keys:', Object.keys(event.headers || {}));
+
   const admin = await isAdmin(event);
+  console.log('👑 Est admin?', admin);
+  
   if (!admin) {
+    console.log('❌ Non autorisé - retour 401');
     return {
       statusCode: 401,
       headers,
@@ -23,12 +29,14 @@ exports.handler = async (event) => {
 
   try {
     const commandes = await getCommandes();
+    console.log(`✅ ${commandes.length} commandes retournées`);
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({ success: true, commandes })
     };
   } catch (error) {
+    console.error('❌ Erreur getCommandes:', error.message);
     return {
       statusCode: 500,
       headers,

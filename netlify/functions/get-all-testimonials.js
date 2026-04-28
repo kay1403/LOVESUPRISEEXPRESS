@@ -12,8 +12,13 @@ exports.handler = async (event) => {
     return { statusCode: 204, headers, body: '' };
   }
 
+  console.log('🔍 get-all-testimonials appelée');
+
   const admin = await isAdmin(event);
+  console.log('👑 Est admin?', admin);
+  
   if (!admin) {
+    console.log('❌ Non autorisé - retour 401');
     return {
       statusCode: 401,
       headers,
@@ -23,6 +28,7 @@ exports.handler = async (event) => {
 
   try {
     const allAvis = await getAvis(null);
+    console.log(`✅ ${allAvis.length} avis retournés`);
     return {
       statusCode: 200,
       headers,
@@ -38,6 +44,7 @@ exports.handler = async (event) => {
       })
     };
   } catch (error) {
+    console.error('❌ Erreur getAvis:', error.message);
     return {
       statusCode: 500,
       headers,
