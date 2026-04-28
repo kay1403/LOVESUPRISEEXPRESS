@@ -17,6 +17,13 @@ interface Testimonial {
 
 const ITEMS_PER_PAGE = 9;
 
+// Fonction utilitaire pour les URLs de photos
+const getImageUrl = (photoUrl: string | undefined) => {
+  if (!photoUrl) return null;
+  if (photoUrl.startsWith('http')) return photoUrl;
+  return `https://lovesupriseexpress.netlify.app${photoUrl}`;
+};
+
 export default function GalleryPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading] = useState(true)
@@ -29,7 +36,8 @@ export default function GalleryPage() {
 
   const fetchTestimonials = async () => {
     try {
-      const response = await fetch('/api/get-testimonials')
+      // ✅ CORRECTION: utiliser /functions/ au lieu de /api/
+      const response = await fetch('/functions/get-testimonials')
       const data = await response.json()
       if (data.success && data.avis) {
         setTestimonials(data.avis)
@@ -113,7 +121,8 @@ export default function GalleryPage() {
                   >
                     <div className="relative h-56 overflow-hidden">
                       {item.photoUrl ? (
-                        <img src={item.photoUrl} alt={item.nom} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        // ✅ CORRECTION: utiliser getImageUrl
+                        <img src={getImageUrl(item.photoUrl)!} alt={item.nom} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
                           <Heart size={48} className="text-primary/40" />
@@ -181,7 +190,7 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* Modal - inchangé */}
+      {/* Modal */}
       <AnimatePresence>
         {selectedTestimonial && (
           <motion.div
@@ -201,7 +210,8 @@ export default function GalleryPage() {
             >
               <div className="relative">
                 {selectedTestimonial.photoUrl ? (
-                  <img src={selectedTestimonial.photoUrl} alt={selectedTestimonial.nom} className="w-full h-80 object-cover" />
+                  // ✅ CORRECTION: utiliser getImageUrl
+                  <img src={getImageUrl(selectedTestimonial.photoUrl)!} alt={selectedTestimonial.nom} className="w-full h-80 object-cover" />
                 ) : (
                   <div className="w-full h-80 bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
                     <Heart size={64} className="text-primary/40" />

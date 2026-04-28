@@ -27,6 +27,15 @@ interface TestimonialItem {
   createdAt: string;
 }
 
+// ✅ Fonction utilitaire pour les URLs de photos
+const getImageUrl = (photoUrl: string | undefined): string | null => {
+  if (!photoUrl) return null;
+  if (photoUrl.startsWith('http')) return photoUrl;
+  // Construction de l'URL absolue pour Netlify
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://lovesupriseexpress.netlify.app';
+  return `${baseUrl}${photoUrl}`;
+};
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -353,13 +362,17 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       
-                      {/* Aperçu photo */}
+                      {/* ✅ CORRECTION: Affichage des photos avec URL absolue */}
                       {testimonial.photoUrl && (
                         <div className="mb-2">
                           <img 
-                            src={testimonial.photoUrl} 
-                            alt="Photo du témoignage" 
+                            src={getImageUrl(testimonial.photoUrl)!} 
+                            alt={`Photo de ${testimonial.nom}`}
                             className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                            onError={(e) => {
+                              console.error('Erreur chargement photo:', testimonial.photoUrl);
+                              e.currentTarget.style.display = 'none';
+                            }}
                           />
                         </div>
                       )}
