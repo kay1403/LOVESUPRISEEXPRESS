@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, X, Heart, User, Calendar, Star, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowLeft, X, Heart, User, Calendar, Star, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react'
 
 interface Testimonial {
   id: string
@@ -32,6 +32,7 @@ export default function GalleryPage() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null)
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
@@ -40,7 +41,6 @@ export default function GalleryPage() {
 
   const fetchTestimonials = async () => {
     try {
-      // ✅ CORRECTION: utiliser /functions/ au lieu de /api/
       const response = await fetch('/functions/get-testimonials')
       const data = await response.json()
       if (data.success && data.avis) {
@@ -59,6 +59,14 @@ export default function GalleryPage() {
 
   const goToPage = (page: number) => {
     setCurrentPage(Math.max(1, Math.min(page, totalPages)))
+  }
+
+  // ✅ Fonction pour ouvrir la photo en plein écran
+  const openPhotoModal = (photoUrl: string | undefined, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (photoUrl) {
+      setSelectedPhoto(getImageUrl(photoUrl))
+    }
   }
 
   if (loading) {
@@ -124,15 +132,21 @@ export default function GalleryPage() {
                   >
                     <div className="relative h-56 overflow-hidden">
                       {item.photoUrl ? (
-                        <img 
-                          src={getImageUrl(item.photoUrl)} 
-                          alt={item.nom} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          onError={(e) => {
-                            console.error('Erreur chargement photo:', item.photoUrl);
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
+                        <>
+                          <img 
+                            src={getImageUrl(item.photoUrl)} 
+                            alt={item.nom} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          {/* ✅ Bouton pour agrandir la photo */}
+                          <button
+                            onClick={(e) => openPhotoModal(item.photoUrl, e)}
+                            className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-primary/80 z-10"
+                            title="Agrandir la photo"
+                          >
+                            <Maximize2 size={16} className="text-white" />
+                          </button>
+                        </>
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
                           <Heart size={48} className="text-primary/40" />
@@ -199,6 +213,7 @@ export default function GalleryPage() {
         </div>
       </section>
 
+      {/* Modal avis complet */}
       <AnimatePresence>
         {selectedTestimonial && (
           <motion.div
@@ -221,11 +236,8 @@ export default function GalleryPage() {
                   <img 
                     src={getImageUrl(selectedTestimonial.photoUrl)} 
                     alt={selectedTestimonial.nom} 
-                    className="w-full h-80 object-cover"
-                    onError={(e) => {
-                      console.error('Erreur chargement photo modal:', selectedTestimonial.photoUrl);
-                      e.currentTarget.style.display = 'none';
-                    }}
+                    className="w-full h-80 object-cover cursor-pointer"
+                    onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
                   />
                 ) : (
                   <div className="w-full h-80 bg-gradient-to-br from-primary/20 to-primaryLight flex items-center justify-center">
@@ -236,6 +248,16 @@ export default function GalleryPage() {
                 <button onClick={() => setSelectedTestimonial(null)} className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition">
                   <X size={20} className="text-white" />
                 </button>
+                {/* ✅ Bouton pour agrandir la photo dans le modal */}
+                {selectedTestimonial.photoUrl && (
+                  <button
+                    onClick={() => setSelectedPhoto(getImageUrl(selectedTestimonial.photoUrl))}
+                    className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-primary/80 transition"
+                    title="Agrandir la photo"
+                  >
+                    <Maximize2 size={18} className="text-white" />
+                  </button>
+                )}
                 <div className="absolute bottom-4 left-4 flex gap-0.5">
                   {[...Array(selectedTestimonial.note || 5)].map((_, i) => (
                     <Star key={i} size={16} className="fill-accent text-accent" />
@@ -266,6 +288,40 @@ export default function GalleryPage() {
                   </div>
                 </div>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ✅ Modal photo plein écran */}
+      <AnimatePresence>
+        {selectedPhoto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 cursor-pointer"
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative max-w-5xl w-full max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={selectedPhoto} 
+                alt="Photo agrandie" 
+                className="w-full h-full object-contain rounded-lg"
+              />
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
+              >
+                <X size={24} className="text-white" />
+              </button>
             </motion.div>
           </motion.div>
         )}

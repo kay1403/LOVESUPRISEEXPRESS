@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNetlifyAuth } from './AdminIdentity';
+import { X, Maximize2 } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -44,7 +46,16 @@ export default function DashboardPage() {
   const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
+
+  // ✅ Fonction pour ouvrir la photo en plein écran
+  const openPhotoModal = (photoUrl: string | undefined, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (photoUrl) {
+      setSelectedPhoto(getImageUrl(photoUrl));
+    }
+  };
 
   const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const token = await getToken();
@@ -344,18 +355,21 @@ export default function DashboardPage() {
                         </span>
                       </div>
                       
-                      {/* ✅ AFFICHAGE PHOTO CORRIGÉ */}
+                      {/* ✅ AFFICHAGE PHOTO AVEC CLIC POUR ZOOM */}
                       {testimonial.photoUrl && (
-                        <div className="mb-2">
+                        <div className="mb-2 relative group">
                           <img 
                             src={getImageUrl(testimonial.photoUrl)} 
                             alt={`Photo de ${testimonial.nom}`}
-                            className="w-16 h-16 object-cover rounded-lg border border-gray-200"
-                            onError={(e) => {
-                              console.error('Erreur chargement photo:', testimonial.photoUrl);
-                              e.currentTarget.style.display = 'none';
-                            }}
+                            className="w-16 h-16 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-90 transition"
+                            onClick={(e) => openPhotoModal(testimonial.photoUrl, e)}
                           />
+                          <button
+                            onClick={(e) => openPhotoModal(testimonial.photoUrl, e)}
+                            className="absolute inset-0 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+                          >
+                            <Maximize2 size={16} className="text-white" />
+                          </button>
                         </div>
                       )}
                       
@@ -392,6 +406,40 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+
+      {/* ✅ Modal photo plein écran */}
+      <AnimatePresence>
+        {selectedPhoto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center p-4 cursor-pointer"
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative max-w-5xl w-full max-h-[90vh]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={selectedPhoto} 
+                alt="Photo agrandie" 
+                className="w-full h-full object-contain rounded-lg"
+              />
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"
+              >
+                <X size={24} className="text-white" />
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
