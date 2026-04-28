@@ -79,14 +79,13 @@ export function useNetlifyAuth() {
     }
   }, []);
 
-  // ✅ CORRECTION: getToken devient asynchrone
+  // ✅ getToken asynchrone avec await sur jwt()
   const getToken = useCallback(async (): Promise<string | null> => {
     const identity = (window as any).netlifyIdentity;
     if (identity) {
       const currentUser = identity.currentUser();
       if (currentUser?.jwt) {
         try {
-          // ✅ CORRECTION: await obligatoire
           const token = await currentUser.jwt();
           if (token) {
             console.log('✅ Token récupéré via jwt()');

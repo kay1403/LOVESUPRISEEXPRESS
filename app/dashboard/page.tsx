@@ -35,7 +35,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
-  // ✅ BUG 2 CORRIGÉ: useCallback pour stabiliser authFetch
+  // ✅ useCallback pour stabiliser authFetch
   const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const token = await getToken();
     console.log('🔑 Token disponible?', !!token, token ? token.substring(0, 20) + '...' : 'NULL');
@@ -113,13 +113,12 @@ export default function DashboardPage() {
     }
   }, [authFetch]);
 
-  // ✅ BUG 1 CORRIGÉ: délai pour laisser identity s'initialiser
+  // ✅ délai pour laisser identity s'initialiser après login
   useEffect(() => {
     if (!user) return;
     
     console.log('👤 User connecté:', user.email);
     
-    // Petit délai pour laisser le temps à jwt() d'être prêt après login
     const timer = setTimeout(() => {
       fetchData();
     }, 100);
