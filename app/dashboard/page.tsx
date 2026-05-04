@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNetlifyAuth } from './AdminIdentity';
-import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Maximize2, ChevronLeft, ChevronRight, Eye, MapPin, Calendar as CalendarIcon, Phone, Mail, Gift, MessageCircle, User } from 'lucide-react';
 
 interface Order {
   id: string;
@@ -17,6 +17,8 @@ interface Order {
   eventDate: string;
   eventType: string;
   message?: string;
+  clientPhone?: string;
+  clientEmail?: string;
 }
 
 interface TestimonialItem {
@@ -70,6 +72,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
+  const [selectedOrderDetails, setSelectedOrderDetails] = useState<Order | null>(null);
   const { getToken, user } = useNetlifyAuth();
 
   // Pagination pour les commandes
@@ -101,6 +104,11 @@ export default function DashboardPage() {
     if (photoUrl) {
       setSelectedPhoto(getImageUrl(photoUrl));
     }
+  };
+
+  const openOrderDetails = (order: Order, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedOrderDetails(order);
   };
 
   const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
@@ -292,6 +300,102 @@ export default function DashboardPage() {
     );
   };
 
+  // Composant Modal Détails Commande
+  const OrderDetailsModal = ({ order, onClose }: { order: Order | null; onClose: () => void }) => {
+    if (!order) return null;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/90 z-[70] flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.9, y: 50, opacity: 0 }}
+          animate={{ scale: 1, y: 0, opacity: 1 }}
+          exit={{ scale: 0.9, y: 50, opacity: 0 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="max-w-3xl w-full bg-white rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* En-tête avec ID et statut */}
+          <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-5 md:p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm opacity-80">Commande</p>
+                <h2 className="text-xl md:text-2xl font-bold">{order.id}</h2>
+              </div>
+              <button onClick={onClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
+                <X size={20} className="text-white" />
+              </button>
+            </div>
+            <div className="mt-3">
+              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(order.status)} bg-opacity-20`}>
+                {getStatusLabel(order.status)}
+              </span>
+            </div>
+          </div>
+
+          <div className="p-5 md:p-6 space-y-6">
+            {/* Section Client */}
+            <div>
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-3"><User size={18} className="text-primary" />Informations client</h3>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <p className="flex items-center gap-2"><User size={16} className="text-gray-400" /><span className="font-medium">{order.clientName}</span></p>
+                {order.clientPhone && <p className="flex items-center gap-2"><Phone size={16} className="text-gray-400" /><a href={`tel:${order.clientPhone}`} className="text-primary hover:underline">{order.clientPhone}</a></p>}
+                {order.clientEmail && <p className="flex items-center gap-2"><Mail size={16} className="text-gray-400" /><span>{order.clientEmail}</span></p>}
+              </div>
+            </div>
+
+            {/* Section Destinataire */}
+            <div>
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" />Destinataire</h3>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <p className="flex items-center gap-2"><User size={16} className="text-gray-400" /><span className="font-medium">{order.destName}</span></p>
+                {order.destAddress && <p className="flex items-center gap-2"><MapPin size={16} className="text-gray-400" /><span>{order.destAddress}</span></p>}
+              </div>
+            </div>
+
+            {/* Section Événement */}
+            <div>
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-3"><CalendarIcon size={18} className="text-primary" />Détails de l'événement</h3>
+              <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <p className="flex items-center gap-2"><CalendarIcon size={16} className="text-gray-400" /><span><strong>Type:</strong> {order.eventType}</span></p>
+                {order.eventDate && <p className="flex items-center gap-2"><CalendarIcon size={16} className="text-gray-400" /><span><strong>Date:</strong> {new Date(order.eventDate).toLocaleDateString('fr-FR')}</span></p>}
+              </div>
+            </div>
+
+            {/* Section Financière */}
+            <div>
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-3">💰 Informations financières</h3>
+              <div className="bg-primaryLight rounded-xl p-4">
+                <p className="text-2xl font-bold text-primary">{Number(order.budget).toLocaleString()} RWF</p>
+                <p className="text-sm text-gray-500 mt-1">Budget total de la commande</p>
+              </div>
+            </div>
+
+            {/* Section Message */}
+            {order.message && (
+              <div>
+                <h3 className="font-semibold text-dark flex items-center gap-2 mb-3"><MessageCircle size={18} className="text-primary" />Message personnalisé</h3>
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <p className="italic text-gray-600">"{order.message}"</p>
+                </div>
+              </div>
+            )}
+
+            {/* Métadonnées */}
+            <div className="text-xs text-gray-400 pt-2 border-t">
+              <p>Commandée le : {new Date(order.createdAt).toLocaleString('fr-FR')}</p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -400,16 +504,24 @@ export default function DashboardPage() {
                           <TruncatedText text={order.message} maxLength={80} />
                         )}
                       </div>
-                      <select
-                        value={order.status}
-                        onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                        className="px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary w-full md:w-auto"
-                      >
-                        <option value="pending">📋 En attente</option>
-                        <option value="confirmed">✅ Confirmée</option>
-                        <option value="delivered">🚚 Livrée</option>
-                        <option value="cancelled">❌ Annulée</option>
-                      </select>
+                      <div className="flex gap-2 w-full md:w-auto">
+                        <button
+                          onClick={(e) => openOrderDetails(order, e)}
+                          className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-primary hover:text-white transition flex items-center gap-1"
+                        >
+                          <Eye size={14} /> Voir détails
+                        </button>
+                        <select
+                          value={order.status}
+                          onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                          className="px-2 md:px-3 py-1.5 md:py-2 text-xs md:text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary"
+                        >
+                          <option value="pending">📋 En attente</option>
+                          <option value="confirmed">✅ Confirmée</option>
+                          <option value="delivered">🚚 Livrée</option>
+                          <option value="cancelled">❌ Annulée</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
                 ))
@@ -549,6 +661,16 @@ export default function DashboardPage() {
               </button>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal détails commande */}
+      <AnimatePresence>
+        {selectedOrderDetails && (
+          <OrderDetailsModal 
+            order={selectedOrderDetails} 
+            onClose={() => setSelectedOrderDetails(null)} 
+          />
         )}
       </AnimatePresence>
     </div>
