@@ -409,12 +409,11 @@ export default function DashboardPage() {
   };
 
   // Composant Filtre
-  const FilterDropdown = ({ filter, setFilter, show, setShow, label }: { 
+  const FilterDropdown = ({ filter, setFilter, show, setShow }: { 
     filter: string; 
     setFilter: (value: string) => void; 
     show: boolean; 
     setShow: (value: boolean) => void;
-    label: string;
   }) => {
     const getFilterLabel = (f: string) => {
       switch(f) {
@@ -429,14 +428,14 @@ export default function DashboardPage() {
       <div className="relative">
         <button
           onClick={() => setShow(!show)}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm border rounded-lg bg-white hover:bg-gray-50 transition"
+          className="flex items-center gap-2 px-4 py-2 text-sm border rounded-lg bg-white hover:bg-gray-50 transition shadow-sm"
         >
-          <Filter size={14} />
-          <span>{getFilterLabel(filter)}</span>
-          <ChevronDown size={14} className={`transition-transform ${show ? 'rotate-180' : ''}`} />
+          <Filter size={16} />
+          <span className="font-medium">{getFilterLabel(filter)}</span>
+          <ChevronDown size={16} className={`transition-transform ${show ? 'rotate-180' : ''}`} />
         </button>
         {show && (
-          <div className="absolute top-full right-0 mt-1 bg-white border rounded-lg shadow-lg z-20 min-w-[150px]">
+          <div className="absolute top-full left-0 mt-2 bg-white border rounded-lg shadow-lg z-20 min-w-[160px]">
             <button
               onClick={() => { setFilter('all'); setShow(false); }}
               className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg ${filter === 'all' ? 'bg-primary/10 text-primary' : ''}`}
@@ -518,7 +517,7 @@ export default function DashboardPage() {
     );
   };
 
-  // Composant Modal Détails Commande - Version COMPLÈTE (A à Z)
+  // Composant Modal Détails Commande
   const OrderDetailsModal = ({ order, onClose }: { order: Order | null; onClose: () => void }) => {
     if (!order) return null;
 
@@ -542,17 +541,16 @@ export default function DashboardPage() {
           className="max-w-4xl w-full bg-white rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* En-tête avec ID et statut */}
           <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-5 md:p-6 sticky top-0 z-10">
             <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm opacity-80">Commande</p>
-                  <h2 className="text-xl md:text-2xl font-bold font-mono break-all">{order.id}</h2>
-                </div>
-                <button onClick={onClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
-                  <X size={20} className="text-white" />
-                </button>
+              <div>
+                <p className="text-sm opacity-80">Commande</p>
+                <h2 className="text-xl md:text-2xl font-bold font-mono break-all">{order.id}</h2>
               </div>
+              <button onClick={onClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
+                <X size={20} className="text-white" />
+              </button>
+            </div>
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(order.status)} bg-opacity-20`}>
                 {getStatusIcon(order.status)}
@@ -565,7 +563,7 @@ export default function DashboardPage() {
           </div>
 
           <div className="p-5 md:p-6 space-y-6">
-            {/* ==================== SECTION 1: INFORMATIONS CLIENT ==================== */}
+            {/* Section Client */}
             <div className="bg-gradient-to-r from-blue-50 to-white rounded-xl p-4 border-l-4 border-blue-500">
               <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
                 <User size={20} className="text-blue-500" />
@@ -578,7 +576,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ==================== SECTION 2: INFORMATIONS DESTINATAIRE ==================== */}
+            {/* Section Destinataire */}
             <div className="bg-gradient-to-r from-purple-50 to-white rounded-xl p-4 border-l-4 border-purple-500">
               <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
                 <Gift size={20} className="text-purple-500" />
@@ -592,7 +590,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ==================== SECTION 3: ÉVÉNEMENT ==================== */}
+            {/* Section Événement */}
             <div className="bg-gradient-to-r from-pink-50 to-white rounded-xl p-4 border-l-4 border-pink-500">
               <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
                 <CalendarIcon size={20} className="text-pink-500" />
@@ -606,14 +604,13 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ==================== SECTION 4: SERVICES & PRODUITS ==================== */}
+            {/* Section Services */}
             <div className="bg-gradient-to-r from-green-50 to-white rounded-xl p-4 border-l-4 border-green-500">
               <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
                 <Package size={20} className="text-green-500" />
                 Services & Produits commandés
               </h3>
               
-              {/* Packs Party Decoration */}
               {selectedPacks.length > 0 && (
                 <div className="mb-4">
                   <p className="font-medium text-dark flex items-center gap-2 mb-2"><PartyPopper size={16} className="text-primary" />Packs Party Decoration</p>
@@ -628,7 +625,6 @@ export default function DashboardPage() {
                 </div>
               )}
               
-              {/* Autres services */}
               {selectedServices.length > 0 && (
                 <div className="mb-4">
                   <p className="font-medium text-dark flex items-center gap-2 mb-2"><Sparkles size={16} className="text-primary" />Services additionnels</p>
@@ -647,7 +643,6 @@ export default function DashboardPage() {
                 </div>
               )}
               
-              {/* Paniers cadeaux */}
               {selectedBaskets.length > 0 && (
                 <div className="mb-4">
                   <p className="font-medium text-dark flex items-center gap-2 mb-2"><Gift size={16} className="text-primary" />Paniers cadeaux</p>
@@ -669,7 +664,7 @@ export default function DashboardPage() {
               )}
             </div>
 
-            {/* ==================== SECTION 5: LIVRAISON & BUDGET ==================== */}
+            {/* Section Livraison & Budget */}
             <div className="bg-gradient-to-r from-orange-50 to-white rounded-xl p-4 border-l-4 border-orange-500">
               <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
                 <Truck size={20} className="text-orange-500" />
@@ -692,7 +687,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* ==================== SECTION 6: MESSAGES ==================== */}
+            {/* Section Messages */}
             {(order.message || order.specialInstructions || order.additionalNotes) && (
               <div className="bg-gradient-to-r from-yellow-50 to-white rounded-xl p-4 border-l-4 border-yellow-500">
                 <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
@@ -720,7 +715,7 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* ==================== SECTION 7: OPTIONS SPÉCIALES ==================== */}
+            {/* Section Options spéciales */}
             {(order.isDiscreet || order.needsPersonPresent) && (
               <div className="bg-gradient-to-r from-indigo-50 to-white rounded-xl p-4 border-l-4 border-indigo-500">
                 <h3 className="font-semibold text-dark flex items-center gap-2 mb-3 text-lg">
@@ -792,58 +787,50 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Tabs avec filtres */}
+      {/* Tabs */}
       <div className="px-4 md:px-6">
-        <div className="flex flex-wrap gap-2 border-b overflow-x-auto">
-          <div className="flex flex-1 gap-2">
-            <button 
-              onClick={() => setActiveTab('orders')} 
-              className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
-                activeTab === 'orders' 
-                  ? 'border-b-2 border-primary text-primary' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Commandes ({filteredOrders.length})
-            </button>
-            <button 
-              onClick={() => setActiveTab('testimonials')} 
-              className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
-                activeTab === 'testimonials' 
-                  ? 'border-b-2 border-primary text-primary' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              Avis clients ({filteredTestimonials.length})
-            </button>
-          </div>
-          
-          {/* Filtre pour Commandes */}
-          {activeTab === 'orders' && (
-            <div className="ml-auto pb-2">
-              <FilterDropdown 
-                filter={ordersFilter}
-                setFilter={setOrdersFilter}
-                show={showOrdersFilter}
-                setShow={setShowOrdersFilter}
-                label="Commandes"
-              />
-            </div>
-          )}
-          
-          {/* Filtre pour Avis */}
-          {activeTab === 'testimonials' && (
-            <div className="ml-auto pb-2">
-              <FilterDropdown 
-                filter={avisFilter}
-                setFilter={setAvisFilter}
-                show={showAvisFilter}
-                setShow={setShowAvisFilter}
-                label="Avis"
-              />
-            </div>
-          )}
+        <div className="flex gap-2 border-b overflow-x-auto">
+          <button 
+            onClick={() => setActiveTab('orders')} 
+            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
+              activeTab === 'orders' 
+                ? 'border-b-2 border-primary text-primary' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Commandes ({filteredOrders.length})
+          </button>
+          <button 
+            onClick={() => setActiveTab('testimonials')} 
+            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
+              activeTab === 'testimonials' 
+                ? 'border-b-2 border-primary text-primary' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Avis clients ({filteredTestimonials.length})
+          </button>
         </div>
+      </div>
+
+      {/* FILTRE - Entre les onglets et la liste */}
+      <div className="px-4 md:px-6 mt-4 flex justify-end">
+        {activeTab === 'orders' && (
+          <FilterDropdown 
+            filter={ordersFilter}
+            setFilter={setOrdersFilter}
+            show={showOrdersFilter}
+            setShow={setShowOrdersFilter}
+          />
+        )}
+        {activeTab === 'testimonials' && (
+          <FilterDropdown 
+            filter={avisFilter}
+            setFilter={setAvisFilter}
+            show={showAvisFilter}
+            setShow={setShowAvisFilter}
+          />
+        )}
       </div>
 
       <div className="p-4 md:p-6">
@@ -1081,7 +1068,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Modal détails commande COMPLET */}
+      {/* Modal détails commande */}
       <AnimatePresence>
         {selectedOrderDetails && (
           <OrderDetailsModal 
