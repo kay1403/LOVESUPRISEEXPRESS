@@ -55,6 +55,7 @@ export default function ContactForm() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [budgetError, setBudgetError] = useState('')
+  const [stepError, setStepError] = useState('')
   const reviewRef = useRef<HTMLDivElement>(null)
 
   const [formData, setFormData] = useState<FormData>({
@@ -68,10 +69,71 @@ export default function ContactForm() {
 
   useEffect(() => { setIsMounted(true) }, [])
 
+  // ✅ Validation des champs requis pour chaque étape
+  const validateStep = (stepToValidate: number): boolean => {
+    setStepError('')
+    
+    switch(stepToValidate) {
+      case 1:
+        if (!formData.clientName.trim()) {
+          setStepError('Veuillez entrer votre nom complet')
+          return false
+        }
+        if (!formData.clientPhone.trim()) {
+          setStepError('Veuillez entrer votre numéro de téléphone WhatsApp')
+          return false
+        }
+        return true
+        
+      case 2:
+        if (!formData.destName.trim()) {
+          setStepError('Veuillez entrer le nom du destinataire')
+          return false
+        }
+        if (!formData.destAddress.trim()) {
+          setStepError('Veuillez entrer l\'adresse de livraison')
+          return false
+        }
+        return true
+        
+      case 3:
+        if (!formData.eventDate) {
+          setStepError('Veuillez sélectionner une date')
+          return false
+        }
+        if (!formData.eventTime) {
+          setStepError('Veuillez sélectionner une heure')
+          return false
+        }
+        if (!formData.eventLocation.trim()) {
+          setStepError('Veuillez entrer le lieu de l\'événement')
+          return false
+        }
+        return true
+        
+      case 4:
+        // Vérifier qu'au moins un service ou pack ou basket est sélectionné
+        const hasService = formData.selectedServices.length > 0
+        const hasPack = formData.selectedPacks.length > 0
+        const hasBasket = formData.selectedBaskets.length > 0
+        if (!hasService && !hasPack && !hasBasket) {
+          setStepError('Veuillez sélectionner au moins un service, pack ou panier cadeau')
+          return false
+        }
+        return true
+        
+      case 5:
+        // Budget déjà géré par le bouton suivant
+        return true
+        
+      default:
+        return true
+    }
+  }
+
   const calculateTotalPrice = useMemo(() => {
     let total = 0
 
-    // Party Decoration packs - avec sécurité TypeScript
     const partyDecoration = servicesData[0]
     if (partyDecoration && partyDecoration.packs && partyDecoration.packs.length > 0) {
       formData.selectedPacks.forEach(packId => {
@@ -80,22 +142,15 @@ export default function ContactForm() {
       })
     }
 
-    // Surprise Planner
     if (formData.selectedServices.includes(2)) total += 200000
-
-    // Custom Website
     if (formData.selectedServices.includes(3)) total += 35000
-
-    // Flower Bouquet
     if (formData.selectedServices.includes(4)) total += 15000
 
-    // Gift Baskets
     formData.selectedBaskets.forEach(basket => {
       const b = basketsData.find(bk => bk.id === basket.id)
       if (b) total += basket.version === 'standard' ? b.standard : b.premium
     })
 
-    // Livraison
     if (formData.deliveryMethod === 'delivery') total += 5000
 
     return total
@@ -143,7 +198,7 @@ export default function ContactForm() {
   const handleBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value) || 0
     setFormData(prev => ({ ...prev, budget: value }))
-    if (value < totalPrice) {
+    if (value < totalPrice && value !== 0) {
       setBudgetError(`Budget minimum requis : ${totalPrice.toLocaleString()} RWF`)
     } else {
       setBudgetError('')
@@ -152,7 +207,6 @@ export default function ContactForm() {
 
   const downloadPDF = async () => {
     if (!isMounted || !reviewRef.current) return
-    // @ts-ignore - html2pdf.js n'a pas de types officiels
     const html2pdf = (await import('html2pdf.js')).default
     const opt = { 
       margin: [10, 10, 10, 10], 
@@ -172,7 +226,11 @@ export default function ContactForm() {
     
     setIsSubmitting(true)
     try {
-      const response = await fetch('/functions/submit-order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...formData, totalPrice, budget: formData.budget || totalPrice }) })
+      const response = await fetch('/functions/submit-order', { 
+        method: 'POST', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify({ ...formData, totalPrice, budget: formData.budget || totalPrice }) 
+      })
       if (response.ok) {
         setTimeout(() => downloadPDF(), 500)
         setIsSubmitted(true)
@@ -192,7 +250,13 @@ export default function ContactForm() {
     finally { setIsSubmitting(false) }
   }
 
-  const nextStep = () => setStep(step + 1)
+  // ✅ Fonction nextStep avec validation
+  const nextStep = () => {
+    if (validateStep(step)) {
+      setStep(step + 1)
+    }
+  }
+  
   const prevStep = () => setStep(step - 1)
   const goToStep = (targetStep: number) => setStep(targetStep)
 
@@ -249,16 +313,41 @@ export default function ContactForm() {
         </motion.div>
 
         <div className="max-w-3xl mx-auto">
-          <div className="mb-8"><div className="flex justify-between mb-2 text-sm text-gray-500"><span>Étape {step} / 6</span><span>{Math.round((step / 6) * 100)}%</span></div><div className="h-2 bg-gray-200 rounded-full overflow-hidden"><motion.div className="h-full bg-primary" initial={{ width: `${((step - 1) / 6) * 100}%` }} animate={{ width: `${((step - 1) / 6) * 100}%` }} transition={{ duration: 0.3 }} /></div></div>
+          <div className="mb-8">
+            <div className="flex justify-between mb-2 text-sm text-gray-500">
+              <span>Étape {step} / 6</span>
+              <span>{Math.round((step / 6) * 100)}%</span>
+            </div>
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <motion.div className="h-full bg-primary" initial={{ width: `${((step - 1) / 6) * 100}%` }} animate={{ width: `${((step - 1) / 6) * 100}%` }} transition={{ duration: 0.3 }} />
+            </div>
+          </div>
+
+          {/* ✅ Message d'erreur de validation */}
+          {stepError && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm flex items-center gap-2">
+              <AlertCircle size={16} />
+              {stepError}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <AnimatePresence mode="wait">
               {step === 1 && (
                 <motion.div key="step1" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Qui êtes-vous ?</h3>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom complet *</label><input type="text" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Téléphone WhatsApp *</label><input type="tel" value={formData.clientPhone} onChange={(e) => setFormData({...formData, clientPhone: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Email (optionnel)</label><input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nom complet <span className="text-red-500">*</span></label>
+                    <input type="text" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" placeholder="Jean Dupont" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone WhatsApp <span className="text-red-500">*</span></label>
+                    <input type="tel" value={formData.clientPhone} onChange={(e) => setFormData({...formData, clientPhone: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder="+250 7XX XXX XXX" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email <span className="text-gray-400 text-xs">(optionnel)</span></label>
+                    <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder="exemple@email.com" />
+                  </div>
                   <button type="button" onClick={nextStep} className="btn-primary w-full">Suivant →</button>
                 </motion.div>
               )}
@@ -266,10 +355,22 @@ export default function ContactForm() {
               {step === 2 && (
                 <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Qui recevra la surprise ?</h3>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Nom du destinataire *</label><input type="text" value={formData.destName} onChange={(e) => setFormData({...formData, destName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Téléphone</label><input type="tel" value={formData.destPhone} onChange={(e) => setFormData({...formData, destPhone: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Adresse de livraison *</label><input type="text" value={formData.destAddress} onChange={(e) => setFormData({...formData, destAddress: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Âge (si anniversaire)</label><input type="text" value={formData.destAge} onChange={(e) => setFormData({...formData, destAge: e.target.value})} className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Nom du destinataire <span className="text-red-500">*</span></label>
+                    <input type="text" value={formData.destName} onChange={(e) => setFormData({...formData, destName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder="Nom de la personne" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone <span className="text-gray-400 text-xs">(optionnel)</span></label>
+                    <input type="tel" value={formData.destPhone} onChange={(e) => setFormData({...formData, destPhone: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder="+250 7XX XXX XXX" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Adresse de livraison <span className="text-red-500">*</span></label>
+                    <input type="text" value={formData.destAddress} onChange={(e) => setFormData({...formData, destAddress: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder="Rue, quartier, ville" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Âge <span className="text-gray-400 text-xs">(optionnel - si anniversaire)</span></label>
+                    <input type="text" value={formData.destAge} onChange={(e) => setFormData({...formData, destAge: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder="Ex: 25 ans" />
+                  </div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
                 </motion.div>
               )}
@@ -277,10 +378,24 @@ export default function ContactForm() {
               {step === 3 && (
                 <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Quel événement ?</h3>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Type *</label><select value={formData.eventType} onChange={(e) => setFormData({...formData, eventType: e.target.value})} className="w-full px-4 py-3 border rounded-lg">{eventTypes.map(t => <option key={t}>{t}</option>)}</select></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Date *</label><input type="date" value={formData.eventDate} onChange={(e) => setFormData({...formData, eventDate: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Heure *</label><input type="time" value={formData.eventTime} onChange={(e) => setFormData({...formData, eventTime: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Lieu exact *</label><input type="text" value={formData.eventLocation} onChange={(e) => setFormData({...formData, eventLocation: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" /></div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Type <span className="text-red-500">*</span></label>
+                    <select value={formData.eventType} onChange={(e) => setFormData({...formData, eventType: e.target.value})} className="w-full px-4 py-3 border rounded-lg">
+                      {eventTypes.map(t => <option key={t}>{t}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Date <span className="text-red-500">*</span></label>
+                    <input type="date" value={formData.eventDate} onChange={(e) => setFormData({...formData, eventDate: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Heure <span className="text-red-500">*</span></label>
+                    <input type="time" value={formData.eventTime} onChange={(e) => setFormData({...formData, eventTime: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Lieu exact <span className="text-red-500">*</span></label>
+                    <input type="text" value={formData.eventLocation} onChange={(e) => setFormData({...formData, eventLocation: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder="Nom du lieu, adresse précise" />
+                  </div>
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
                 </motion.div>
               )}
@@ -343,8 +458,14 @@ export default function ContactForm() {
                     </div>
                   </div>
 
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Message sur la carte</label><textarea value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Joyeux anniversaire ! Je t'aime" /></div>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Instructions spéciales</label><textarea value={formData.specialInstructions} onChange={(e) => setFormData({...formData, specialInstructions: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Thème, couleurs, préférences..." /></div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Message sur la carte</label>
+                    <textarea value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder="Joyeux anniversaire ! Je t'aime" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Instructions spéciales</label>
+                    <textarea value={formData.specialInstructions} onChange={(e) => setFormData({...formData, specialInstructions: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Thème, couleurs, préférences..." />
+                  </div>
 
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
                 </motion.div>
@@ -354,7 +475,19 @@ export default function ContactForm() {
                 <motion.div key="step5" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">Livraison & Budget</h3>
                   
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Mode de livraison</label><div className="grid grid-cols-2 gap-4"><label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'delivery' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}><input type="radio" name="deliveryMethod" value="delivery" checked={formData.deliveryMethod === 'delivery'} onChange={() => setFormData({...formData, deliveryMethod: 'delivery'})} className="w-4 h-4 text-primary" /><div><span className="font-semibold block">Livraison à domicile</span><span className="text-xs text-gray-500">+5 000 RWF</span></div></label><label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'pickup' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}><input type="radio" name="deliveryMethod" value="pickup" checked={formData.deliveryMethod === 'pickup'} onChange={() => setFormData({...formData, deliveryMethod: 'pickup'})} className="w-4 h-4 text-primary" /><div><span className="font-semibold block">Retrait au bureau</span><span className="text-xs text-gray-500">Gratuit</span></div></label></div></div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Mode de livraison</label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'delivery' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                        <input type="radio" name="deliveryMethod" value="delivery" checked={formData.deliveryMethod === 'delivery'} onChange={() => setFormData({...formData, deliveryMethod: 'delivery'})} className="w-4 h-4 text-primary" />
+                        <div><span className="font-semibold block">Livraison à domicile</span><span className="text-xs text-gray-500">+5 000 RWF</span></div>
+                      </label>
+                      <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'pickup' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                        <input type="radio" name="deliveryMethod" value="pickup" checked={formData.deliveryMethod === 'pickup'} onChange={() => setFormData({...formData, deliveryMethod: 'pickup'})} className="w-4 h-4 text-primary" />
+                        <div><span className="font-semibold block">Retrait au bureau</span><span className="text-xs text-gray-500">Gratuit</span></div>
+                      </label>
+                    </div>
+                  </div>
 
                   <div className="bg-primaryLight rounded-xl p-5">
                     <h4 className="font-semibold text-dark mb-3">Récapitulatif des services</h4>
@@ -376,10 +509,10 @@ export default function ContactForm() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Votre budget (RWF)</label>
-                    <input type="number" value={formData.budget || totalPrice} onChange={handleBudgetChange} className="w-full px-4 py-3 border rounded-lg" placeholder={totalPrice.toString()} />
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Votre budget (RWF) <span className="text-gray-400 text-xs">(optionnel - laisse vide pour utiliser le total)</span></label>
+                    <input type="number" value={formData.budget || ''} onChange={handleBudgetChange} className="w-full px-4 py-3 border rounded-lg" placeholder={totalPrice.toString()} />
                     {budgetError && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{budgetError}</p>}
-                    <p className="text-xs text-gray-400 mt-1">Budget minimum requis : {totalPrice.toLocaleString()} RWF</p>
+                    <p className="text-xs text-gray-400 mt-1">Budget minimum suggéré : {totalPrice.toLocaleString()} RWF</p>
                   </div>
 
                   <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">Retour</button><button type="button" onClick={nextStep} className="btn-primary flex-1">Suivant →</button></div>
@@ -392,9 +525,18 @@ export default function ContactForm() {
                   
                   <ReviewContent />
                   
-                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight"><input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5 text-primary rounded" /><span>Surprise discrète (ne pas révéler l'expéditeur)</span></label>
-                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight"><input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5 text-primary rounded" /><span>Le destinataire doit être présent lors de la livraison</span></label>
-                  <div><label className="block text-sm font-medium text-gray-700 mb-2">Notes supplémentaires</label><textarea value={formData.additionalNotes} onChange={(e) => setFormData({...formData, additionalNotes: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Information importante..." /></div>
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight">
+                    <input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5 text-primary rounded" />
+                    <span>Surprise discrète (ne pas révéler l'expéditeur)</span>
+                  </label>
+                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight">
+                    <input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5 text-primary rounded" />
+                    <span>Le destinataire doit être présent lors de la livraison</span>
+                  </label>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Notes supplémentaires <span className="text-gray-400 text-xs">(optionnel)</span></label>
+                    <textarea value={formData.additionalNotes} onChange={(e) => setFormData({...formData, additionalNotes: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder="Information importante..." />
+                  </div>
 
                   <div className="flex flex-col gap-3">
                     <div className="flex gap-4">
