@@ -8,7 +8,7 @@ import {
   Calendar as CalendarIcon, Clock, Phone, Mail, Gift, 
   MessageCircle, User, Package, Heart, Sparkles, Globe, 
   Flower2, Baby, Coffee, AlertCircle, Truck, CheckCircle, 
-  XCircle, Clock as ClockIcon, PartyPopper 
+  XCircle, Clock as ClockIcon, PartyPopper, Trash2
 } from 'lucide-react';
 
 interface Order {
@@ -28,6 +28,8 @@ interface Order {
   selectedPacks: number[];
   selectedBaskets: { id: number; version: 'standard' | 'premium' }[];
   budget: number;
+  confirmedAmount?: number;
+  originalBudget?: number;
   totalPrice?: number;
   deliveryMethod: 'delivery' | 'pickup';
   message: string;
@@ -226,12 +228,26 @@ export default function DashboardPage() {
 
   const updateOrderStatus = async (id: string, status: string) => {
     try {
+      let confirmedAmount = null;
+      if (status === 'confirmed') {
+        const amount = prompt('Entrez le montant confirmé pour cette commande (en RWF) :');
+        if (amount && !isNaN(Number(amount)) && Number(amount) > 0) {
+          confirmedAmount = Number(amount);
+        } else if (amount !== null) {
+          alert('Veuillez entrer un montant valide');
+          return;
+        }
+      }
+      
       const res = await authFetch('/functions/update-order-status', {
         method: 'POST',
-        body: JSON.stringify({ id, status })
+        body: JSON.stringify({ id, status, confirmedAmount })
       });
       if (res.ok) {
         await fetchData();
+        if (status === 'confirmed' && confirmedAmount) {
+          alert(`Commande confirmée avec le montant de ${confirmedAmount.toLocaleString()} RWF`);
+        }
       } else {
         const error = await res.json();
         console.error('Erreur mise à jour:', error);
@@ -251,7 +267,7 @@ export default function DashboardPage() {
       });
       if (res.ok) {
         await fetchData();
-        alert(`Avis ${status === 'published' ? 'publié' : status === 'rejected' ? 'rejeté' : 'restauré'} avec succès`);
+        alert(`Avis ${status === 'published' ? 'publié' : 'rejeté'} avec succès`);
       } else {
         const error = await res.json();
         console.error('Erreur modération:', error);
@@ -260,6 +276,28 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Erreur:', error);
       alert('Erreur lors de la modération');
+    }
+  };
+
+  const deleteTestimonial = async (id: string) => {
+    if (confirm('⚠️ Attention : Cette action est IRRÉVERSIBLE. Voulez-vous vraiment supprimer définitivement cet avis ?')) {
+      try {
+        const res = await authFetch('/functions/delete-testimonial', {
+          method: 'DELETE',
+          body: JSON.stringify({ id })
+        });
+        if (res.ok) {
+          await fetchData();
+          alert('Avis supprimé définitivement');
+        } else {
+          const error = await res.json();
+          console.error('Erreur suppression:', error);
+          alert('Erreur lors de la suppression');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la suppression');
+      }
     }
   };
 
@@ -272,7 +310,11 @@ export default function DashboardPage() {
     pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
     publishedTestimonials: testimonials.filter(t => t.status === 'published').length,
     rejectedTestimonials: testimonials.filter(t => t.status === 'rejected').length,
-    totalRevenue: orders.reduce((sum, o) => sum + (Number(o.budget) || 0), 0)
+    totalRevenue: orders.reduce((sum, o) => {
+      if (o.status === 'confirmed' && o.confirmedAmount) return sum + (Number(o.confirmedAmount) || 0);
+      if (o.status === 'cancelled') return sum;
+      return sum + (Number(o.budget) || 0);
+    }, 0)
   }), [orders, testimonials]);
 
   const getStatusBadge = (status: string) => {
@@ -394,13 +436,13 @@ export default function DashboardPage() {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm opacity-80">Commande</p>
-                <h2 className="text-xl md:text-2xl font-bold font-mono">{order.id}</h2>
+                <h2 className="text-xl md:text-2xl font-bold font-mono break-all">{order.id}</h2>
               </div>
               <button onClick={onClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
                 <X size={20} className="text-white" />
               </button>
             </div>
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(order.status)} bg-opacity-20`}>
                 {getStatusIcon(order.status)}
                 {getStatusLabel(order.status)}
@@ -524,7 +566,18 @@ export default function DashboardPage() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <p className="flex items-center gap-2"><Truck size={16} className="text-gray-400" /><span><strong>Mode:</strong> {order.deliveryMethod === 'delivery' ? 'Livraison à domicile (+5 000 RWF)' : 'Retrait au bureau'}</span></p>
-                <p className="flex items-center gap-2"><AlertCircle size={16} className="text-gray-400" /><span><strong>Budget total:</strong> <span className="font-bold text-primary text-lg">{Number(order.budget).toLocaleString()} RWF</span></span></p>
+                <div>
+                  <p className="flex items-center gap-2"><AlertCircle size={16} className="text-gray-400" /><span><strong>Budget:</strong> <span className="font-bold text-primary text-lg">
+                    {order.status === 'confirmed' && order.confirmedAmount 
+                      ? `${order.confirmedAmount.toLocaleString()} RWF`
+                      : order.status === 'cancelled'
+                      ? <span className="line-through text-gray-400">{order.budget?.toLocaleString()} RWF</span>
+                      : `${order.budget?.toLocaleString()} RWF`}
+                  </span></span></p>
+                  {order.status === 'confirmed' && order.confirmedAmount && order.originalBudget && order.originalBudget !== order.confirmedAmount && (
+                    <p className="text-xs text-gray-400 ml-6">Initial: {order.originalBudget.toLocaleString()} RWF</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -680,9 +733,18 @@ export default function DashboardPage() {
                         {order.destAddress && (
                           <p className="text-xs text-gray-400 mt-1 break-words">📍 {order.destAddress}</p>
                         )}
-                        <p className="text-primary font-bold mt-2 text-sm md:text-base">
-                          {Number(order.budget).toLocaleString()} RWF
-                        </p>
+                        <div className="flex flex-col mt-2">
+                          <p className="text-primary font-bold text-sm md:text-base">
+                            {order.status === 'confirmed' && order.confirmedAmount 
+                              ? `${order.confirmedAmount.toLocaleString()} RWF` 
+                              : order.status === 'cancelled'
+                              ? <span className="line-through text-gray-400">{order.budget?.toLocaleString()} RWF</span>
+                              : `${order.budget?.toLocaleString()} RWF`}
+                          </p>
+                          {order.status === 'confirmed' && order.confirmedAmount && order.originalBudget && order.originalBudget !== order.confirmedAmount && (
+                            <p className="text-xs text-gray-400">Initial: {order.originalBudget.toLocaleString()} RWF</p>
+                          )}
+                        </div>
                         {order.message && (
                           <TruncatedText text={order.message} maxLength={80} />
                         )}
@@ -763,7 +825,7 @@ export default function DashboardPage() {
                         <p className="text-xs md:text-sm text-gray-500 mt-2">— {testimonial.nom || 'Anonyme'}</p>
                       </div>
                       
-                      <div className="flex gap-2 w-full md:w-auto">
+                      <div className="flex gap-2 w-full md:w-auto flex-wrap">
                         {testimonial.status === 'pending' && (
                           <>
                             <button 
@@ -784,7 +846,7 @@ export default function DashboardPage() {
                         {testimonial.status === 'published' && (
                           <button 
                             onClick={() => moderateTestimonial(testimonial.id, 'rejected')} 
-                            className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-red-600 transition w-full"
+                            className="bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-orange-600 transition flex-1"
                           >
                             Retirer
                           </button>
@@ -793,11 +855,19 @@ export default function DashboardPage() {
                         {testimonial.status === 'rejected' && (
                           <button 
                             onClick={() => moderateTestimonial(testimonial.id, 'published')} 
-                            className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-green-600 transition w-full"
+                            className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-green-600 transition flex-1"
                           >
                             Restaurer
                           </button>
                         )}
+                        
+                        {/* Bouton Supprimer définitivement - visible pour tous les statuts */}
+                        <button 
+                          onClick={() => deleteTestimonial(testimonial.id)} 
+                          className="bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-red-800 transition flex items-center gap-1"
+                        >
+                          <Trash2 size={14} /> Supprimer
+                        </button>
                       </div>
                     </div>
                   </div>

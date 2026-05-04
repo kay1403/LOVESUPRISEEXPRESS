@@ -1,11 +1,11 @@
-const { updateCommandeStatus } = require('../../lib/utils/netlify-blobs.js');
+const { deleteAvis } = require('../../lib/utils/netlify-blobs.js');
 const { isAdmin } = require('../../lib/utils/verify-token.js');
 
 exports.handler = async (event) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+    'Access-Control-Allow-Methods': 'DELETE, OPTIONS'
   };
 
   if (event.httpMethod === 'OPTIONS') {
@@ -22,14 +22,26 @@ exports.handler = async (event) => {
   }
 
   try {
-    const { id, status, confirmedAmount } = JSON.parse(event.body);
-    const updated = await updateCommandeStatus(id, status, confirmedAmount);
+    const { id } = JSON.parse(event.body);
+    
+    if (!id || typeof id !== 'string') {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'ID invalide' })
+      };
+    }
+    
+    const deleted = await deleteAvis(id);
+    console.log(`🗑️ Avis ${id} supprimé définitivement`);
+    
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, commande: updated })
+      body: JSON.stringify({ success: true, deleted })
     };
   } catch (error) {
+    console.error('Erreur suppression:', error);
     return {
       statusCode: 500,
       headers,

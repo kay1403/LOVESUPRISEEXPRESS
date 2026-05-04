@@ -76,3 +76,9 @@
   to = "/.netlify/functions/get-photo"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/functions/delete-testimonial"
+  to = "/.netlify/functions/delete-testimonial"
+  status = 200
+  force = true
