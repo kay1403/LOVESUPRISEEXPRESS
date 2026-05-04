@@ -8,7 +8,7 @@ import {
   Calendar as CalendarIcon, Clock, Phone, Mail, Gift, 
   MessageCircle, User, Package, Heart, Sparkles, Globe, 
   Flower2, Baby, Coffee, AlertCircle, Truck, CheckCircle, 
-  XCircle, Clock as ClockIcon, PartyPopper, Trash2
+  XCircle, Clock as ClockIcon, PartyPopper, Trash2, Filter, CalendarDays
 } from 'lucide-react';
 
 interface Order {
@@ -105,6 +105,36 @@ const basketsData = [
   { id: 5, name: 'Wellness', icon: Flower2, standard: 50000, premium: 100000 }
 ];
 
+// Fonction pour obtenir la date du jour sans heure
+const getTodayDate = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+};
+
+// Fonction pour vérifier si une date correspond au filtre
+const matchesDateFilter = (dateStr: string, filter: string): boolean => {
+  const date = new Date(dateStr);
+  date.setHours(0, 0, 0, 0);
+  const today = getTodayDate();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const twoDaysAgo = new Date(today);
+  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+  
+  switch(filter) {
+    case 'today':
+      return date.getTime() === today.getTime();
+    case 'yesterday':
+      return date.getTime() === yesterday.getTime();
+    case '2days':
+      return date.getTime() === twoDaysAgo.getTime();
+    case 'all':
+    default:
+      return true;
+  }
+};
+
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState<Order[]>([]);
@@ -114,30 +144,45 @@ export default function DashboardPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [selectedOrderDetails, setSelectedOrderDetails] = useState<Order | null>(null);
   const { getToken, user } = useNetlifyAuth();
+  
+  // Filtres
+  const [ordersFilter, setOrdersFilter] = useState('all');
+  const [avisFilter, setAvisFilter] = useState('all');
+  const [showOrdersFilter, setShowOrdersFilter] = useState(false);
+  const [showAvisFilter, setShowAvisFilter] = useState(false);
 
-  // Pagination pour les commandes
+  // Données filtrées
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => matchesDateFilter(order.createdAt, ordersFilter));
+  }, [orders, ordersFilter]);
+
+  const filteredTestimonials = useMemo(() => {
+    return testimonials.filter(testimonial => matchesDateFilter(testimonial.createdAt, avisFilter));
+  }, [testimonials, avisFilter]);
+
+  // Pagination pour les commandes filtrées
   const [ordersCurrentPage, setOrdersCurrentPage] = useState(1);
   const ordersPerPage = 5;
-  const ordersTotalPages = Math.ceil(orders.length / ordersPerPage);
-  const paginatedOrders = orders.slice(
+  const ordersTotalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const paginatedOrders = filteredOrders.slice(
     (ordersCurrentPage - 1) * ordersPerPage,
     ordersCurrentPage * ordersPerPage
   );
 
-  // Pagination pour les avis
+  // Pagination pour les avis filtrés
   const [avisCurrentPage, setAvisCurrentPage] = useState(1);
   const avisPerPage = 5;
-  const avisTotalPages = Math.ceil(testimonials.length / avisPerPage);
-  const paginatedTestimonials = testimonials.slice(
+  const avisTotalPages = Math.ceil(filteredTestimonials.length / avisPerPage);
+  const paginatedTestimonials = filteredTestimonials.slice(
     (avisCurrentPage - 1) * avisPerPage,
     avisCurrentPage * avisPerPage
   );
 
-  // Réinitialiser la page quand on change d'onglet
+  // Réinitialiser la page quand on change d'onglet ou de filtre
   useEffect(() => {
     setOrdersCurrentPage(1);
     setAvisCurrentPage(1);
-  }, [activeTab]);
+  }, [activeTab, ordersFilter, avisFilter]);
 
   const openPhotoModal = (photoUrl: string | undefined, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -302,20 +347,20 @@ export default function DashboardPage() {
   };
 
   const stats = useMemo(() => ({
-    totalOrders: orders.length,
-    pendingOrders: orders.filter(o => o.status === 'pending').length,
-    confirmedOrders: orders.filter(o => o.status === 'confirmed').length,
-    deliveredOrders: orders.filter(o => o.status === 'delivered').length,
-    cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
-    pendingTestimonials: testimonials.filter(t => t.status === 'pending').length,
-    publishedTestimonials: testimonials.filter(t => t.status === 'published').length,
-    rejectedTestimonials: testimonials.filter(t => t.status === 'rejected').length,
-    totalRevenue: orders.reduce((sum, o) => {
+    totalOrders: filteredOrders.length,
+    pendingOrders: filteredOrders.filter(o => o.status === 'pending').length,
+    confirmedOrders: filteredOrders.filter(o => o.status === 'confirmed').length,
+    deliveredOrders: filteredOrders.filter(o => o.status === 'delivered').length,
+    cancelledOrders: filteredOrders.filter(o => o.status === 'cancelled').length,
+    pendingTestimonials: filteredTestimonials.filter(t => t.status === 'pending').length,
+    publishedTestimonials: filteredTestimonials.filter(t => t.status === 'published').length,
+    rejectedTestimonials: filteredTestimonials.filter(t => t.status === 'rejected').length,
+    totalRevenue: filteredOrders.reduce((sum, o) => {
       if (o.status === 'confirmed' && o.confirmedAmount) return sum + (Number(o.confirmedAmount) || 0);
       if (o.status === 'cancelled') return sum;
       return sum + (Number(o.budget) || 0);
     }, 0)
-  }), [orders, testimonials]);
+  }), [filteredOrders, filteredTestimonials]);
 
   const getStatusBadge = (status: string) => {
     const badges: Record<string, string> = {
@@ -362,6 +407,72 @@ export default function DashboardPage() {
       default: return 'bg-yellow-100 text-yellow-700';
     }
   };
+
+  // Composant Filtre
+  const FilterDropdown = ({ filter, setFilter, show, setShow, label }: { 
+    filter: string; 
+    setFilter: (value: string) => void; 
+    show: boolean; 
+    setShow: (value: boolean) => void;
+    label: string;
+  }) => {
+    const getFilterLabel = (f: string) => {
+      switch(f) {
+        case 'today': return "Aujourd'hui";
+        case 'yesterday': return 'Hier';
+        case '2days': return 'Il y a 2 jours';
+        default: return 'Toutes les dates';
+      }
+    };
+
+    return (
+      <div className="relative">
+        <button
+          onClick={() => setShow(!show)}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm border rounded-lg bg-white hover:bg-gray-50 transition"
+        >
+          <Filter size={14} />
+          <span>{getFilterLabel(filter)}</span>
+          <ChevronDown size={14} className={`transition-transform ${show ? 'rotate-180' : ''}`} />
+        </button>
+        {show && (
+          <div className="absolute top-full right-0 mt-1 bg-white border rounded-lg shadow-lg z-20 min-w-[150px]">
+            <button
+              onClick={() => { setFilter('all'); setShow(false); }}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg ${filter === 'all' ? 'bg-primary/10 text-primary' : ''}`}
+            >
+              📅 Toutes les dates
+            </button>
+            <button
+              onClick={() => { setFilter('today'); setShow(false); }}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${filter === 'today' ? 'bg-primary/10 text-primary' : ''}`}
+            >
+              ✅ Aujourd'hui
+            </button>
+            <button
+              onClick={() => { setFilter('yesterday'); setShow(false); }}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${filter === 'yesterday' ? 'bg-primary/10 text-primary' : ''}`}
+            >
+              📆 Hier
+            </button>
+            <button
+              onClick={() => { setFilter('2days'); setShow(false); }}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 last:rounded-b-lg ${filter === '2days' ? 'bg-primary/10 text-primary' : ''}`}
+            >
+              📅 Il y a 2 jours
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Composant ChevronDown
+  const ChevronDown = ({ size, className }: { size: number; className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <polyline points="6 9 12 15 18 9"></polyline>
+    </svg>
+  );
 
   // Fonctions pour formater les sélections
   const getSelectedPacksList = (selectedPacks: number[]) => {
@@ -436,7 +547,7 @@ export default function DashboardPage() {
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm opacity-80">Commande</p>
-                <h2 className="text-xl md:text-2xl font-bold font-mono break-all">{order.id}</h2>
+                <h2 className="text-xl md:text-2xl font-bold font-mono text-sm break-all">{order.id}</h2>
               </div>
               <button onClick={onClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
                 <X size={20} className="text-white" />
@@ -681,29 +792,57 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs avec filtres */}
       <div className="px-4 md:px-6">
-        <div className="flex gap-2 border-b overflow-x-auto">
-          <button 
-            onClick={() => setActiveTab('orders')} 
-            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
-              activeTab === 'orders' 
-                ? 'border-b-2 border-primary text-primary' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Commandes ({stats.totalOrders})
-          </button>
-          <button 
-            onClick={() => setActiveTab('testimonials')} 
-            className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
-              activeTab === 'testimonials' 
-                ? 'border-b-2 border-primary text-primary' 
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            Avis clients ({stats.pendingTestimonials} en attente)
-          </button>
+        <div className="flex flex-wrap gap-2 border-b overflow-x-auto">
+          <div className="flex flex-1 gap-2">
+            <button 
+              onClick={() => setActiveTab('orders')} 
+              className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
+                activeTab === 'orders' 
+                  ? 'border-b-2 border-primary text-primary' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Commandes ({filteredOrders.length})
+            </button>
+            <button 
+              onClick={() => setActiveTab('testimonials')} 
+              className={`px-3 md:px-4 py-2 font-medium text-sm md:text-base whitespace-nowrap transition ${
+                activeTab === 'testimonials' 
+                  ? 'border-b-2 border-primary text-primary' 
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              Avis clients ({filteredTestimonials.length})
+            </button>
+          </div>
+          
+          {/* Filtre pour Commandes */}
+          {activeTab === 'orders' && (
+            <div className="ml-auto pb-2">
+              <FilterDropdown 
+                filter={ordersFilter}
+                setFilter={setOrdersFilter}
+                show={showOrdersFilter}
+                setShow={setShowOrdersFilter}
+                label="Commandes"
+              />
+            </div>
+          )}
+          
+          {/* Filtre pour Avis */}
+          {activeTab === 'testimonials' && (
+            <div className="ml-auto pb-2">
+              <FilterDropdown 
+                filter={avisFilter}
+                setFilter={setAvisFilter}
+                show={showAvisFilter}
+                setShow={setShowAvisFilter}
+                label="Avis"
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -713,7 +852,20 @@ export default function DashboardPage() {
             <div className="space-y-3 md:space-y-4">
               {paginatedOrders.length === 0 ? (
                 <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
-                  Aucune commande pour le moment
+                  {ordersFilter !== 'all' ? (
+                    <>
+                      <CalendarDays size={48} className="text-gray-300 mx-auto mb-4" />
+                      <p>Aucune commande pour la période sélectionnée</p>
+                      <button 
+                        onClick={() => setOrdersFilter('all')}
+                        className="mt-3 text-primary text-sm hover:underline"
+                      >
+                        Voir toutes les commandes
+                      </button>
+                    </>
+                  ) : (
+                    <p>Aucune commande pour le moment</p>
+                  )}
                 </div>
               ) : (
                 paginatedOrders.map((order) => (
@@ -783,7 +935,20 @@ export default function DashboardPage() {
             <div className="space-y-3 md:space-y-4">
               {paginatedTestimonials.length === 0 ? (
                 <div className="text-center py-12 text-gray-500 bg-white rounded-xl">
-                  Aucun témoignage pour le moment
+                  {avisFilter !== 'all' ? (
+                    <>
+                      <CalendarDays size={48} className="text-gray-300 mx-auto mb-4" />
+                      <p>Aucun avis pour la période sélectionnée</p>
+                      <button 
+                        onClick={() => setAvisFilter('all')}
+                        className="mt-3 text-primary text-sm hover:underline"
+                      >
+                        Voir tous les avis
+                      </button>
+                    </>
+                  ) : (
+                    <p>Aucun témoignage pour le moment</p>
+                  )}
                 </div>
               ) : (
                 paginatedTestimonials.map((testimonial) => (
@@ -861,7 +1026,6 @@ export default function DashboardPage() {
                           </button>
                         )}
                         
-                        {/* Bouton Supprimer définitivement - visible pour tous les statuts */}
                         <button 
                           onClick={() => deleteTestimonial(testimonial.id)} 
                           className="bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-red-800 transition flex items-center gap-1"
