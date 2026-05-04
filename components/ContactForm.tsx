@@ -338,7 +338,7 @@ export default function ContactForm() {
                   <h3 className="text-2xl font-bold text-dark mb-6">Qui êtes-vous ?</h3>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Nom complet <span className="text-red-500">*</span></label>
-                    <input type="text" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" placeholder="Jean Dupont" />
+                    <input type="text" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" placeholder="Votre nom" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Téléphone WhatsApp <span className="text-red-500">*</span></label>
