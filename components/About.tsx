@@ -4,30 +4,53 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Sparkles, Users, Clock, Award, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
+interface AboutImage {
+  id: number
+  src: string
+  alt: string
+  order: number
+}
+
 export default function About() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
   const [imagesLoaded, setImagesLoaded] = useState(false)
+  const [images, setImages] = useState<AboutImage[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const images = [
-    { src: '/images/IMG-20260417-WA0038.jpg', alt: 'EYEANG Love - Fondatrice LoveExpress' },
-    { src: '/images/IMG-20260417-WA0039.jpg', alt: 'EYEANG Love - Organisation de surprises' },
-    { src: '/images/IMG-20260417-WA0040.jpg', alt: 'EYEANG Love - Créatrice de moments magiques' }
-  ]
+  useEffect(() => {
+    fetchAboutImages()
+  }, [])
+
+  const fetchAboutImages = async () => {
+    try {
+      const response = await fetch('/api/cms/about-images')
+      const data = await response.json()
+      if (data.success && data.images && data.images.length > 0) {
+        setImages(data.images)
+      }
+    } catch (error) {
+      console.error('Erreur chargement images about:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Rotation automatique toutes les 7 secondes
   useEffect(() => {
-    if (isHovering) return
+    if (loading || images.length === 0 || isHovering) return
     
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % images.length)
     }, 7000)
     
     return () => clearInterval(interval)
-  }, [isHovering, images.length])
+  }, [isHovering, images.length, loading])
 
   // Préchargement des images
   useEffect(() => {
+    if (loading || images.length === 0) return
+    
     let loadedCount = 0
     images.forEach((image) => {
       const img = new Image()
@@ -38,14 +61,22 @@ export default function About() {
           setImagesLoaded(true)
         }
       }
+      img.onerror = () => {
+        loadedCount++
+        if (loadedCount === images.length) {
+          setImagesLoaded(true)
+        }
+      }
     })
-  }, [images])
+  }, [images, loading])
 
   const nextImage = () => {
+    if (images.length === 0) return
     setCurrentImageIndex((prev) => (prev + 1) % images.length)
   }
 
   const prevImage = () => {
+    if (images.length === 0) return
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
   }
 
@@ -67,7 +98,7 @@ export default function About() {
     'Attention aux détails'
   ]
 
-  if (!imagesLoaded) {
+  if (loading || !imagesLoaded) {
     return (
       <section className="py-24 bg-primaryLight">
         <div className="container-custom">
@@ -85,11 +116,21 @@ export default function About() {
     )
   }
 
+  if (images.length === 0) {
+    return (
+      <section className="py-24 bg-primaryLight">
+        <div className="container-custom text-center">
+          <p className="text-gray-500">Aucune image disponible</p>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-24 bg-primaryLight">
       <div className="container-custom">
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Carrousel photo avec effet de fondu - version img standard */}
+          {/* Carrousel photo avec effet de fondu */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -113,6 +154,10 @@ export default function About() {
                     src={images[currentImageIndex].src}
                     alt={images[currentImageIndex].alt}
                     className="w-full h-full object-cover"
+                    onError={(e) => {
+                      console.error('Erreur chargement image:', images[currentImageIndex].src)
+                      e.currentTarget.src = '/images/placeholder.jpg'
+                    }}
                   />
                 </motion.div>
               </AnimatePresence>
@@ -132,12 +177,14 @@ export default function About() {
               <button
                 onClick={prevImage}
                 className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white hover:bg-primary transition-all duration-300 z-20 opacity-0 group-hover:opacity-100"
+                aria-label="Image précédente"
               >
                 <ChevronLeft size={20} />
               </button>
               <button
                 onClick={nextImage}
                 className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white hover:bg-primary transition-all duration-300 z-20 opacity-0 group-hover:opacity-100"
+                aria-label="Image suivante"
               >
                 <ChevronRight size={20} />
               </button>
@@ -153,6 +200,7 @@ export default function About() {
                         ? 'w-8 h-2 bg-primary'
                         : 'w-2 h-2 bg-white/60 hover:bg-white/90'
                     }`}
+                    aria-label={`Aller à l'image ${idx + 1}`}
                   />
                 ))}
               </div>

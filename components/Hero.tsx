@@ -399,7 +399,7 @@ export default function Hero() {
               </motion.p>
 
               <motion.div className="space-y-1.5" initial="hidden" animate="visible">
-                {currentService.features && currentService.features.map((feature, idx) => (
+                {currentService.features && currentService.features?.map((feature, idx) => (
                   <motion.div key={idx} custom={idx} variants={featureVariants} className="flex items-center gap-2">
                     <div className="w-3 h-px bg-primary" />
                     <span className="text-gray-600 text-xs">{feature}</span>

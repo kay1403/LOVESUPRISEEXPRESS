@@ -4,7 +4,6 @@ backend:
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
-public_path: "/images/uploads"
 
 collections:
   - name: "services"
@@ -100,12 +99,25 @@ collections:
       - label: "Caractéristiques"
         name: "features"
         widget: "list"
-        required: true
-        default: ["Fleurs fraîches de saison", "Emballage élégant", "Carte personnalisée", "Livraison offerte à Kigali"]
+        required: false
+        default: []
         field: { label: "Feature", name: "feature", widget: "string" }
       - { label: "Couleur de fond", name: "bgColor", widget: "string", default: "#FF4D6D", required: false }
       - { label: "Couleur claire", name: "bgLight", widget: "string", default: "#FFF0F3", required: false }
       - { label: "Position", name: "order", widget: "number", default: 0 }
+
+  - name: "about_images"
+    label: "🖼️ Images About"
+    folder: "content/about_images"
+    create: true
+    slug: "image_{{id}}"
+    format: "json"
+    extension: "json"
+    fields:
+      - { label: "ID", name: "id", widget: "number" }
+      - { label: "Image", name: "src", widget: "image" }
+      - { label: "Texte alternatif", name: "alt", widget: "string" }
+      - { label: "Ordre", name: "order", widget: "number", default: 0 }
 
   - name: "footer"
     label: "📋 Footer"

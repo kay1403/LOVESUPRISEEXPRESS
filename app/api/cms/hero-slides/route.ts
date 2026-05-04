@@ -10,7 +10,10 @@ const defaultHeroSlides = [
     badge: "Frais & Élégant",
     description: "Des bouquets de fleurs fraîches pour toutes les occasions.",
     image: "https://images.pexels.com/photos/35841488/pexels-photo-35841488.jpeg",
-    order: 1
+    features: ["Fleurs fraîches de saison", "Emballage élégant", "Carte personnalisée", "Livraison offerte"],
+    order: 1,
+    bgColor: "#FF4D6D",
+    bgLight: "#FFF0F3"
   },
   {
     id: 2,
@@ -19,7 +22,10 @@ const defaultHeroSlides = [
     badge: "Art & Élégance",
     description: "Transformez n'importe quel espace en un lieu magique.",
     image: "https://images.pexels.com/photos/17417854/pexels-photo-17417854.jpeg",
-    order: 2
+    features: ["Décoration sur mesure", "Installation complète", "Démontage inclus", "Discrétion garantie"],
+    order: 2,
+    bgColor: "#FF4D6D",
+    bgLight: "#FFF0F3"
   },
   {
     id: 3,
@@ -28,7 +34,10 @@ const defaultHeroSlides = [
     badge: "Expert en émotions",
     description: "Vous avez l'idée, nous l'exécutons.",
     image: "https://images.pexels.com/photos/30319620/pexels-photo-30319620.jpeg",
-    order: 3
+    features: ["Planification complète", "Coordination avec prestataires", "Timing et discrétion", "Présence sur place"],
+    order: 3,
+    bgColor: "#FF4D6D",
+    bgLight: "#FFF0F3"
   },
   {
     id: 4,
@@ -37,7 +46,10 @@ const defaultHeroSlides = [
     badge: "Luxe & Douceur",
     description: "Des paniers cadeaux luxueux soigneusement composés.",
     image: "https://i.pinimg.com/1200x/e6/3e/d3/e63ed35a4e166f7830f1ef5cd2839392.jpg",
-    order: 4
+    features: ["Panier premium", "Produits de qualité", "Carte personnalisée", "Emballage cadeau"],
+    order: 4,
+    bgColor: "#FF4D6D",
+    bgLight: "#FFF0F3"
   }
 ];
 
@@ -54,6 +66,8 @@ export async function GET() {
           const filePath = path.join(contentPath, file);
           const content = fs.readFileSync(filePath, 'utf-8');
           const slide = JSON.parse(content);
+          // ✅ S'assurer que features existe
+          if (!slide.features) slide.features = [];
           slides.push(slide);
         }
       }

@@ -10,6 +10,11 @@
   NODE_VERSION = "20"
 
 [[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+
+[[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
@@ -22,13 +27,13 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
+# ✅ Correction: /admin/* vers admin/index.html
 [[redirects]]
   from = "/admin/*"
   to = "/admin/index.html"
   status = 200
 
-# ============ REDIRECTS DES FONCTIONS NETLIFY ============
-# Utilisation de /functions/ pour éviter conflit avec Next.js API routes
+# Redirections des fonctions
 [[redirects]]
   from = "/functions/submit-order"
   to = "/.netlify/functions/submit-order"
