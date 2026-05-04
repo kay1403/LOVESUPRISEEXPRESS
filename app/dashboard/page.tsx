@@ -545,14 +545,14 @@ export default function DashboardPage() {
           {/* En-tête avec ID et statut */}
           <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-5 md:p-6 sticky top-0 z-10">
             <div className="flex justify-between items-start">
-              <div>
-                <p className="text-sm opacity-80">Commande</p>
-                <h2 className="text-xl md:text-2xl font-bold font-mono text-sm break-all">{order.id}</h2>
+                <div>
+                  <p className="text-sm opacity-80">Commande</p>
+                  <h2 className="text-xl md:text-2xl font-bold font-mono break-all">{order.id}</h2>
+                </div>
+                <button onClick={onClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
+                  <X size={20} className="text-white" />
+                </button>
               </div>
-              <button onClick={onClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
-                <X size={20} className="text-white" />
-              </button>
-            </div>
             <div className="mt-3 flex items-center gap-2 flex-wrap">
               <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(order.status)} bg-opacity-20`}>
                 {getStatusIcon(order.status)}
