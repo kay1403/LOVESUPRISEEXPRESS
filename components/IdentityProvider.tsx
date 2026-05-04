@@ -14,7 +14,7 @@ export default function IdentityProvider() {
         const module = await import('netlify-identity-widget');
         const netlifyIdentity = module.default || module;
         
-        // ✅ CORRECTION: Utiliser 'APIUrl' (avec majuscule U) car c'est l'API correcte de netlify-identity-widget
+        // ✅ CORRECTION: Utiliser 'APIUrl' (conforme aux typings) — il est mappé à api_url côté runtime
         netlifyIdentity.init({
           APIUrl: process.env.NEXT_PUBLIC_NETLIFY_URL || window.location.origin,
         });
