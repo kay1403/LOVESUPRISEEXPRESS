@@ -3,22 +3,40 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNetlifyAuth } from './AdminIdentity';
-import { X, Maximize2, ChevronLeft, ChevronRight, Eye, MapPin, Calendar as CalendarIcon, Phone, Mail, Gift, MessageCircle, User } from 'lucide-react';
+import { 
+  X, Maximize2, ChevronLeft, ChevronRight, Eye, MapPin, 
+  Calendar as CalendarIcon, Clock, Phone, Mail, Gift, 
+  MessageCircle, User, Package, Heart, Sparkles, Globe, 
+  Flower2, Baby, Coffee, AlertCircle, Truck, CheckCircle, 
+  XCircle, Clock as ClockIcon, PartyPopper 
+} from 'lucide-react';
 
 interface Order {
   id: string;
   clientName: string;
+  clientPhone: string;
+  clientEmail: string;
   destName: string;
+  destPhone: string;
   destAddress: string;
+  destAge: string;
+  eventType: string;
+  eventDate: string;
+  eventTime: string;
+  eventLocation: string;
+  selectedServices: number[];
+  selectedPacks: number[];
+  selectedBaskets: { id: number; version: 'standard' | 'premium' }[];
   budget: number;
   totalPrice?: number;
+  deliveryMethod: 'delivery' | 'pickup';
+  message: string;
+  specialInstructions: string;
+  isDiscreet: boolean;
+  needsPersonPresent: boolean;
+  additionalNotes: string;
   status: 'pending' | 'confirmed' | 'delivered' | 'cancelled';
   createdAt: string;
-  eventDate: string;
-  eventType: string;
-  message?: string;
-  clientPhone?: string;
-  clientEmail?: string;
 }
 
 interface TestimonialItem {
@@ -64,6 +82,26 @@ const TruncatedText = ({ text, maxLength = 100 }: { text: string; maxLength?: nu
     </div>
   );
 };
+
+// Données pour l'affichage des services (identique au formulaire)
+const servicesData = [
+  { id: 1, name: 'Party Decoration', icon: PartyPopper, packs: [
+    { id: 1, name: 'Pack Premier Frisson', price: 60000 },
+    { id: 2, name: 'Pack Love XL', price: 100000 },
+    { id: 3, name: 'Pack ROYAL SURPRISE', price: 200000 }
+  ] },
+  { id: 2, name: 'Surprise Planner', icon: Sparkles, price: 200000 },
+  { id: 3, name: 'Custom Website', icon: Globe, priceMin: 25000, priceMax: 45000 },
+  { id: 4, name: 'Flower Bouquet', icon: Flower2, price: 15000 }
+];
+
+const basketsData = [
+  { id: 1, name: 'Birthday', icon: Gift, standard: 15000, premium: 80000 },
+  { id: 2, name: 'Romantic', icon: Heart, standard: 40000, premium: 50000 },
+  { id: 3, name: 'New Baby', icon: Baby, standard: 40000, premium: 80000 },
+  { id: 4, name: 'Gourmet', icon: Coffee, standard: 20000, premium: 70000 },
+  { id: 5, name: 'Wellness', icon: Flower2, standard: 50000, premium: 100000 }
+];
 
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('orders');
@@ -257,6 +295,16 @@ export default function DashboardPage() {
     return labels[status] || 'En attente';
   };
 
+  const getStatusIcon = (status: string) => {
+    switch(status) {
+      case 'pending': return <ClockIcon size={16} className="text-yellow-600" />;
+      case 'confirmed': return <CheckCircle size={16} className="text-green-600" />;
+      case 'delivered': return <Truck size={16} className="text-blue-600" />;
+      case 'cancelled': return <XCircle size={16} className="text-red-600" />;
+      default: return <ClockIcon size={16} />;
+    }
+  };
+
   const getTestimonialStatusLabel = (status: string) => {
     switch(status) {
       case 'published': return 'Publié';
@@ -271,6 +319,23 @@ export default function DashboardPage() {
       case 'rejected': return 'bg-red-100 text-red-700';
       default: return 'bg-yellow-100 text-yellow-700';
     }
+  };
+
+  // Fonctions pour formater les sélections
+  const getSelectedPacksList = (selectedPacks: number[]) => {
+    const packs = servicesData[0]?.packs || [];
+    return selectedPacks.map(packId => packs.find(p => p.id === packId)).filter(Boolean);
+  };
+
+  const getSelectedServicesList = (selectedServices: number[]) => {
+    return selectedServices.map(serviceId => servicesData.find(s => s.id === serviceId)).filter(Boolean);
+  };
+
+  const getSelectedBasketsList = (selectedBaskets: { id: number; version: 'standard' | 'premium' }[]) => {
+    return selectedBaskets.map(basket => ({
+      ...basketsData.find(b => b.id === basket.id),
+      version: basket.version
+    })).filter(Boolean);
   };
 
   // Composant de pagination réutilisable
@@ -300,9 +365,13 @@ export default function DashboardPage() {
     );
   };
 
-  // Composant Modal Détails Commande
+  // Composant Modal Détails Commande - Version COMPLÈTE (A à Z)
   const OrderDetailsModal = ({ order, onClose }: { order: Order | null; onClose: () => void }) => {
     if (!order) return null;
+
+    const selectedPacks = getSelectedPacksList(order.selectedPacks || []);
+    const selectedServices = getSelectedServicesList(order.selectedServices || []);
+    const selectedBaskets = getSelectedBasketsList(order.selectedBaskets || []);
 
     return (
       <motion.div
@@ -317,79 +386,193 @@ export default function DashboardPage() {
           animate={{ scale: 1, y: 0, opacity: 1 }}
           exit={{ scale: 0.9, y: 50, opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="max-w-3xl w-full bg-white rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
+          className="max-w-4xl w-full bg-white rounded-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           {/* En-tête avec ID et statut */}
-          <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-5 md:p-6">
+          <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-5 md:p-6 sticky top-0 z-10">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-sm opacity-80">Commande</p>
-                <h2 className="text-xl md:text-2xl font-bold">{order.id}</h2>
+                <h2 className="text-xl md:text-2xl font-bold font-mono">{order.id}</h2>
               </div>
               <button onClick={onClose} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition">
                 <X size={20} className="text-white" />
               </button>
             </div>
-            <div className="mt-3">
-              <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(order.status)} bg-opacity-20`}>
+            <div className="mt-3 flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(order.status)} bg-opacity-20`}>
+                {getStatusIcon(order.status)}
                 {getStatusLabel(order.status)}
+              </span>
+              <span className="text-xs opacity-70">
+                {new Date(order.createdAt).toLocaleString('fr-FR')}
               </span>
             </div>
           </div>
 
           <div className="p-5 md:p-6 space-y-6">
-            {/* Section Client */}
-            <div>
-              <h3 className="font-semibold text-dark flex items-center gap-2 mb-3"><User size={18} className="text-primary" />Informations client</h3>
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                <p className="flex items-center gap-2"><User size={16} className="text-gray-400" /><span className="font-medium">{order.clientName}</span></p>
-                {order.clientPhone && <p className="flex items-center gap-2"><Phone size={16} className="text-gray-400" /><a href={`tel:${order.clientPhone}`} className="text-primary hover:underline">{order.clientPhone}</a></p>}
-                {order.clientEmail && <p className="flex items-center gap-2"><Mail size={16} className="text-gray-400" /><span>{order.clientEmail}</span></p>}
+            {/* ==================== SECTION 1: INFORMATIONS CLIENT ==================== */}
+            <div className="bg-gradient-to-r from-blue-50 to-white rounded-xl p-4 border-l-4 border-blue-500">
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
+                <User size={20} className="text-blue-500" />
+                Informations client
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <p className="flex items-center gap-2"><User size={16} className="text-gray-400" /><span className="font-medium">{order.clientName || 'Non renseigné'}</span></p>
+                <p className="flex items-center gap-2"><Phone size={16} className="text-gray-400" /><a href={`tel:${order.clientPhone}`} className="text-primary hover:underline">{order.clientPhone || 'Non renseigné'}</a></p>
+                <p className="flex items-center gap-2"><Mail size={16} className="text-gray-400" /><span>{order.clientEmail || 'Non renseigné'}</span></p>
               </div>
             </div>
 
-            {/* Section Destinataire */}
-            <div>
-              <h3 className="font-semibold text-dark flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" />Destinataire</h3>
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                <p className="flex items-center gap-2"><User size={16} className="text-gray-400" /><span className="font-medium">{order.destName}</span></p>
-                {order.destAddress && <p className="flex items-center gap-2"><MapPin size={16} className="text-gray-400" /><span>{order.destAddress}</span></p>}
+            {/* ==================== SECTION 2: INFORMATIONS DESTINATAIRE ==================== */}
+            <div className="bg-gradient-to-r from-purple-50 to-white rounded-xl p-4 border-l-4 border-purple-500">
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
+                <Gift size={20} className="text-purple-500" />
+                Destinataire
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <p className="flex items-center gap-2"><User size={16} className="text-gray-400" /><span className="font-medium">{order.destName || 'Non renseigné'}</span></p>
+                <p className="flex items-center gap-2"><Phone size={16} className="text-gray-400" /><span>{order.destPhone || 'Non renseigné'}</span></p>
+                <p className="flex items-center gap-2 md:col-span-2"><MapPin size={16} className="text-gray-400" /><span>{order.destAddress || 'Non renseignée'}</span></p>
+                {order.destAge && <p className="flex items-center gap-2"><CalendarIcon size={16} className="text-gray-400" /><span>Âge: {order.destAge} ans</span></p>}
               </div>
             </div>
 
-            {/* Section Événement */}
-            <div>
-              <h3 className="font-semibold text-dark flex items-center gap-2 mb-3"><CalendarIcon size={18} className="text-primary" />Détails de l'événement</h3>
-              <div className="bg-gray-50 rounded-xl p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <p className="flex items-center gap-2"><CalendarIcon size={16} className="text-gray-400" /><span><strong>Type:</strong> {order.eventType}</span></p>
-                {order.eventDate && <p className="flex items-center gap-2"><CalendarIcon size={16} className="text-gray-400" /><span><strong>Date:</strong> {new Date(order.eventDate).toLocaleDateString('fr-FR')}</span></p>}
+            {/* ==================== SECTION 3: ÉVÉNEMENT ==================== */}
+            <div className="bg-gradient-to-r from-pink-50 to-white rounded-xl p-4 border-l-4 border-pink-500">
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
+                <CalendarIcon size={20} className="text-pink-500" />
+                Détails de l'événement
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <p className="flex items-center gap-2"><CalendarIcon size={16} className="text-gray-400" /><span><strong>Type:</strong> {order.eventType || 'Non spécifié'}</span></p>
+                <p className="flex items-center gap-2"><CalendarIcon size={16} className="text-gray-400" /><span><strong>Date:</strong> {order.eventDate ? new Date(order.eventDate).toLocaleDateString('fr-FR') : 'Non renseignée'}</span></p>
+                <p className="flex items-center gap-2"><Clock size={16} className="text-gray-400" /><span><strong>Heure:</strong> {order.eventTime || 'Non renseignée'}</span></p>
+                <p className="flex items-center gap-2 md:col-span-2"><MapPin size={16} className="text-gray-400" /><span><strong>Lieu:</strong> {order.eventLocation || 'Non renseigné'}</span></p>
               </div>
             </div>
 
-            {/* Section Financière */}
-            <div>
-              <h3 className="font-semibold text-dark flex items-center gap-2 mb-3">💰 Informations financières</h3>
-              <div className="bg-primaryLight rounded-xl p-4">
-                <p className="text-2xl font-bold text-primary">{Number(order.budget).toLocaleString()} RWF</p>
-                <p className="text-sm text-gray-500 mt-1">Budget total de la commande</p>
-              </div>
-            </div>
-
-            {/* Section Message */}
-            {order.message && (
-              <div>
-                <h3 className="font-semibold text-dark flex items-center gap-2 mb-3"><MessageCircle size={18} className="text-primary" />Message personnalisé</h3>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="italic text-gray-600">"{order.message}"</p>
+            {/* ==================== SECTION 4: SERVICES & PRODUITS ==================== */}
+            <div className="bg-gradient-to-r from-green-50 to-white rounded-xl p-4 border-l-4 border-green-500">
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
+                <Package size={20} className="text-green-500" />
+                Services & Produits commandés
+              </h3>
+              
+              {/* Packs Party Decoration */}
+              {selectedPacks.length > 0 && (
+                <div className="mb-4">
+                  <p className="font-medium text-dark flex items-center gap-2 mb-2"><PartyPopper size={16} className="text-primary" />Packs Party Decoration</p>
+                  <ul className="space-y-1 ml-6">
+                    {selectedPacks.map((pack, idx) => (
+                      <li key={idx} className="flex justify-between text-sm">
+                        <span>{pack?.name}</span>
+                        <span className="font-bold text-primary">{pack?.price?.toLocaleString()} RWF</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
+              )}
+              
+              {/* Autres services */}
+              {selectedServices.length > 0 && (
+                <div className="mb-4">
+                  <p className="font-medium text-dark flex items-center gap-2 mb-2"><Sparkles size={16} className="text-primary" />Services additionnels</p>
+                  <ul className="space-y-1 ml-6">
+                    {selectedServices.map((service, idx) => (
+                      <li key={idx} className="flex justify-between text-sm">
+                        <span>{service?.name}</span>
+                        <span className="font-bold text-primary">
+                          {service?.price 
+                            ? `${service.price.toLocaleString()} RWF` 
+                            : service?.priceMin ? `${service.priceMin.toLocaleString()} - ${service.priceMax?.toLocaleString()} RWF` : 'Sur devis'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Paniers cadeaux */}
+              {selectedBaskets.length > 0 && (
+                <div className="mb-4">
+                  <p className="font-medium text-dark flex items-center gap-2 mb-2"><Gift size={16} className="text-primary" />Paniers cadeaux</p>
+                  <ul className="space-y-1 ml-6">
+                    {selectedBaskets.map((basket, idx) => (
+                      <li key={idx} className="flex justify-between text-sm">
+                        <span>{basket?.name} ({basket?.version === 'standard' ? 'Standard' : 'Premium'})</span>
+                        <span className="font-bold text-primary">
+                          {(basket?.version === 'standard' ? basket?.standard : basket?.premium)?.toLocaleString()} RWF
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {selectedPacks.length === 0 && selectedServices.length === 0 && selectedBaskets.length === 0 && (
+                <p className="text-gray-500 italic text-sm">Aucun service ou produit sélectionné</p>
+              )}
+            </div>
+
+            {/* ==================== SECTION 5: LIVRAISON & BUDGET ==================== */}
+            <div className="bg-gradient-to-r from-orange-50 to-white rounded-xl p-4 border-l-4 border-orange-500">
+              <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
+                <Truck size={20} className="text-orange-500" />
+                Livraison & Budget
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <p className="flex items-center gap-2"><Truck size={16} className="text-gray-400" /><span><strong>Mode:</strong> {order.deliveryMethod === 'delivery' ? 'Livraison à domicile (+5 000 RWF)' : 'Retrait au bureau'}</span></p>
+                <p className="flex items-center gap-2"><AlertCircle size={16} className="text-gray-400" /><span><strong>Budget total:</strong> <span className="font-bold text-primary text-lg">{Number(order.budget).toLocaleString()} RWF</span></span></p>
+              </div>
+            </div>
+
+            {/* ==================== SECTION 6: MESSAGES ==================== */}
+            {(order.message || order.specialInstructions || order.additionalNotes) && (
+              <div className="bg-gradient-to-r from-yellow-50 to-white rounded-xl p-4 border-l-4 border-yellow-500">
+                <h3 className="font-semibold text-dark flex items-center gap-2 mb-4 text-lg">
+                  <MessageCircle size={20} className="text-yellow-500" />
+                  Messages & Instructions
+                </h3>
+                {order.message && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-500 mb-1">Message sur la carte</p>
+                    <p className="italic text-gray-700">"{order.message}"</p>
+                  </div>
+                )}
+                {order.specialInstructions && (
+                  <div className="mb-3">
+                    <p className="text-sm text-gray-500 mb-1">Instructions spéciales</p>
+                    <p className="text-gray-700">{order.specialInstructions}</p>
+                  </div>
+                )}
+                {order.additionalNotes && (
+                  <div>
+                    <p className="text-sm text-gray-500 mb-1">Notes supplémentaires</p>
+                    <p className="text-gray-700">{order.additionalNotes}</p>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Métadonnées */}
-            <div className="text-xs text-gray-400 pt-2 border-t">
-              <p>Commandée le : {new Date(order.createdAt).toLocaleString('fr-FR')}</p>
-            </div>
+            {/* ==================== SECTION 7: OPTIONS SPÉCIALES ==================== */}
+            {(order.isDiscreet || order.needsPersonPresent) && (
+              <div className="bg-gradient-to-r from-indigo-50 to-white rounded-xl p-4 border-l-4 border-indigo-500">
+                <h3 className="font-semibold text-dark flex items-center gap-2 mb-3 text-lg">
+                  <Heart size={20} className="text-indigo-500" />
+                  Options spéciales
+                </h3>
+                <div className="space-y-2">
+                  {order.isDiscreet && (
+                    <p className="flex items-center gap-2 text-sm"><CheckCircle size={14} className="text-green-500" />Surprise discrète (ne pas révéler l'expéditeur)</p>
+                  )}
+                  {order.needsPersonPresent && (
+                    <p className="flex items-center gap-2 text-sm"><CheckCircle size={14} className="text-green-500" />Le destinataire doit être présent lors de la livraison</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
       </motion.div>
@@ -425,7 +608,7 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-8">
-      {/* Stats Cards - Responsive: 2 colonnes sur mobile, 4 sur desktop */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 p-4 md:p-6">
         <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm">
           <p className="text-xl md:text-2xl font-bold">{stats.totalOrders}</p>
@@ -445,7 +628,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Tabs - Responsive */}
+      {/* Tabs */}
       <div className="px-4 md:px-6">
         <div className="flex gap-2 border-b overflow-x-auto">
           <button 
@@ -664,7 +847,7 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Modal détails commande */}
+      {/* Modal détails commande COMPLET */}
       <AnimatePresence>
         {selectedOrderDetails && (
           <OrderDetailsModal 
