@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { ArrowRight, Heart } from 'lucide-react'
+import { ArrowRight, Heart, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 
 interface Realisation {
@@ -16,6 +16,29 @@ export default function Realizations() {
   const [realizations, setRealisations] = useState<Realisation[]>([])
   const [selectedImage, setSelectedImage] = useState<Realisation | null>(null)
   const [loading, setLoading] = useState(true)
+  
+  // ✅ État pour le nombre d'éléments visibles
+  const [visibleCount, setVisibleCount] = useState(6)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // ✅ Détecter la taille d'écran pour ajuster le seuil
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // ✅ Ajuster le nombre initial en fonction de la taille d'écran
+  useEffect(() => {
+    if (isMobile) {
+      setVisibleCount(3) // Mobile : 3 éléments d'abord
+    } else {
+      setVisibleCount(6) // Desktop/Tablette : 6 éléments d'abord
+    }
+  }, [isMobile])
 
   useEffect(() => {
     fetchRealisations()
@@ -32,6 +55,26 @@ export default function Realizations() {
       console.error('Erreur chargement réalisations:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // ✅ Éléments visibles
+  const visibleRealisations = realizations.slice(0, visibleCount)
+  
+  // ✅ Calculer le seuil maximum (combien d'éléments avant d'afficher le bouton)
+  const getMaxBeforeButton = () => {
+    if (isMobile) return 3
+    return 6
+  }
+  
+  const hasMore = realizations.length > getMaxBeforeButton() && visibleCount < realizations.length
+
+  // ✅ Fonction pour charger plus
+  const loadMore = () => {
+    if (isMobile) {
+      setVisibleCount(prev => Math.min(prev + 3, realizations.length))
+    } else {
+      setVisibleCount(prev => Math.min(prev + 3, realizations.length))
     }
   }
 
@@ -65,12 +108,12 @@ export default function Realizations() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {realizations.map((image, index) => (
+            {visibleRealisations.map((image, index) => (
               <motion.div
                 key={image.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: (index % 6) * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ scale: 1.02 }}
                 className="cursor-pointer group"
@@ -90,6 +133,26 @@ export default function Realizations() {
             ))}
           </div>
 
+          {/* ✅ Bouton "Voir plus" - ne s'affiche que si nécessaire */}
+          {hasMore && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              viewport={{ once: true }}
+              className="text-center mt-8"
+            >
+              <button
+                onClick={loadMore}
+                className="inline-flex items-center gap-2 px-6 py-3 border-2 border-primary/30 text-primary rounded-full hover:border-primary hover:bg-primary/5 transition-all duration-300 group"
+              >
+                <ChevronDown size={18} className="group-hover:translate-y-0.5 transition-transform" />
+                <span className="font-medium">Voir plus de réalisations</span>
+              </button>
+            </motion.div>
+          )}
+
+          {/* ✅ Bouton Avis Clients - reste toujours visible */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
