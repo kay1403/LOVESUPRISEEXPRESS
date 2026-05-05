@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface FooterData {
   companyName: string
@@ -15,17 +16,18 @@ interface FooterData {
 }
 
 export default function Footer() {
+  const { t, i18n } = useTranslation()
   const [footerData, setFooterData] = useState<FooterData | null>(null)
   const [loading, setLoading] = useState(true)
   const currentYear = new Date().getFullYear()
 
   useEffect(() => {
     fetchFooter()
-  }, [])
+  }, [i18n.language])
 
   const fetchFooter = async () => {
     try {
-      const response = await fetch('/api/cms/footer')
+      const response = await fetch(`/api/cms/footer?lang=${i18n.language}`)
       const data = await response.json()
       if (data.success && data.footer) {
         setFooterData(data.footer)
@@ -66,7 +68,6 @@ export default function Footer() {
     <footer className="bg-dark text-white py-12">
       <div className="container-custom">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Colonne 1 - Brand */}
           <div>
             <h3 className="font-display text-2xl font-bold text-primary mb-4">
               {data.companyName}
@@ -76,9 +77,8 @@ export default function Footer() {
             </p>
           </div>
           
-          {/* Colonne 2 - Contact */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Contact</h4>
+            <h4 className="font-semibold text-lg mb-4">{t('footer.contact')}</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
               <li>Tel: {data.phone1}</li>
               <li>Tel: {data.phone2}</li>
@@ -86,9 +86,8 @@ export default function Footer() {
             </ul>
           </div>
           
-          {/* Colonne 3 - Services */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Services</h4>
+            <h4 className="font-semibold text-lg mb-4">{t('footer.services')}</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
               {data.services.map((service, idx) => (
                 <li key={idx}>{service}</li>
@@ -96,9 +95,8 @@ export default function Footer() {
             </ul>
           </div>
           
-          {/* Colonne 4 - Horaires */}
           <div>
-            <h4 className="font-semibold text-lg mb-4">Horaires</h4>
+            <h4 className="font-semibold text-lg mb-4">{t('footer.hours')}</h4>
             <ul className="space-y-2 text-gray-400 text-sm">
               {data.hours.map((hour, idx) => (
                 <li key={idx}>{hour.day}: {hour.time}</li>

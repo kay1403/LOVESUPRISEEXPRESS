@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { cmsTranslations } from '@/lib/cms-translations';
 
 const defaultFooter = {
   companyName: "LoveExpress",
@@ -23,8 +24,11 @@ const defaultFooter = {
   year: new Date().getFullYear()
 };
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const lang = url.searchParams.get('lang') || 'fr';
+    
     const contentPath = path.join(process.cwd(), 'content', 'footer');
     
     if (fs.existsSync(contentPath)) {
@@ -34,13 +38,26 @@ export async function GET() {
         if (file.endsWith('.json')) {
           const filePath = path.join(contentPath, file);
           const content = fs.readFileSync(filePath, 'utf-8');
-          const footer = JSON.parse(content);
+          let footer = JSON.parse(content);
+          
+          // Appliquer traduction si nécessaire
+          if (lang !== 'fr' && cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer]) {
+            const t = cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer];
+            footer = { ...footer, ...t };
+          }
+          
           return NextResponse.json({ success: true, footer });
         }
       }
     }
     
-    return NextResponse.json({ success: true, footer: defaultFooter });
+    // Fallback avec traduction
+    let defaultData = { ...defaultFooter };
+    if (lang !== 'fr' && cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer]) {
+      defaultData = { ...defaultData, ...cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer] };
+    }
+    
+    return NextResponse.json({ success: true, footer: defaultData });
   } catch (error) {
     console.error('Erreur lecture footer:', error);
     return NextResponse.json({ success: true, footer: defaultFooter });

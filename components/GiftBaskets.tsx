@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { X, Package, Heart, Baby, Coffee, Flower2, Sparkles, Gift, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface GiftBasket {
   id: number
@@ -19,17 +20,18 @@ interface GiftBasket {
 }
 
 export default function GiftBaskets() {
+  const { t, i18n } = useTranslation()
   const [giftBaskets, setGiftBaskets] = useState<GiftBasket[]>([])
   const [selectedBasket, setSelectedBasket] = useState<GiftBasket | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchGiftBaskets()
-  }, [])
+  }, [i18n.language])
 
   const fetchGiftBaskets = async () => {
     try {
-      const response = await fetch('/api/cms/gift-baskets')
+      const response = await fetch(`/api/cms/gift-baskets?lang=${i18n.language}`)
       const data = await response.json()
       if (data.success && data.giftBaskets) {
         setGiftBaskets(data.giftBaskets)
@@ -68,10 +70,10 @@ export default function GiftBaskets() {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="text-center mb-16">
             <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
               <Gift size={14} className="text-primary" />
-              <span className="text-xs font-medium text-primary uppercase tracking-wider">Cadeaux sur mesure</span>
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">{t('giftbaskets.badge')}</span>
             </div>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">Nos Paniers Cadeaux</h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">Des cadeaux soigneusement sélectionnés pour chaque occasion</p>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">{t('giftbaskets.title')}</h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">{t('giftbaskets.subtitle')}</p>
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -97,12 +99,12 @@ export default function GiftBaskets() {
                     {basket.popular && (
                       <div className="absolute top-4 right-4 bg-accent/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1">
                         <Sparkles size={12} className="text-dark" />
-                        <span className="text-xs font-semibold text-dark">Populaire</span>
+                        <span className="text-xs font-semibold text-dark">{t('giftbaskets.popular')}</span>
                       </div>
                     )}
                     <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <span className="text-white text-sm font-semibold bg-primary/90 px-5 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                        Voir le panier
+                        {t('giftbaskets.viewBasket')}
                       </span>
                     </div>
                   </div>
@@ -119,7 +121,7 @@ export default function GiftBaskets() {
                     <p className="text-gray-600 text-sm mb-4">{basket.description}</p>
                     <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                       <span className="text-primary font-bold">{basket.priceStandard.toLocaleString()} RWF</span>
-                      <button className="text-primary text-sm font-medium hover:text-accent transition">Détails</button>
+                      <button className="text-primary text-sm font-medium hover:text-accent transition">{t('giftbaskets.viewDetails')}</button>
                     </div>
                   </div>
                 </motion.div>
@@ -137,7 +139,7 @@ export default function GiftBaskets() {
                 <img src={selectedBasket.image} alt={selectedBasket.name} className="w-full h-full object-cover rounded-t-2xl" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                 <button onClick={() => setSelectedBasket(null)} className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full hover:bg-black/70 transition"><X size={20} className="text-white" /></button>
-                {selectedBasket.popular && (<div className="absolute top-4 left-4 bg-accent px-3 py-1 rounded-full flex items-center gap-1"><Sparkles size={12} className="text-dark" /><span className="text-xs font-semibold text-dark">Populaire</span></div>)}
+                {selectedBasket.popular && (<div className="absolute top-4 left-4 bg-accent px-3 py-1 rounded-full flex items-center gap-1"><Sparkles size={12} className="text-dark" /><span className="text-xs font-semibold text-dark">{t('giftbaskets.popular')}</span></div>)}
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full mb-3">
                     <span className="text-xs font-medium text-white uppercase tracking-wider">{selectedBasket.badge}</span>
@@ -148,16 +150,16 @@ export default function GiftBaskets() {
               <div className="p-6 space-y-5">
                 <p className="text-gray-600 leading-relaxed">{selectedBasket.longDescription}</p>
                 <div className="bg-primaryLight rounded-xl p-5">
-                  <h4 className="font-semibold text-dark mb-3 flex items-center gap-2"><Package size={18} className="text-primary" />Contenu du panier</h4>
+                  <h4 className="font-semibold text-dark mb-3 flex items-center gap-2"><Package size={18} className="text-primary" />{t('giftbaskets.includes')}</h4>
                   <ul className="grid grid-cols-2 gap-2">{selectedBasket.includes.map((item, idx) => (<li key={idx} className="flex items-center gap-2 text-gray-600 text-sm"><Check size={14} className="text-primary" />{item}</li>))}</ul>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="border rounded-xl p-3 text-center"><p className="text-xs text-gray-500">Standard</p><p className="text-xl font-bold text-primary">{selectedBasket.priceStandard.toLocaleString()} RWF</p></div>
-                  <div className="border rounded-xl p-3 text-center bg-gradient-to-r from-primary/5 to-primaryLight"><p className="text-xs text-gray-500">Premium</p><p className="text-xl font-bold text-primary">{selectedBasket.pricePremium.toLocaleString()} RWF</p></div>
+                  <div className="border rounded-xl p-3 text-center"><p className="text-xs text-gray-500">{t('giftbaskets.standard')}</p><p className="text-xl font-bold text-primary">{selectedBasket.priceStandard.toLocaleString()} RWF</p></div>
+                  <div className="border rounded-xl p-3 text-center bg-gradient-to-r from-primary/5 to-primaryLight"><p className="text-xs text-gray-500">{t('giftbaskets.premium')}</p><p className="text-xl font-bold text-primary">{selectedBasket.pricePremium.toLocaleString()} RWF</p></div>
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t">
-                  <div><p className="text-sm text-gray-500">À partir de</p><p className="text-2xl font-bold text-primary">{selectedBasket.priceStandard.toLocaleString()} RWF</p></div>
-                  <button onClick={() => { setSelectedBasket(null); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-primary text-white px-6 py-2.5 rounded-full font-semibold hover:bg-primary/90 transition">Commander</button>
+                  <div><p className="text-sm text-gray-500">{t('giftbaskets.from')}</p><p className="text-2xl font-bold text-primary">{selectedBasket.priceStandard.toLocaleString()} RWF</p></div>
+                  <button onClick={() => { setSelectedBasket(null); document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-primary text-white px-6 py-2.5 rounded-full font-semibold hover:bg-primary/90 transition">{t('giftbaskets.order')}</button>
                 </div>
               </div>
             </motion.div>

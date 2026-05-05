@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Sparkles, Users, Clock, Award, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface AboutImage {
   id: number
@@ -12,6 +13,7 @@ interface AboutImage {
 }
 
 export default function About() {
+  const { t } = useTranslation()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
   const [imagesLoaded, setImagesLoaded] = useState(false)
@@ -36,7 +38,6 @@ export default function About() {
     }
   }
 
-  // Rotation automatique toutes les 7 secondes
   useEffect(() => {
     if (loading || images.length === 0 || isHovering) return
     
@@ -47,7 +48,6 @@ export default function About() {
     return () => clearInterval(interval)
   }, [isHovering, images.length, loading])
 
-  // Préchargement des images
   useEffect(() => {
     if (loading || images.length === 0) return
     
@@ -85,17 +85,17 @@ export default function About() {
   }
 
   const stats = [
-    { value: '98%', label: 'Clients satisfaits', icon: Users },
-    { value: '100%', label: 'Passion et dévouement', icon: Heart },
-    { value: '24/7', label: 'Disponibilité', icon: Clock },
-    { value: 'Premium', label: 'Service exclusif', icon: Award }
+    { value: '98%', label: t('about.stats.satisfied'), icon: Users },
+    { value: '100%', label: t('about.stats.passion'), icon: Heart },
+    { value: '24/7', label: t('about.stats.availability'), icon: Clock },
+    { value: 'Premium', label: t('about.stats.exclusive'), icon: Award }
   ]
 
   const qualities = [
-    'Créativité illimitée',
-    'Discrétion absolue',
-    'Exécution parfaite',
-    'Attention aux détails'
+    t('about.qualities.creativity'),
+    t('about.qualities.discretion'),
+    t('about.qualities.execution'),
+    t('about.qualities.details')
   ]
 
   if (loading || !imagesLoaded) {
@@ -120,7 +120,7 @@ export default function About() {
     return (
       <section className="py-24 bg-primaryLight">
         <div className="container-custom text-center">
-          <p className="text-gray-500">Aucune image disponible</p>
+          <p className="text-gray-500">{t('about.noImages')}</p>
         </div>
       </section>
     )
@@ -130,7 +130,7 @@ export default function About() {
     <section className="py-24 bg-primaryLight">
       <div className="container-custom">
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Carrousel photo avec effet de fondu */}
+          {/* Carrousel photo - inchangé (vient du CMS) */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -162,7 +162,6 @@ export default function About() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Indicateur de progression (barre animée) */}
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/30 z-20">
                 <motion.div
                   className="h-full bg-primary"
@@ -173,7 +172,6 @@ export default function About() {
                 />
               </div>
 
-              {/* Navigation flèches */}
               <button
                 onClick={prevImage}
                 className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white hover:bg-primary transition-all duration-300 z-20 opacity-0 group-hover:opacity-100"
@@ -189,7 +187,6 @@ export default function About() {
                 <ChevronRight size={20} />
               </button>
 
-              {/* Indicateurs dots */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                 {images.map((_, idx) => (
                   <button
@@ -207,7 +204,7 @@ export default function About() {
             </div>
           </motion.div>
 
-          {/* Texte à propos */}
+          {/* Texte à propos - TRADUIT via i18n */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -216,22 +213,19 @@ export default function About() {
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
               <Heart size={16} className="text-primary" />
-              <span className="text-primary font-semibold text-sm">Notre histoire</span>
+              <span className="text-primary font-semibold text-sm">{t('about.ourStory')}</span>
             </div>
             
             <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-              Derrière chaque surprise, une passionnée
+              {t('about.title')}
             </h2>
             
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Je m'appelle <span className="font-semibold text-dark">EYEANG Love</span>, fondatrice de LoveExpress. 
-              Je transforme les moments ordinaires en souvenirs extraordinaires.
+              {t('about.description1')}
             </p>
             
             <p className="text-gray-600 mb-6 leading-relaxed">
-              Ce qui me motive chaque jour : voir l'étincelle dans les yeux 
-              de ceux qui reçoivent une surprise et la joie de ceux qui offrent.
-              Chaque projet est unique, chaque détail compte.
+              {t('about.description2')}
             </p>
 
             <div className="flex flex-wrap gap-3 mb-8">

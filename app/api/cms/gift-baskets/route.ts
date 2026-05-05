@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { translateGiftBasket } from '@/lib/cms-translations';
 
 const defaultGiftBaskets = [
   { id: 1, name: 'Birthday', subtitle: 'Gift Basket', badge: 'Anniversaire', description: 'Pour un anniversaire inoubliable', longDescription: 'Mini gâteau d\'anniversaire, bougie, carte personnalisée, jus de fruit.', priceStandard: 15000, pricePremium: 80000, popular: true, image: 'https://i.pinimg.com/1200x/ec/36/e4/ec36e470b8d41448d810491847893f83.jpg', includes: ['Mini gâteau anniversaire', 'Bougie', 'Carte personnalisée', 'Jus de fruit'] },
@@ -10,8 +11,11 @@ const defaultGiftBaskets = [
   { id: 5, name: 'Wellness', subtitle: 'Gift Basket', badge: 'Bien-être', description: 'Détente et bien-être', longDescription: 'Thé, huiles essentielles, savon, masques visage, parfum, crème.', priceStandard: 50000, pricePremium: 100000, popular: false, image: 'https://i.pinimg.com/1200x/fe/c3/97/fec397b6fbc634e851457411b107e4c5.jpg', includes: ['Thé', 'Huiles essentielles', 'Savon', 'Masques visage', 'Parfum', 'Crème'] }
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const lang = url.searchParams.get('lang') || 'fr';
+    
     const contentPath = path.join(process.cwd(), 'content', 'gift_baskets');
     
     if (fs.existsSync(contentPath)) {
@@ -28,11 +32,20 @@ export async function GET() {
       }
       
       if (baskets.length > 0) {
+        if (lang !== 'fr') {
+          const translatedBaskets = baskets.map((basket, idx) => translateGiftBasket(basket, lang, idx));
+          return NextResponse.json({ success: true, giftBaskets: translatedBaskets });
+        }
         return NextResponse.json({ success: true, giftBaskets: baskets });
       }
     }
     
-    return NextResponse.json({ success: true, giftBaskets: defaultGiftBaskets });
+    let defaultData = [...defaultGiftBaskets];
+    if (lang !== 'fr') {
+      defaultData = defaultData.map((basket, idx) => translateGiftBasket(basket, lang, idx));
+    }
+    
+    return NextResponse.json({ success: true, giftBaskets: defaultData });
   } catch (error) {
     console.error('Erreur lecture gift baskets:', error);
     return NextResponse.json({ success: true, giftBaskets: defaultGiftBaskets });

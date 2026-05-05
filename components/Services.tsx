@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { X, Info, Sparkles, Clock, MapPin, CreditCard, Heart, Gift, Flower2, Globe, PartyPopper, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 type ServiceOption = {
   name: string
@@ -34,17 +35,18 @@ type Service = {
 }
 
 export default function Services() {
+  const { t, i18n } = useTranslation()
   const [services, setServices] = useState<Service[]>([])
   const [selectedService, setSelectedService] = useState<Service | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchServices()
-  }, [])
+  }, [i18n.language])
 
   const fetchServices = async () => {
     try {
-      const response = await fetch('/api/cms/services')
+      const response = await fetch(`/api/cms/services?lang=${i18n.language}`)
       const data = await response.json()
       if (data.success && data.services) {
         setServices(data.services)
@@ -90,10 +92,10 @@ export default function Services() {
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
               <Heart size={14} className="text-primary" />
-              <span className="text-xs font-medium text-primary uppercase tracking-wider">Nos Prestations</span>
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">{t('services.badge')}</span>
             </div>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">Nos Services</h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">Tout ce dont vous avez besoin pour créer le moment de surprise parfait</p>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">{t('services.title')}</h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">{t('services.subtitle')}</p>
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -118,7 +120,7 @@ export default function Services() {
                     </div>
                     <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <span className="text-white text-sm font-semibold bg-primary/90 px-5 py-2 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                        Découvrir
+                        {t('services.buttons.details')}
                       </span>
                     </div>
                   </div>
@@ -136,7 +138,7 @@ export default function Services() {
                     <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                       <span className="text-primary font-bold">{service.priceRange}</span>
                       <button className="text-primary text-sm font-medium hover:text-accent transition flex items-center gap-1">
-                        Détails <Info size={14} />
+                        {t('services.buttons.details')} <Info size={14} />
                       </button>
                     </div>
                   </div>
@@ -182,7 +184,7 @@ export default function Services() {
               </div>
               <div className="p-6 space-y-6">
                 <div>
-                  <h4 className="text-xl font-semibold text-dark mb-3">Description</h4>
+                  <h4 className="text-xl font-semibold text-dark mb-3">{t('common.description')}</h4>
                   <p className="text-gray-600 leading-relaxed">{selectedService.longDescription}</p>
                 </div>
                 
@@ -190,7 +192,7 @@ export default function Services() {
                   <div className="bg-primaryLight rounded-xl p-5">
                     <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2">
                       <Sparkles size={20} className="text-primary" />
-                      Nos Packs Décoration
+                      {t('services.packsTitle')}
                     </h4>
                     <div className="space-y-3">
                       {selectedService.packs.map((pack, idx) => (
@@ -210,7 +212,7 @@ export default function Services() {
                   <div className="bg-primaryLight rounded-xl p-5">
                     <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2">
                       <Check size={20} className="text-primary" />
-                      Inclus
+                      {t('services.includes')}
                     </h4>
                     <ul className="space-y-2">
                       {selectedService.includes.map((item, idx) => (
@@ -226,7 +228,7 @@ export default function Services() {
                     <div className="bg-primaryLight rounded-xl p-5">
                       <h4 className="text-lg font-semibold text-dark mb-3 flex items-center gap-2">
                         <CreditCard size={20} className="text-primary" />
-                        Options
+                        {t('services.options')}
                       </h4>
                       <ul className="space-y-2">
                         {selectedService.options.map((option, idx) => (
@@ -237,7 +239,7 @@ export default function Services() {
                             ) : option.note ? (
                               <span className="text-xs text-gray-400">{option.note}</span>
                             ) : (
-                              <span className="text-green-600 text-xs">Inclus</span>
+                              <span className="text-green-600 text-xs">{t('common.included')}</span>
                             )}
                           </li>
                         ))}
@@ -252,7 +254,7 @@ export default function Services() {
                       <Clock size={20} className="text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Préparation</p>
+                      <p className="text-xs text-gray-500">{t('services.preparation')}</p>
                       <p className="font-semibold text-dark text-sm">{selectedService.duration}</p>
                     </div>
                   </div>
@@ -261,7 +263,7 @@ export default function Services() {
                       <MapPin size={20} className="text-primary" />
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500">Couverture</p>
+                      <p className="text-xs text-gray-500">{t('services.coverage')}</p>
                       <p className="font-semibold text-dark text-sm">{selectedService.coverage}</p>
                     </div>
                   </div>
@@ -275,13 +277,13 @@ export default function Services() {
                     }} 
                     className="flex-1 bg-primary text-white px-6 py-3 rounded-full font-semibold hover:bg-primary/90 transition"
                   >
-                    Demander un devis
+                    {t('services.buttons.getQuote')}
                   </button>
                   <button 
                     onClick={() => setSelectedService(null)} 
                     className="px-6 py-3 rounded-full border-2 border-gray-200 text-gray-600 font-semibold hover:border-primary hover:text-primary transition"
                   >
-                    Fermer
+                    {t('common.close')}
                   </button>
                 </div>
               </div>

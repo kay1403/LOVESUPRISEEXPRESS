@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { cmsTranslations } from '@/lib/cms-translations';
 
 const defaultRealisations = [
   { id: 1, title: 'Demande en mariage surprise', category: 'Proposal', image: 'https://images.pexels.com/photos/2253870/pexels-photo-2253870.jpeg' },
@@ -11,8 +12,11 @@ const defaultRealisations = [
   { id: 6, title: 'Bouquet de fleurs', category: 'Flowers', image: 'https://images.pexels.com/photos/568500/pexels-photo-568500.jpeg' }
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const lang = url.searchParams.get('lang') || 'fr';
+    
     const contentPath = path.join(process.cwd(), 'content', 'realisations');
     
     if (fs.existsSync(contentPath)) {
@@ -29,11 +33,28 @@ export async function GET() {
       }
       
       if (realisations.length > 0) {
+        if (lang !== 'fr' && cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations]) {
+          const translations = cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations];
+          const translatedRealisations = realisations.map((r, idx) => ({
+            ...r,
+            title: translations[idx] || r.title
+          }));
+          return NextResponse.json({ success: true, realisations: translatedRealisations });
+        }
         return NextResponse.json({ success: true, realisations });
       }
     }
     
-    return NextResponse.json({ success: true, realisations: defaultRealisations });
+    let defaultData = [...defaultRealisations];
+    if (lang !== 'fr' && cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations]) {
+      const translations = cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations];
+      defaultData = defaultData.map((r, idx) => ({
+        ...r,
+        title: translations[idx] || r.title
+      }));
+    }
+    
+    return NextResponse.json({ success: true, realisations: defaultData });
   } catch (error) {
     console.error('Erreur lecture réalisations:', error);
     return NextResponse.json({ success: true, realisations: defaultRealisations });

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { translateHeroSlide } from '@/lib/cms-translations';
 
 const defaultHeroSlides = [
   {
@@ -53,8 +54,11 @@ const defaultHeroSlides = [
   }
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const url = new URL(request.url);
+    const lang = url.searchParams.get('lang') || 'fr';
+    
     const contentPath = path.join(process.cwd(), 'content', 'hero_slides');
     
     if (fs.existsSync(contentPath)) {
@@ -66,7 +70,6 @@ export async function GET() {
           const filePath = path.join(contentPath, file);
           const content = fs.readFileSync(filePath, 'utf-8');
           const slide = JSON.parse(content);
-          // ✅ S'assurer que features existe
           if (!slide.features) slide.features = [];
           slides.push(slide);
         }
@@ -74,11 +77,22 @@ export async function GET() {
       
       if (slides.length > 0) {
         slides.sort((a, b) => (a.order || 0) - (b.order || 0));
+        
+        if (lang !== 'fr') {
+          const translatedSlides = slides.map((slide, idx) => translateHeroSlide(slide, lang, idx));
+          return NextResponse.json({ success: true, slides: translatedSlides });
+        }
+        
         return NextResponse.json({ success: true, slides });
       }
     }
     
-    return NextResponse.json({ success: true, slides: defaultHeroSlides });
+    let defaultData = [...defaultHeroSlides];
+    if (lang !== 'fr') {
+      defaultData = defaultData.map((slide, idx) => translateHeroSlide(slide, lang, idx));
+    }
+    
+    return NextResponse.json({ success: true, slides: defaultData });
   } catch (error) {
     console.error('Erreur lecture hero slides:', error);
     return NextResponse.json({ success: true, slides: defaultHeroSlides });

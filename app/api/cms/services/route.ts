@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { translateService } from '@/lib/cms-translations';
 
 // Données par défaut (fallback si fichiers CMS non trouvés)
 const defaultServices = [
@@ -81,8 +82,12 @@ const defaultServices = [
   }
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Récupérer la langue depuis l'URL
+    const url = new URL(request.url);
+    const lang = url.searchParams.get('lang') || 'fr';
+    
     // Essayer de lire les fichiers CMS
     const contentPath = path.join(process.cwd(), 'content', 'services');
     
@@ -100,14 +105,26 @@ export async function GET() {
       }
       
       if (services.length > 0) {
-        // ✅ CORRECTION: Trier les services par ID
+        // Trier les services par ID
         services.sort((a, b) => (a.id || 0) - (b.id || 0));
+        
+        // Appliquer la traduction si nécessaire
+        if (lang !== 'fr') {
+          const translatedServices = services.map((service, idx) => translateService(service, lang, idx));
+          return NextResponse.json({ success: true, services: translatedServices });
+        }
+        
         return NextResponse.json({ success: true, services });
       }
     }
     
-    // Fallback aux données par défaut (déjà triées)
-    return NextResponse.json({ success: true, services: defaultServices });
+    // Fallback aux données par défaut
+    let defaultData = [...defaultServices];
+    if (lang !== 'fr') {
+      defaultData = defaultData.map((service, idx) => translateService(service, lang, idx));
+    }
+    
+    return NextResponse.json({ success: true, services: defaultData });
   } catch (error) {
     console.error('Erreur lecture services:', error);
     return NextResponse.json({ success: true, services: defaultServices });

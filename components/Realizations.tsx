@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { ArrowRight, Heart, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
+import { useTranslation } from 'react-i18next'
 
 interface Realisation {
   id: number
@@ -13,15 +14,14 @@ interface Realisation {
 }
 
 export default function Realizations() {
+  const { t, i18n } = useTranslation()
   const [realizations, setRealisations] = useState<Realisation[]>([])
   const [selectedImage, setSelectedImage] = useState<Realisation | null>(null)
   const [loading, setLoading] = useState(true)
   
-  // ✅ État pour le nombre d'éléments visibles
   const [visibleCount, setVisibleCount] = useState(6)
   const [isMobile, setIsMobile] = useState(false)
 
-  // ✅ Détecter la taille d'écran pour ajuster le seuil
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -31,22 +31,21 @@ export default function Realizations() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // ✅ Ajuster le nombre initial en fonction de la taille d'écran
   useEffect(() => {
     if (isMobile) {
-      setVisibleCount(3) // Mobile : 3 éléments d'abord
+      setVisibleCount(3)
     } else {
-      setVisibleCount(6) // Desktop/Tablette : 6 éléments d'abord
+      setVisibleCount(6)
     }
   }, [isMobile])
 
   useEffect(() => {
     fetchRealisations()
-  }, [])
+  }, [i18n.language])
 
   const fetchRealisations = async () => {
     try {
-      const response = await fetch('/api/cms/realisations')
+      const response = await fetch(`/api/cms/realisations?lang=${i18n.language}`)
       const data = await response.json()
       if (data.success && data.realisations) {
         setRealisations(data.realisations)
@@ -58,10 +57,8 @@ export default function Realizations() {
     }
   }
 
-  // ✅ Éléments visibles
   const visibleRealisations = realizations.slice(0, visibleCount)
   
-  // ✅ Calculer le seuil maximum (combien d'éléments avant d'afficher le bouton)
   const getMaxBeforeButton = () => {
     if (isMobile) return 3
     return 6
@@ -69,7 +66,6 @@ export default function Realizations() {
   
   const hasMore = realizations.length > getMaxBeforeButton() && visibleCount < realizations.length
 
-  // ✅ Fonction pour charger plus
   const loadMore = () => {
     if (isMobile) {
       setVisibleCount(prev => Math.min(prev + 3, realizations.length))
@@ -99,12 +95,8 @@ export default function Realizations() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-              Nos Réalisations
-            </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              Découvrez nos dernières créations
-            </p>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">{t('realizations.title')}</h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">{t('realizations.subtitle')}</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -133,7 +125,6 @@ export default function Realizations() {
             ))}
           </div>
 
-          {/* ✅ Bouton "Voir plus" - ne s'affiche que si nécessaire */}
           {hasMore && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -147,12 +138,11 @@ export default function Realizations() {
                 className="inline-flex items-center gap-2 px-6 py-3 border-2 border-primary/30 text-primary rounded-full hover:border-primary hover:bg-primary/5 transition-all duration-300 group"
               >
                 <ChevronDown size={18} className="group-hover:translate-y-0.5 transition-transform" />
-                <span className="font-medium">Voir plus de réalisations</span>
+                <span className="font-medium">{t('realizations.viewMore')}</span>
               </button>
             </motion.div>
           )}
 
-          {/* ✅ Bouton Avis Clients - reste toujours visible */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -165,7 +155,7 @@ export default function Realizations() {
               className="btn-secondary inline-flex items-center gap-2 group"
             >
               <Heart size={18} className="group-hover:fill-primary transition" />
-              Avis Clients
+              {t('gallery.viewAll')}
               <ArrowRight size={18} className="group-hover:translate-x-1 transition" />
             </Link>
           </motion.div>

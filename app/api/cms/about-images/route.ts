@@ -52,13 +52,11 @@ export async function POST(request: Request) {
       fs.mkdirSync(contentPath, { recursive: true });
     }
     
-    // Sauvegarder chaque image individuellement
     for (const image of images) {
       const filePath = path.join(contentPath, `image_${image.id}.json`);
       fs.writeFileSync(filePath, JSON.stringify(image, null, 2));
     }
     
-    // Supprimer les anciens fichiers qui ne sont plus dans la liste
     const files = fs.readdirSync(contentPath);
     for (const file of files) {
       const fileId = parseInt(file.match(/image_(\d+)\.json/)?.[1] || '0');

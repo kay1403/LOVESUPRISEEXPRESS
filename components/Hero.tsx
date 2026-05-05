@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Heart, ChevronDown } from 'lucide-react'
 import Image from 'next/image'
 import LanguageSelector from './LanguageSelector'
+import { useTranslation } from 'react-i18next'
 
 interface HeroSlide {
   id: number
@@ -19,7 +20,7 @@ interface HeroSlide {
   order: number
 }
 
-// Cœurs flottants
+// Cœurs flottants (inchangé)
 const FloatingHearts = () => {
   const hearts = [
     { id: 1, x: "8%", y: "15%", size: 18, duration: 10, delay: 0 },
@@ -51,7 +52,7 @@ const FloatingHearts = () => {
   )
 }
 
-// Étoiles filantes
+// Étoiles filantes (inchangé)
 const ShootingStars = () => {
   const stars = [
     { id: 1, top: "8%", left: "-5%", duration: 2.5, delay: 0 },
@@ -79,7 +80,7 @@ const ShootingStars = () => {
   )
 }
 
-// Confettis
+// Confettis (inchangé)
 const Confetti = () => {
   const confettis = [
     { id: 1, x: "10%", y: "20%", width: 6, height: 3, color: "#FF4D6D", duration: 6, delay: 0 },
@@ -104,7 +105,7 @@ const Confetti = () => {
   )
 }
 
-// Rubans flottants
+// Rubans flottants (inchangé)
 const FloatingRibbons = () => {
   const ribbons = [
     { id: 1, x: "5%", y: "18%", duration: 11, delay: 0 },
@@ -133,7 +134,7 @@ const FloatingRibbons = () => {
   )
 }
 
-// Ballons flottants
+// Ballons flottants (inchangé)
 const FloatingBalloons = () => {
   const balloons = [
     { id: 1, x: "45%", y: "5%", size: 38, color: "#FF4D6D", duration: 16, delay: 0 },
@@ -164,12 +165,10 @@ const FloatingBalloons = () => {
   )
 }
 
-// Fonction pour extraire une version courte (max 30-40 caractères, 2-3 lignes de ~5 mots)
+// Fonction pour extraire une version courte
 const getShortDescription = (description: string) => {
-  // Supprimer les points pour que ce soit une seule phrase
   let cleanDesc = description.replace(/\./g, '').trim()
   
-  // Liste des descriptions personnalisées par slide
   const shortDescriptions: Record<number, string> = {
     1: "Bouquets frais sur mesure",
     2: "Décoration magique pour vos événements",
@@ -177,7 +176,6 @@ const getShortDescription = (description: string) => {
     4: "Paniers cadeaux personnalisables"
   }
   
-  // Extraire l'ID approximatif depuis la description
   if (cleanDesc.includes("Bouquet") || cleanDesc.includes("fleurs")) {
     return "Bouquets frais sur mesure"
   }
@@ -191,7 +189,6 @@ const getShortDescription = (description: string) => {
     return "Paniers cadeaux personnalisables"
   }
   
-  // Fallback: prendre les 40 premiers caractères
   if (cleanDesc.length > 40) {
     return cleanDesc.substring(0, 37) + "..."
   }
@@ -199,6 +196,7 @@ const getShortDescription = (description: string) => {
 }
 
 export default function Hero() {
+  const { t, i18n } = useTranslation()
   const [slides, setSlides] = useState<HeroSlide[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [progress, setProgress] = useState(0)
@@ -217,11 +215,12 @@ export default function Hero() {
 
   useEffect(() => {
     fetchHeroSlides()
-  }, [])
+  }, [i18n.language]) // ✅ Recharger quand la langue change
 
   const fetchHeroSlides = async () => {
     try {
-      const response = await fetch('/api/cms/hero-slides')
+      // ✅ Passer la langue dans l'URL
+      const response = await fetch(`/api/cms/hero-slides?lang=${i18n.language}`)
       const data = await response.json()
       if (data.success && data.slides) {
         const sortedSlides = [...data.slides].sort((a, b) => (a.order || 0) - (b.order || 0))
@@ -349,8 +348,8 @@ export default function Hero() {
 
       <div className="absolute top-20 left-6 z-30">
         <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className="flex flex-col">
-          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight leading-[1.1]">Love Surprise</span>
-          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-gray-700 tracking-tight leading-[1.1]">Express</span>
+          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight leading-[1.1]">{t('hero.loveSurprise')}</span>
+          <span className="font-display text-5xl md:text-7xl lg:text-8xl font-bold text-gray-700 tracking-tight leading-[1.1]">{t('hero.express')}</span>
         </motion.div>
       </div>
 
@@ -388,7 +387,6 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* Description - version mobile courte (max 5 mots/ligne, 2-3 lignes) */}
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

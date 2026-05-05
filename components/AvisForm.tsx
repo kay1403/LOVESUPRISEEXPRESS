@@ -3,8 +3,10 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { Star, Heart, Camera, X } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 export default function AvisForm() {
+  const { t } = useTranslation()
   const [note, setNote] = useState(5)
   const [message, setMessage] = useState('')
   const [nom, setNom] = useState('')
@@ -17,9 +19,8 @@ export default function AvisForm() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Vérifier la taille (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        setError('La photo ne doit pas dépasser 5MB')
+        setError(t('avisForm.photoLimitError') || 'La photo ne doit pas dépasser 5MB')
         return
       }
       setPhoto(file)
@@ -41,7 +42,7 @@ export default function AvisForm() {
     e.preventDefault()
     
     if (!message.trim()) {
-      setError('Veuillez écrire votre témoignage')
+      setError(t('avisForm.messageRequired') || 'Veuillez écrire votre témoignage')
       return
     }
 
@@ -81,11 +82,11 @@ export default function AvisForm() {
         setPhotoPreview(null)
         setTimeout(() => setIsSubmitted(false), 5000)
       } else {
-        setError(data.error || 'Erreur lors de l\'envoi. Veuillez réessayer.')
+        setError(data.error || t('avisForm.submitError') || 'Erreur lors de l\'envoi. Veuillez réessayer.')
       }
     } catch (error) {
       console.error('Erreur:', error)
-      setError('Erreur de connexion. Veuillez réessayer.')
+      setError(t('common.error') || 'Une erreur est survenue')
     } finally {
       setIsSubmitting(false)
     }
@@ -101,9 +102,9 @@ export default function AvisForm() {
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Heart className="w-8 h-8 text-green-600 fill-green-600" />
         </div>
-        <h3 className="text-xl font-bold text-dark mb-2">Merci pour votre témoignage !</h3>
+        <h3 className="text-xl font-bold text-dark mb-2">{t('avisForm.success.title') || 'Merci pour votre témoignage !'}</h3>
         <p className="text-gray-600">
-          Votre avis sera publié après validation par notre équipe (sous 24-48h).
+          {t('avisForm.success.message') || 'Votre avis sera publié après validation par notre équipe (sous 24-48h).'}
         </p>
       </motion.div>
     )
@@ -121,13 +122,13 @@ export default function AvisForm() {
         >
           <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
             <Star size={14} className="text-primary fill-primary" />
-            <span className="text-xs font-medium text-primary uppercase tracking-wider">Votre avis compte</span>
+            <span className="text-xs font-medium text-primary uppercase tracking-wider">{t('avisForm.badge') || 'Votre avis compte'}</span>
           </div>
           <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-            Donnez votre avis
+            {t('avisForm.title') || 'Donnez votre avis'}
           </h2>
           <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-            Partagez votre expérience LoveExpress avec la communauté
+            {t('avisForm.subtitle') || 'Partagez votre expérience LoveExpress avec la communauté'}
           </p>
         </motion.div>
 
@@ -145,10 +146,9 @@ export default function AvisForm() {
             </div>
           )}
 
-          {/* Note étoiles */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-3">
-              Votre note *
+              {t('avisForm.rating') || 'Votre note'} *
             </label>
             <div className="flex gap-2">
               {[1, 2, 3, 4, 5].map((s) => (
@@ -167,39 +167,36 @@ export default function AvisForm() {
             </div>
           </div>
 
-          {/* Message */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Votre témoignage *
+              {t('avisForm.testimonial') || 'Votre témoignage'} *
             </label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={4}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="J'ai adoré ma surprise, tout était parfait ! Merci LoveExpress ❤️"
+              placeholder={t('avisForm.testimonialPlaceholder') || "J'ai adoré ma surprise, tout était parfait ! Merci LoveExpress ❤️"}
               required
             />
           </div>
 
-          {/* Nom (optionnel) */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Votre nom (optionnel)
+              {t('avisForm.name') || 'Votre nom'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span>
             </label>
             <input
               type="text"
               value={nom}
               onChange={(e) => setNom(e.target.value)}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent"
-              placeholder="Marie, Jean, ..."
+              placeholder={t('avisForm.namePlaceholder') || 'Marie, Jean, ...'}
             />
           </div>
 
-          {/* Photo (optionnelle) */}
           <div className="mb-8">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Ajouter une photo (optionnelle)
+              {t('avisForm.photo') || 'Ajouter une photo'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span>
             </label>
             {photoPreview ? (
               <div className="relative inline-block">
@@ -216,32 +213,31 @@ export default function AvisForm() {
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:border-primary transition">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
                   <Camera className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">Cliquez pour ajouter une photo</p>
-                  <p className="text-xs text-gray-400">JPG, PNG (max 5MB)</p>
+                  <p className="text-sm text-gray-500">{t('avisForm.photoHint') || 'Cliquez pour ajouter une photo'}</p>
+                  <p className="text-xs text-gray-400">{t('avisForm.photoLimit') || 'JPG, PNG (max 5MB)'}</p>
                 </div>
                 <input type="file" className="hidden" accept="image/*" onChange={handlePhotoChange} />
               </label>
             )}
           </div>
 
-          {/* Bouton envoyer */}
           <button
             type="submit"
             disabled={isSubmitting}
             className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {isSubmitting ? (
-              'Envoi en cours...'
+              t('common.loading') || 'Envoi en cours...'
             ) : (
               <>
                 <Heart size={18} />
-                Envoyer mon témoignage
+                {t('avisForm.submit') || 'Envoyer mon témoignage'}
               </>
             )}
           </button>
 
           <p className="text-center text-xs text-gray-400 mt-4">
-            Votre témoignage sera publié après validation par notre équipe
+            {t('avisForm.footerNote') || 'Votre témoignage sera publié après validation par notre équipe'}
           </p>
         </motion.form>
       </div>

@@ -5,11 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Globe, ChevronDown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
-// Initialiser i18n uniquement côté client
-let i18nInstance: any = null
-
 const languages = [
-  { code: 'fr', name: 'Français', flag: '��🇷' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'en', name: 'English', flag: '🇬🇧' },
   { code: 'rw', name: 'Kinyarwanda', flag: '🇷🇼' }
 ]
@@ -17,7 +14,7 @@ const languages = [
 export default function LanguageSelector() {
   const [isOpen, setIsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
-  const { i18n, t } = useTranslation()
+  const { i18n } = useTranslation()
   
   useEffect(() => {
     setMounted(true)
@@ -60,7 +57,7 @@ export default function LanguageSelector() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-xl overflow-hidden z-50 min-w-[150px] border border-gray-100"
+            className="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-xl overflow-hidden z-50 min-w-[160px] border border-gray-100"
           >
             {languages.map((lang) => (
               <button
