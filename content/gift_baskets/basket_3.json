@@ -1,0 +1,13 @@
+{
+  "id": 3,
+  "name": "New Baby",
+  "subtitle": "Gift Basket",
+  "badge": "Naissance",
+  "description": "Bienvenue au nouveau-né",
+  "longDescription": "Vêtements bébé, couches, produits de soin, doudou.",
+  "priceStandard": 40000,
+  "pricePremium": 80000,
+  "popular": false,
+  "image": "https://i.pinimg.com/1200x/48/b0/79/48b07903362683f89724cc49e705a008.jpg",
+  "includes": ["Vêtements bébé", "Couches", "Produits de soin", "Doudou"]
+}

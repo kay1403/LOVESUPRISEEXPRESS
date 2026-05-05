@@ -1,0 +1,13 @@
+{
+  "id": 2,
+  "name": "Romantic",
+  "subtitle": "Gift Basket",
+  "badge": "Romantique",
+  "description": "Pour votre moitié",
+  "longDescription": "Chocolat, bougies parfumées, lettre d'amour, bouquet de fleurs.",
+  "priceStandard": 40000,
+  "pricePremium": 50000,
+  "popular": true,
+  "image": "https://i.pinimg.com/736x/63/a7/09/63a709e557275506ec67b31b59642c44.jpg",
+  "includes": ["Chocolat", "Bougies parfumées", "Lettre d'amour", "Bouquet de fleurs"]
+}

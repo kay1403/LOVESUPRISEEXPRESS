@@ -1,0 +1,13 @@
+{
+  "id": 5,
+  "name": "Wellness",
+  "subtitle": "Gift Basket",
+  "badge": "Bien-être",
+  "description": "Détente et bien-être",
+  "longDescription": "Thé, huiles essentielles, savon, masques visage, parfum, crème.",
+  "priceStandard": 50000,
+  "pricePremium": 100000,
+  "popular": false,
+  "image": "https://i.pinimg.com/1200x/fe/c3/97/fec397b6fbc634e851457411b107e4c5.jpg",
+  "includes": ["Thé", "Huiles essentielles", "Savon", "Masques visage", "Parfum", "Crème"]
+}

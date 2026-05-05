@@ -1,0 +1,13 @@
+{
+  "id": 1,
+  "name": "Birthday",
+  "subtitle": "Gift Basket",
+  "badge": "Anniversaire",
+  "description": "Pour un anniversaire inoubliable",
+  "longDescription": "Mini gâteau d'anniversaire, bougie, carte personnalisée, jus de fruit.",
+  "priceStandard": 15000,
+  "pricePremium": 80000,
+  "popular": true,
+  "image": "https://i.pinimg.com/1200x/ec/36/e4/ec36e470b8d41448d810491847893f83.jpg",
+  "includes": ["Mini gâteau anniversaire", "Bougie", "Carte personnalisée", "Jus de fruit"]
+}
