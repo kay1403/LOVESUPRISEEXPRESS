@@ -84,16 +84,15 @@ const defaultServices = [
 
 export async function GET(request: Request) {
   try {
-    // Récupérer la langue depuis l'URL
     const url = new URL(request.url);
     const lang = url.searchParams.get('lang') || 'fr';
     
-    // Essayer de lire les fichiers CMS
     const contentPath = path.join(process.cwd(), 'content', 'services');
+    let services = [];
+    let useDefault = false;
     
     if (fs.existsSync(contentPath)) {
       const files = fs.readdirSync(contentPath);
-      const services = [];
       
       for (const file of files) {
         if (file.endsWith('.json')) {
@@ -103,30 +102,33 @@ export async function GET(request: Request) {
           services.push(service);
         }
       }
-      
-      if (services.length > 0) {
-        // Trier les services par ID
-        services.sort((a, b) => (a.id || 0) - (b.id || 0));
-        
-        // Appliquer la traduction si nécessaire
-        if (lang !== 'fr') {
-          const translatedServices = services.map((service, idx) => translateService(service, lang, idx));
-          return NextResponse.json({ success: true, services: translatedServices });
-        }
-        
-        return NextResponse.json({ success: true, services });
-      }
     }
     
-    // Fallback aux données par défaut
+    // Si aucun fichier trouvé, utiliser les données par défaut
+    if (services.length === 0) {
+      services = [...defaultServices];
+      useDefault = true;
+    }
+    
+    // Trier les services par ID
+    services.sort((a, b) => (a.id || 0) - (b.id || 0));
+    
+    // ✅ TOUJOURS appliquer la traduction si la langue n'est pas française
+    // (même pour les données par défaut)
+    if (lang !== 'fr') {
+      const translatedServices = services.map((service, idx) => translateService(service, lang, idx));
+      return NextResponse.json({ success: true, services: translatedServices });
+    }
+    
+    return NextResponse.json({ success: true, services });
+  } catch (error) {
+    console.error('Erreur lecture services:', error);
+    // ✅ En cas d'erreur, retourner les services par défaut dans la bonne langue
+    const lang = new URL(request.url).searchParams.get('lang') || 'fr';
     let defaultData = [...defaultServices];
     if (lang !== 'fr') {
       defaultData = defaultData.map((service, idx) => translateService(service, lang, idx));
     }
-    
     return NextResponse.json({ success: true, services: defaultData });
-  } catch (error) {
-    console.error('Erreur lecture services:', error);
-    return NextResponse.json({ success: true, services: defaultServices });
   }
 }

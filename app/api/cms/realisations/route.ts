@@ -18,10 +18,10 @@ export async function GET(request: Request) {
     const lang = url.searchParams.get('lang') || 'fr';
     
     const contentPath = path.join(process.cwd(), 'content', 'realisations');
+    let realisations = [];
     
     if (fs.existsSync(contentPath)) {
       const files = fs.readdirSync(contentPath);
-      const realisations = [];
       
       for (const file of files) {
         if (file.endsWith('.json')) {
@@ -31,20 +31,27 @@ export async function GET(request: Request) {
           realisations.push(realisation);
         }
       }
-      
-      if (realisations.length > 0) {
-        if (lang !== 'fr' && cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations]) {
-          const translations = cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations];
-          const translatedRealisations = realisations.map((r, idx) => ({
-            ...r,
-            title: translations[idx] || r.title
-          }));
-          return NextResponse.json({ success: true, realisations: translatedRealisations });
-        }
-        return NextResponse.json({ success: true, realisations });
-      }
     }
     
+    // Si aucun fichier trouvé, utiliser les données par défaut
+    if (realisations.length === 0) {
+      realisations = [...defaultRealisations];
+    }
+    
+    // ✅ Appliquer la traduction si nécessaire
+    if (lang !== 'fr' && cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations]) {
+      const translations = cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations];
+      const translatedRealisations = realisations.map((r, idx) => ({
+        ...r,
+        title: translations[idx] || r.title
+      }));
+      return NextResponse.json({ success: true, realisations: translatedRealisations });
+    }
+    
+    return NextResponse.json({ success: true, realisations });
+  } catch (error) {
+    console.error('Erreur lecture réalisations:', error);
+    const lang = new URL(request.url).searchParams.get('lang') || 'fr';
     let defaultData = [...defaultRealisations];
     if (lang !== 'fr' && cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations]) {
       const translations = cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations];
@@ -53,10 +60,6 @@ export async function GET(request: Request) {
         title: translations[idx] || r.title
       }));
     }
-    
     return NextResponse.json({ success: true, realisations: defaultData });
-  } catch (error) {
-    console.error('Erreur lecture réalisations:', error);
-    return NextResponse.json({ success: true, realisations: defaultRealisations });
   }
 }

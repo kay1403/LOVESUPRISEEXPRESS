@@ -30,6 +30,7 @@ export async function GET(request: Request) {
     const lang = url.searchParams.get('lang') || 'fr';
     
     const contentPath = path.join(process.cwd(), 'content', 'footer');
+    let footer = null;
     
     if (fs.existsSync(contentPath)) {
       const files = fs.readdirSync(contentPath);
@@ -38,28 +39,31 @@ export async function GET(request: Request) {
         if (file.endsWith('.json')) {
           const filePath = path.join(contentPath, file);
           const content = fs.readFileSync(filePath, 'utf-8');
-          let footer = JSON.parse(content);
-          
-          // Appliquer traduction si nécessaire
-          if (lang !== 'fr' && cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer]) {
-            const t = cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer];
-            footer = { ...footer, ...t };
-          }
-          
-          return NextResponse.json({ success: true, footer });
+          footer = JSON.parse(content);
+          break;
         }
       }
     }
     
-    // Fallback avec traduction
+    // Si aucun fichier trouvé, utiliser les données par défaut
+    if (!footer) {
+      footer = { ...defaultFooter };
+    }
+    
+    // ✅ Appliquer traduction si nécessaire
+    if (lang !== 'fr' && cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer]) {
+      const t = cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer];
+      footer = { ...footer, ...t };
+    }
+    
+    return NextResponse.json({ success: true, footer });
+  } catch (error) {
+    console.error('Erreur lecture footer:', error);
+    const lang = new URL(request.url).searchParams.get('lang') || 'fr';
     let defaultData = { ...defaultFooter };
     if (lang !== 'fr' && cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer]) {
       defaultData = { ...defaultData, ...cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer] };
     }
-    
     return NextResponse.json({ success: true, footer: defaultData });
-  } catch (error) {
-    console.error('Erreur lecture footer:', error);
-    return NextResponse.json({ success: true, footer: defaultFooter });
   }
 }

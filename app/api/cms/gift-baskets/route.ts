@@ -17,10 +17,10 @@ export async function GET(request: Request) {
     const lang = url.searchParams.get('lang') || 'fr';
     
     const contentPath = path.join(process.cwd(), 'content', 'gift_baskets');
+    let baskets = [];
     
     if (fs.existsSync(contentPath)) {
       const files = fs.readdirSync(contentPath);
-      const baskets = [];
       
       for (const file of files) {
         if (file.endsWith('.json')) {
@@ -30,24 +30,27 @@ export async function GET(request: Request) {
           baskets.push(basket);
         }
       }
-      
-      if (baskets.length > 0) {
-        if (lang !== 'fr') {
-          const translatedBaskets = baskets.map((basket, idx) => translateGiftBasket(basket, lang, idx));
-          return NextResponse.json({ success: true, giftBaskets: translatedBaskets });
-        }
-        return NextResponse.json({ success: true, giftBaskets: baskets });
-      }
     }
     
+    // Si aucun fichier trouvé, utiliser les données par défaut
+    if (baskets.length === 0) {
+      baskets = [...defaultGiftBaskets];
+    }
+    
+    // ✅ TOUJOURS appliquer la traduction si la langue n'est pas française
+    if (lang !== 'fr') {
+      const translatedBaskets = baskets.map((basket, idx) => translateGiftBasket(basket, lang, idx));
+      return NextResponse.json({ success: true, giftBaskets: translatedBaskets });
+    }
+    
+    return NextResponse.json({ success: true, giftBaskets: baskets });
+  } catch (error) {
+    console.error('Erreur lecture gift baskets:', error);
+    const lang = new URL(request.url).searchParams.get('lang') || 'fr';
     let defaultData = [...defaultGiftBaskets];
     if (lang !== 'fr') {
       defaultData = defaultData.map((basket, idx) => translateGiftBasket(basket, lang, idx));
     }
-    
     return NextResponse.json({ success: true, giftBaskets: defaultData });
-  } catch (error) {
-    console.error('Erreur lecture gift baskets:', error);
-    return NextResponse.json({ success: true, giftBaskets: defaultGiftBaskets });
   }
 }

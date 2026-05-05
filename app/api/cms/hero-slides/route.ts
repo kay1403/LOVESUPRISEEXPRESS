@@ -60,10 +60,10 @@ export async function GET(request: Request) {
     const lang = url.searchParams.get('lang') || 'fr';
     
     const contentPath = path.join(process.cwd(), 'content', 'hero_slides');
+    let slides = [];
     
     if (fs.existsSync(contentPath)) {
       const files = fs.readdirSync(contentPath);
-      const slides = [];
       
       for (const file of files) {
         if (file.endsWith('.json')) {
@@ -74,27 +74,29 @@ export async function GET(request: Request) {
           slides.push(slide);
         }
       }
-      
-      if (slides.length > 0) {
-        slides.sort((a, b) => (a.order || 0) - (b.order || 0));
-        
-        if (lang !== 'fr') {
-          const translatedSlides = slides.map((slide, idx) => translateHeroSlide(slide, lang, idx));
-          return NextResponse.json({ success: true, slides: translatedSlides });
-        }
-        
-        return NextResponse.json({ success: true, slides });
-      }
     }
     
+    // Si aucun fichier trouvé, utiliser les données par défaut
+    if (slides.length === 0) {
+      slides = [...defaultHeroSlides];
+    }
+    
+    slides.sort((a, b) => (a.order || 0) - (b.order || 0));
+    
+    // ✅ TOUJOURS appliquer la traduction si la langue n'est pas française
+    if (lang !== 'fr') {
+      const translatedSlides = slides.map((slide, idx) => translateHeroSlide(slide, lang, idx));
+      return NextResponse.json({ success: true, slides: translatedSlides });
+    }
+    
+    return NextResponse.json({ success: true, slides });
+  } catch (error) {
+    console.error('Erreur lecture hero slides:', error);
+    const lang = new URL(request.url).searchParams.get('lang') || 'fr';
     let defaultData = [...defaultHeroSlides];
     if (lang !== 'fr') {
       defaultData = defaultData.map((slide, idx) => translateHeroSlide(slide, lang, idx));
     }
-    
     return NextResponse.json({ success: true, slides: defaultData });
-  } catch (error) {
-    console.error('Erreur lecture hero slides:', error);
-    return NextResponse.json({ success: true, slides: defaultHeroSlides });
   }
 }
