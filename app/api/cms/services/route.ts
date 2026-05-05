@@ -100,11 +100,13 @@ export async function GET() {
       }
       
       if (services.length > 0) {
+        // ✅ CORRECTION: Trier les services par ID
+        services.sort((a, b) => (a.id || 0) - (b.id || 0));
         return NextResponse.json({ success: true, services });
       }
     }
     
-    // Fallback aux données par défaut
+    // Fallback aux données par défaut (déjà triées)
     return NextResponse.json({ success: true, services: defaultServices });
   } catch (error) {
     console.error('Erreur lecture services:', error);
