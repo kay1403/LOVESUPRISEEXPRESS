@@ -1,3 +1,4 @@
+// components/Hero.tsx
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
@@ -6,6 +7,7 @@ import { ChevronLeft, ChevronRight, Heart, ChevronDown } from 'lucide-react'
 import Image from 'next/image'
 import LanguageSelector from './LanguageSelector'
 import { useTranslation } from 'react-i18next'
+import { useHeroSlidesSafe } from '@/lib/api-wrapper'
 
 interface HeroSlide {
   id: number
@@ -20,7 +22,7 @@ interface HeroSlide {
   order: number
 }
 
-// Cœurs flottants (inchangé)
+// Cœurs flottants
 const FloatingHearts = () => {
   const hearts = [
     { id: 1, x: "8%", y: "15%", size: 18, duration: 10, delay: 0 },
@@ -52,7 +54,7 @@ const FloatingHearts = () => {
   )
 }
 
-// Étoiles filantes (inchangé)
+// Étoiles filantes
 const ShootingStars = () => {
   const stars = [
     { id: 1, top: "8%", left: "-5%", duration: 2.5, delay: 0 },
@@ -80,7 +82,7 @@ const ShootingStars = () => {
   )
 }
 
-// Confettis (inchangé)
+// Confettis
 const Confetti = () => {
   const confettis = [
     { id: 1, x: "10%", y: "20%", width: 6, height: 3, color: "#FF4D6D", duration: 6, delay: 0 },
@@ -105,7 +107,7 @@ const Confetti = () => {
   )
 }
 
-// Rubans flottants (inchangé)
+// Rubans flottants
 const FloatingRibbons = () => {
   const ribbons = [
     { id: 1, x: "5%", y: "18%", duration: 11, delay: 0 },
@@ -134,7 +136,7 @@ const FloatingRibbons = () => {
   )
 }
 
-// Ballons flottants (inchangé)
+// Ballons flottants
 const FloatingBalloons = () => {
   const balloons = [
     { id: 1, x: "45%", y: "5%", size: 38, color: "#FF4D6D", duration: 16, delay: 0 },
@@ -197,11 +199,11 @@ const getShortDescription = (description: string) => {
 
 export default function Hero() {
   const { t, i18n } = useTranslation()
+  const { data: slidesData, loading: slidesLoading } = useHeroSlidesSafe()
   const [slides, setSlides] = useState<HeroSlide[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [progress, setProgress] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
-  const [loading, setLoading] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -214,27 +216,14 @@ export default function Hero() {
   }, [])
 
   useEffect(() => {
-    fetchHeroSlides()
-  }, [i18n.language]) // ✅ Recharger quand la langue change
-
-  const fetchHeroSlides = async () => {
-    try {
-      // ✅ Passer la langue dans l'URL
-      const response = await fetch(`/api/cms/hero-slides?lang=${i18n.language}`)
-      const data = await response.json()
-      if (data.success && data.slides) {
-        const sortedSlides = [...data.slides].sort((a, b) => (a.order || 0) - (b.order || 0))
-        setSlides(sortedSlides)
-      }
-    } catch (error) {
-      console.error('Erreur chargement hero slides:', error)
-    } finally {
-      setLoading(false)
+    if (slidesData && slidesData.length > 0) {
+      const sortedSlides = [...slidesData].sort((a, b) => (a.order || 0) - (b.order || 0))
+      setSlides(sortedSlides)
     }
-  }
+  }, [slidesData])
 
   useEffect(() => {
-    if (loading || slides.length === 0 || isHovering) return
+    if (slidesLoading || slides.length === 0 || isHovering) return
     
     const startTime = Date.now()
     let animationFrame: number
@@ -257,7 +246,7 @@ export default function Hero() {
       clearTimeout(timer)
       cancelAnimationFrame(animationFrame)
     }
-  }, [currentIndex, isHovering, loading, slides.length])
+  }, [currentIndex, isHovering, slidesLoading, slides.length])
 
   const nextSlide = () => {
     setProgress(0)
@@ -289,7 +278,7 @@ export default function Hero() {
     visible: (i: number) => ({ x: 0, opacity: 1, filter: "blur(0px)", transition: { delay: 0.3 + i * 0.1, duration: 0.5, ease: [0.2, 0.9, 0.3, 1] } })
   }
 
-  if (loading || slides.length === 0) {
+  if (slidesLoading || slides.length === 0) {
     return (
       <section className="relative h-screen w-full overflow-hidden bg-primaryLight flex items-center justify-center">
         <div className="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>

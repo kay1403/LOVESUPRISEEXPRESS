@@ -1,4 +1,4 @@
-// components/Realizations.tsx (version mise à jour)
+// components/Realizations.tsx (version finale - COMPLÈTE)
 'use client'
 
 import { motion } from 'framer-motion'
@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 import { ArrowRight, Heart, ChevronDown, Play, X } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
+import { useRealisationsSafe } from '@/lib/api-wrapper'
 
 interface Realisation {
   id: number
@@ -19,13 +20,21 @@ interface Realisation {
 
 export default function Realizations() {
   const { t, i18n } = useTranslation()
+  const { data: realizationsData, loading } = useRealisationsSafe()
   const [realizations, setRealisations] = useState<Realisation[]>([])
   const [selectedMedia, setSelectedMedia] = useState<Realisation | null>(null)
-  const [loading, setLoading] = useState(true)
   const [visibleCount, setVisibleCount] = useState(6)
   const [isMobile, setIsMobile] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
 
+  // Mettre à jour les réalisations quand les données sécurisées arrivent
+  useEffect(() => {
+    if (realizationsData && realizationsData.length > 0) {
+      setRealisations(realizationsData)
+    }
+  }, [realizationsData])
+
+  // Détection mobile
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -35,6 +44,7 @@ export default function Realizations() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Ajuster le nombre d'éléments visibles selon mobile
   useEffect(() => {
     if (isMobile) {
       setVisibleCount(3)
@@ -42,24 +52,6 @@ export default function Realizations() {
       setVisibleCount(6)
     }
   }, [isMobile])
-
-  useEffect(() => {
-    fetchRealisations()
-  }, [i18n.language])
-
-  const fetchRealisations = async () => {
-    try {
-      const response = await fetch(`/api/cms/realisations?lang=${i18n.language}`)
-      const data = await response.json()
-      if (data.success && data.realisations) {
-        setRealisations(data.realisations)
-      }
-    } catch (error) {
-      console.error('Erreur chargement réalisations:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const visibleRealisations = realizations.slice(0, visibleCount)
   
@@ -243,7 +235,7 @@ export default function Realizations() {
         </div>
       </section>
 
-      {/* Modal amélioré pour afficher images ou vidéos */}
+      {/* Modal pour afficher images ou vidéos en grand */}
       {selectedMedia && (
         <div 
           className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"

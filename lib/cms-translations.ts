@@ -8,7 +8,7 @@ export const cmsTranslations = {
         title: "Party",
         subtitle: "Decoration",
         badge: "Pack Premier Frisson",
-        description: "The beauty of your events is prepared everyday",
+        description: "La beauté de vos événements est préparée chaque jour", 
         longDescription: "Transformez n'importe quel espace en un lieu magique.",
         packs: [
           { name: "Pack Premier Frisson", price: 60000, desc: "15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie" },
@@ -122,7 +122,7 @@ export const cmsTranslations = {
         title: "Party",
         subtitle: "Decoration",
         badge: "Iseguriro rya mbere",
-        description: "The beauty of your events is prepared everyday",
+        description: "Ubwiza bw'ibirori byawe butegurwa buri munsi", // ✅ KINYARWANDA
         longDescription: "Hindura ahantu hose haba ahantu h'ubwiza.",
         packs: [
           { name: "Iseguriro rya mbere", price: 60000, desc: "Ibipuuho 15, ubutumwa bw'indabyo hasi, amafoto 5, LED cyangwa buji" },

@@ -51,6 +51,26 @@ const fr = {
       buttons: {
         details: 'Détails',
         getQuote: 'Demander un devis'
+      },
+      party: {
+        title: 'Party Decoration',
+        description: 'Décoration de fête sur mesure'
+      },
+      surprise: {
+        title: 'Surprise Planner',
+        description: 'Planification complète + coordination sur place'
+      },
+      custom: {
+        title: 'Custom Website',
+        description: 'Site web personnalisé pour votre événement'
+      },
+      flower: {
+        title: 'Flower Bouquet',
+        description: 'Bouquet de fleurs fraîches'
+      },
+      gift: {
+        title: 'Gift Baskets',
+        description: 'Paniers cadeaux personnalisables'
       }
     },
     giftbaskets: {
@@ -65,11 +85,16 @@ const fr = {
       premium: 'Premium',
       from: 'À partir de',
       order: 'Commander',
-      birthday: 'Panier Anniversaire',
-      romantic: 'Panier Romantique',
-      newbaby: 'Panier Nouveau-né',
-      gourmet: 'Panier Gourmet',
-      wellness: 'Panier Bien-être'
+      birthday: 'Anniversaire',
+      romantic: 'Romantique',
+      newbaby: 'Nouveau-né',
+      gourmet: 'Gourmet',
+      wellness: 'Bien-être',
+      birthdayDesc: 'Mini gâteau, bougie, carte, jus de fruit',
+      romanticDesc: 'Chocolat, bougies, lettre, fleurs',
+      newBabyDesc: 'Vêtements, couches, soin, doudou',
+      gourmetDesc: 'Biscuits, fruits, chocolat, jus, bonbons',
+      wellnessDesc: 'Thé, huiles, savon, masques, parfum, crème'
     },
     gallery: {
       badge: 'Ils nous ont fait confiance',
@@ -278,6 +303,26 @@ const en = {
       buttons: {
         details: 'Details',
         getQuote: 'Request a quote'
+      },
+      party: {
+        title: 'Party Decoration',
+        description: 'Custom party decoration'
+      },
+      surprise: {
+        title: 'Surprise Planner',
+        description: 'Complete planning + on-site coordination'
+      },
+      custom: {
+        title: 'Custom Website',
+        description: 'Custom website for your event'
+      },
+      flower: {
+        title: 'Flower Bouquet',
+        description: 'Fresh flower bouquet'
+      },
+      gift: {
+        title: 'Gift Baskets',
+        description: 'Customizable gift baskets'
       }
     },
     giftbaskets: {
@@ -292,11 +337,16 @@ const en = {
       premium: 'Premium',
       from: 'From',
       order: 'Order',
-      birthday: 'Birthday Gift Basket',
-      romantic: 'Romantic Gift Basket',
-      newbaby: 'New Baby Gift Basket',
-      gourmet: 'Gourmet Gift Basket',
-      wellness: 'Wellness Gift Basket'
+      birthday: 'Birthday',
+      romantic: 'Romantic',
+      newbaby: 'New Baby',
+      gourmet: 'Gourmet',
+      wellness: 'Wellness',
+      birthdayDesc: 'Mini cake, candle, card, fruit juice',
+      romanticDesc: 'Chocolate, scented candles, love letter, flowers',
+      newBabyDesc: 'Baby clothes, diapers, care products, soft toy',
+      gourmetDesc: 'Cookies, fruits, chocolate, juice, candies',
+      wellnessDesc: 'Tea, oils, soap, face masks, perfume, cream'
     },
     gallery: {
       badge: 'They trusted us',
@@ -505,6 +555,26 @@ const rw = {
       buttons: {
         details: 'Ibyuzuye',
         getQuote: 'Saba igiciro'
+      },
+      party: {
+        title: 'Imitako y\'ibirori',
+        description: 'Imitako y\'ibirori ihujije n\'ibyo ukunda'
+      },
+      surprise: {
+        title: 'Umunyamabanga w\'ibitangaza',
+        description: 'Gutegura byose + guhuza nabategura'
+      },
+      custom: {
+        title: 'Urubuga rwihariye',
+        description: 'Urubuga rwihariye rw\'ibirori byawe'
+      },
+      flower: {
+        title: 'Indabyo',
+        description: 'Indabyo nziza'
+      },
+      gift: {
+        title: 'Ibikapu by\'impano',
+        description: 'Ibikapu by\'impano bihindurika'
       }
     },
     giftbaskets: {
@@ -519,11 +589,16 @@ const rw = {
       premium: 'Premium',
       from: 'Kuva',
       order: 'Oda',
-      birthday: 'Impano y\'Isabukuru',
-      romantic: 'Impano y\'Urukundo',
-      newbaby: 'Impano y\'Uruhererekane',
-      gourmet: 'Impano y\'Ibiryo Byiza',
-      wellness: 'Impano y\'Ubuzima Bwiza'
+      birthday: 'Isabukuru',
+      romantic: 'Urukundo',
+      newbaby: 'Uruhererekane',
+      gourmet: 'Ibiryo Byiza',
+      wellness: 'Ubuzima Bwiza',
+      birthdayDesc: 'Ikeke nto, buji, ikarita, umutobe',
+      romanticDesc: 'Chokora, buji, ibaruwa, indabyo',
+      newBabyDesc: 'Imyenda, amaru, ibikoresho, ikinyonyo',
+      gourmetDesc: 'Ibikome, imbuto, chokora, umutobe, ubunyobwa',
+      wellnessDesc: 'Icyayi, amavuta, isabune, masque, parfum, amavuta'
     },
     gallery: {
       badge: 'Baratwizera',

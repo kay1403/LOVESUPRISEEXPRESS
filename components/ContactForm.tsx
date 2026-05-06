@@ -1,9 +1,11 @@
+// components/ContactForm.tsx (VERSION CORRIGÉE SANS ERREURS TS)
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Download, CheckCircle, Heart, AlertCircle, Package, Sparkles, Globe, Flower2, Gift, PartyPopper, Baby, Coffee } from 'lucide-react'
+import { Download, CheckCircle, Heart, AlertCircle, Package, Sparkles, Globe, Flower2, Gift, PartyPopper, Baby, Coffee, LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useServicesSafe, useGiftBasketsSafe } from '@/lib/api-wrapper'
 
 interface FormData {
   clientName: string
@@ -29,36 +31,88 @@ interface FormData {
   additionalNotes: string
 }
 
-const servicesData = [
-  { id: 1, name: 'Party Decoration', icon: PartyPopper, packs: [
-    { id: 1, name: 'Pack Premier Frisson', price: 60000, desc: '15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie' },
-    { id: 2, name: 'Pack Love XL', price: 100000, desc: '25 ballons, lettre/chiffre lumineux, table dressée pour deux, bougie parfumée, playlist personnalisée' },
-    { id: 3, name: 'Pack ROYAL SURPRISE', price: 200000, desc: 'Rideau de ballons + néon personnalisé, plateau de fruits + vin, photographe 20 min, bouquet de fleurs' }
-  ] },
-  { id: 2, name: 'Surprise Planner', icon: Sparkles, price: 200000, desc: 'Dites nous l\'occasion et on planifie toute la surprise' },
-  { id: 3, name: 'Custom Website', icon: Globe, priceMin: 25000, priceMax: 45000, desc: 'Site web personnalisé pour votre événement' },
-  { id: 4, name: 'Flower Bouquet', icon: Flower2, price: 15000, desc: 'Bouquet de fleurs fraîches pour toute occasion' }
+interface StaticService {
+  id: number
+  nameKey: string
+  icon: LucideIcon
+  hasPacks?: boolean
+  price?: number
+  priceMin?: number
+  priceMax?: number
+  descKey?: string
+}
+
+interface StaticBasket {
+  id: number
+  nameKey: string
+  icon: LucideIcon
+  standard: number
+  premium: number
+  descKey: string
+}
+
+interface Pack {
+  id: number
+  name: string
+  price: number
+  desc: string
+}
+
+interface Service {
+  id: number
+  name?: string
+  packs?: Pack[]
+  price?: number
+  description?: string
+}
+
+// Données statiques pour le formulaire (les noms des services sont des clés, pas les valeurs)
+const STATIC_SERVICES: StaticService[] = [
+  { id: 1, nameKey: 'party', icon: PartyPopper, hasPacks: true },
+  { id: 2, nameKey: 'surprise', icon: Sparkles, price: 200000, descKey: 'surpriseDesc' },
+  { id: 3, nameKey: 'custom', icon: Globe, priceMin: 25000, priceMax: 45000, descKey: 'customDesc' },
+  { id: 4, nameKey: 'flower', icon: Flower2, price: 15000, descKey: 'flowerDesc' }
 ]
 
-const basketsData = [
-  { id: 1, name: 'Birthday', icon: Gift, standard: 15000, premium: 80000, desc: 'Mini gâteau, bougie, carte, jus de fruit' },
-  { id: 2, name: 'Romantic', icon: Heart, standard: 40000, premium: 50000, desc: 'Chocolat, bougies, lettre, fleurs' },
-  { id: 3, name: 'New Baby', icon: Baby, standard: 40000, premium: 80000, desc: 'Vêtements, couches, soin, doudou' },
-  { id: 4, name: 'Gourmet', icon: Coffee, standard: 20000, premium: 70000, desc: 'Biscuits, fruits, chocolat, jus, bonbons' },
-  { id: 5, name: 'Wellness', icon: Flower2, standard: 50000, premium: 100000, desc: 'Thé, huiles, savon, masques, parfum, crème' }
+const STATIC_BASKETS: StaticBasket[] = [
+  { id: 1, nameKey: 'birthday', icon: Gift, standard: 15000, premium: 80000, descKey: 'birthdayDesc' },
+  { id: 2, nameKey: 'romantic', icon: Heart, standard: 40000, premium: 50000, descKey: 'romanticDesc' },
+  { id: 3, nameKey: 'newBaby', icon: Baby, standard: 40000, premium: 80000, descKey: 'newBabyDesc' },
+  { id: 4, nameKey: 'gourmet', icon: Coffee, standard: 20000, premium: 70000, descKey: 'gourmetDesc' },
+  { id: 5, nameKey: 'wellness', icon: Flower2, standard: 50000, premium: 100000, descKey: 'wellnessDesc' }
 ]
 
-const eventTypes = ['Birthday', 'Proposal', 'Anniversary', 'Baby Shower', 'Bridal Shower', 'Welcome Back Party', 'Other']
+const eventTypes: string[] = ['Birthday', 'Proposal', 'Anniversary', 'Baby Shower', 'Bridal Shower', 'Welcome Back Party', 'Other']
 
 export default function ContactForm() {
   const { t } = useTranslation()
-  const [step, setStep] = useState(1)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [isMounted, setIsMounted] = useState(false)
-  const [budgetError, setBudgetError] = useState('')
-  const [stepError, setStepError] = useState('')
+  const { data: servicesData } = useServicesSafe()
+  const { data: basketsDataFromCMS } = useGiftBasketsSafe()
+  
+  const [step, setStep] = useState<number>(1)
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false)
+  const [isMounted, setIsMounted] = useState<boolean>(false)
+  const [budgetError, setBudgetError] = useState<string>('')
+  const [stepError, setStepError] = useState<string>('')
   const reviewRef = useRef<HTMLDivElement>(null)
+
+  // Récupérer les packs du service Party (service id 1)
+  const partyService = servicesData?.find((s: Service) => s.id === 1)
+  const packs: Pack[] = partyService?.packs || []
+
+  // Récupérer les noms traduits des baskets
+  const basketsData = useMemo(() => {
+    if (!basketsDataFromCMS) return STATIC_BASKETS
+    return STATIC_BASKETS.map((staticBasket: StaticBasket, idx: number) => {
+      const cmsBasket = basketsDataFromCMS[idx]
+      return {
+        ...staticBasket,
+        name: cmsBasket?.name || staticBasket.nameKey,
+        desc: cmsBasket?.description || staticBasket.descKey
+      }
+    })
+  }, [basketsDataFromCMS])
 
   const [formData, setFormData] = useState<FormData>({
     clientName: '', clientPhone: '', clientEmail: '',
@@ -133,27 +187,27 @@ export default function ContactForm() {
   const calculateTotalPrice = useMemo(() => {
     let total = 0
 
-    const partyDecoration = servicesData[0]
-    if (partyDecoration && partyDecoration.packs && partyDecoration.packs.length > 0) {
-      formData.selectedPacks.forEach(packId => {
-        const pack = partyDecoration.packs.find(p => p.id === packId)
-        if (pack) total += pack.price
-      })
-    }
+    // Prix des packs Party Decoration
+    formData.selectedPacks.forEach((packId: number) => {
+      const pack = packs.find((p: Pack) => p.id === packId)
+      if (pack) total += pack.price
+    })
 
+    // Prix des services
     if (formData.selectedServices.includes(2)) total += 200000
     if (formData.selectedServices.includes(3)) total += 35000
     if (formData.selectedServices.includes(4)) total += 15000
 
-    formData.selectedBaskets.forEach(basket => {
-      const b = basketsData.find(bk => bk.id === basket.id)
+    // Prix des baskets
+    formData.selectedBaskets.forEach((basket: { id: number; version: 'standard' | 'premium' }) => {
+      const b = STATIC_BASKETS.find((bk: StaticBasket) => bk.id === basket.id)
       if (b) total += basket.version === 'standard' ? b.standard : b.premium
     })
 
     if (formData.deliveryMethod === 'delivery') total += 5000
 
     return total
-  }, [formData.selectedPacks, formData.selectedServices, formData.selectedBaskets, formData.deliveryMethod])
+  }, [formData.selectedPacks, formData.selectedServices, formData.selectedBaskets, formData.deliveryMethod, packs])
 
   const totalPrice = calculateTotalPrice
   const hasValidSelection = totalPrice > 0
@@ -162,7 +216,7 @@ export default function ContactForm() {
     setFormData(prev => ({
       ...prev,
       selectedPacks: prev.selectedPacks.includes(packId)
-        ? prev.selectedPacks.filter(id => id !== packId)
+        ? prev.selectedPacks.filter((id: number) => id !== packId)
         : [...prev.selectedPacks, packId]
     }))
   }
@@ -171,16 +225,16 @@ export default function ContactForm() {
     setFormData(prev => ({
       ...prev,
       selectedServices: prev.selectedServices.includes(serviceId)
-        ? prev.selectedServices.filter(id => id !== serviceId)
+        ? prev.selectedServices.filter((id: number) => id !== serviceId)
         : [...prev.selectedServices, serviceId]
     }))
   }
 
   const handleBasketToggle = (basketId: number, version: 'standard' | 'premium') => {
     setFormData(prev => {
-      const exists = prev.selectedBaskets.find(b => b.id === basketId)
+      const exists = prev.selectedBaskets.find((b: { id: number }) => b.id === basketId)
       if (exists) {
-        return { ...prev, selectedBaskets: prev.selectedBaskets.filter(b => b.id !== basketId) }
+        return { ...prev, selectedBaskets: prev.selectedBaskets.filter((b: { id: number }) => b.id !== basketId) }
       } else {
         return { ...prev, selectedBaskets: [...prev.selectedBaskets, { id: basketId, version }] }
       }
@@ -190,7 +244,9 @@ export default function ContactForm() {
   const updateBasketVersion = (basketId: number, version: 'standard' | 'premium') => {
     setFormData(prev => ({
       ...prev,
-      selectedBaskets: prev.selectedBaskets.map(b => b.id === basketId ? { ...b, version } : b)
+      selectedBaskets: prev.selectedBaskets.map((b: { id: number; version: 'standard' | 'premium' }) => 
+        b.id === basketId ? { ...b, version } : b
+      )
     }))
   }
 
@@ -208,7 +264,7 @@ export default function ContactForm() {
     if (!isMounted || !reviewRef.current) return
     const html2pdf = (await import('html2pdf.js')).default
     const opt = { 
-      margin: [10, 10, 10, 10], 
+      margin: [10, 10, 10, 10] as [number, number, number, number], 
       filename: `commande_${formData.clientName || 'client'}_${Date.now()}.pdf`, 
       image: { type: 'jpeg', quality: 0.98 }, 
       html2canvas: { scale: 2 }, 
@@ -281,16 +337,17 @@ export default function ContactForm() {
       <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">{t('contactForm.review.eventInfo') || 'Informations événement'}</h3><div className="grid grid-cols-2 gap-2 text-sm"><p><span className="text-gray-500">{t('contactForm.fields.eventType') || 'Type'}:</span> {formData.eventType}</p><p><span className="text-gray-500">{t('contactForm.fields.eventDate') || 'Date'}:</span> {formData.eventDate || t('common.notSpecified') || 'Non renseignée'}</p></div></div>
       <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">{t('contactForm.review.services') || 'Services & Packs'}</h3>
         <ul className="text-sm space-y-1">
-          {formData.selectedPacks.map(packId => {
-            const pack = servicesData[0]?.packs?.find(p => p.id === packId)
+          {formData.selectedPacks.map((packId: number) => {
+            const pack = packs.find((p: Pack) => p.id === packId)
             return <li key={packId}>• {pack?.name} : {pack?.price.toLocaleString()} RWF</li>
           })}
-          {formData.selectedServices.includes(2) && <li>• Surprise Planner : 200 000 RWF</li>}
-          {formData.selectedServices.includes(3) && <li>• Custom Website : 35 000 RWF ({t('common.estimate') || 'estimation'})</li>}
-          {formData.selectedServices.includes(4) && <li>• Flower Bouquet : 15 000 RWF</li>}
-          {formData.selectedBaskets.map(b => {
-            const basket = basketsData.find(bk => bk.id === b.id)
-            return <li key={b.id}>• {basket?.name} ({b.version}) : {b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</li>
+          {formData.selectedServices.includes(2) && <li>• {t('services.surprise.title') || 'Surprise Planner'} : 200 000 RWF</li>}
+          {formData.selectedServices.includes(3) && <li>• {t('services.custom.title') || 'Custom Website'} : 35 000 RWF ({t('common.estimate') || 'estimation'})</li>}
+          {formData.selectedServices.includes(4) && <li>• {t('services.flower.title') || 'Flower Bouquet'} : 15 000 RWF</li>}
+          {formData.selectedBaskets.map((b: { id: number; version: 'standard' | 'premium' }) => {
+            const basket = STATIC_BASKETS.find((bk: StaticBasket) => bk.id === b.id)
+            const basketName = basketsDataFromCMS?.find((bk: any) => bk.id === b.id)?.name || basket?.nameKey
+            return <li key={b.id}>• {basketName} ({b.version}) : {b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</li>
           })}
         </ul>
       </div>
@@ -378,7 +435,7 @@ export default function ContactForm() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventType') || 'Type'} <span className="text-red-500">*</span></label>
                     <select value={formData.eventType} onChange={(e) => setFormData({...formData, eventType: e.target.value})} className="w-full px-4 py-3 border rounded-lg">
-                      {eventTypes.map(t => <option key={t}>{t}</option>)}
+                      {eventTypes.map((type: string) => <option key={type}>{type}</option>)}
                     </select>
                   </div>
                   <div>
@@ -401,11 +458,11 @@ export default function ContactForm() {
                 <motion.div key="step4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                   <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.3') || 'Que souhaitez-vous commander ?'}</h3>
                   
-                  {/* Party Decoration */}
+                  {/* Party Decoration - avec packs dynamiques */}
                   <div className="border rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3"><PartyPopper size={18} className="text-primary" /><h4 className="font-semibold text-dark">Party Decoration</h4></div>
+                    <div className="flex items-center gap-2 mb-3"><PartyPopper size={18} className="text-primary" /><h4 className="font-semibold text-dark">{t('services.party.title') || 'Party Decoration'}</h4></div>
                     <div className="space-y-2">
-                      {servicesData[0]?.packs?.map(pack => (
+                      {packs.map((pack: Pack) => (
                         <label key={pack.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition ${formData.selectedPacks.includes(pack.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
                           <input type="checkbox" checked={formData.selectedPacks.includes(pack.id)} onChange={() => handlePackToggle(pack.id)} className="w-4 h-4 text-primary rounded" />
                           <div className="flex-1"><span className="font-medium">{pack.name}</span><p className="text-xs text-gray-500">{pack.desc}</p></div>
@@ -417,39 +474,48 @@ export default function ContactForm() {
 
                   {/* Surprise Planner */}
                   <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(2) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3"><Sparkles size={18} className="text-primary" /><div><span className="font-medium">Surprise Planner</span><p className="text-xs text-gray-500">Planification complète + coordination sur place</p></div></div>
+                    <div className="flex items-center gap-3"><Sparkles size={18} className="text-primary" /><div><span className="font-medium">{t('services.surprise.title') || 'Surprise Planner'}</span><p className="text-xs text-gray-500">{t('services.surprise.description') || 'Planification complète + coordination sur place'}</p></div></div>
                     <div className="flex items-center gap-4"><span className="text-primary font-bold">200 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(2)} onChange={() => handleServiceToggle(2)} className="w-4 h-4 text-primary rounded" /></div>
                   </label>
 
                   {/* Custom Website */}
                   <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(3) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3"><Globe size={18} className="text-primary" /><div><span className="font-medium">Custom Website</span><p className="text-xs text-gray-500">Site personnalisé pour votre événement</p></div></div>
+                    <div className="flex items-center gap-3"><Globe size={18} className="text-primary" /><div><span className="font-medium">{t('services.custom.title') || 'Custom Website'}</span><p className="text-xs text-gray-500">{t('services.custom.description') || 'Site personnalisé pour votre événement'}</p></div></div>
                     <div className="flex items-center gap-4"><span className="text-primary font-bold">25 000 - 45 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(3)} onChange={() => handleServiceToggle(3)} className="w-4 h-4 text-primary rounded" /></div>
                   </label>
 
                   {/* Flower Bouquet */}
                   <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(4) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3"><Flower2 size={18} className="text-primary" /><div><span className="font-medium">Flower Bouquet</span><p className="text-xs text-gray-500">Bouquet de fleurs fraîches</p></div></div>
+                    <div className="flex items-center gap-3"><Flower2 size={18} className="text-primary" /><div><span className="font-medium">{t('services.flower.title') || 'Flower Bouquet'}</span><p className="text-xs text-gray-500">{t('services.flower.description') || 'Bouquet de fleurs fraîches'}</p></div></div>
                     <div className="flex items-center gap-4"><span className="text-primary font-bold">15 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(4)} onChange={() => handleServiceToggle(4)} className="w-4 h-4 text-primary rounded" /></div>
                   </label>
 
-                  {/* Gift Baskets */}
+                  {/* Gift Baskets - avec noms traduits */}
                   <div className="border rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" /><h4 className="font-semibold text-dark">Gift Baskets</h4></div>
+                    <div className="flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" /><h4 className="font-semibold text-dark">{t('giftbaskets.title') || 'Gift Baskets'}</h4></div>
                     <div className="space-y-3">
-                      {basketsData.map(basket => (
-                        <div key={basket.id} className={`p-3 rounded-lg border transition ${formData.selectedBaskets.some(b => b.id === basket.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                      {basketsData.map((basket: StaticBasket & { name?: string; desc?: string }) => (
+                        <div key={basket.id} className={`p-3 rounded-lg border transition ${formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
                           <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3"><basket.icon size={16} className="text-primary" /><span className="font-medium">{basket.name}</span></div>
-                            <input type="checkbox" checked={formData.selectedBaskets.some(b => b.id === basket.id)} onChange={() => handleBasketToggle(basket.id, 'standard')} className="w-4 h-4 text-primary rounded" />
+                            <div className="flex items-center gap-3">
+                              <basket.icon size={16} className="text-primary" />
+                              <span className="font-medium">{t(`giftbaskets.${basket.nameKey.toLowerCase()}`) || basket.name}</span>
+                            </div>
+                            <input type="checkbox" checked={formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id)} onChange={() => handleBasketToggle(basket.id, 'standard')} className="w-4 h-4 text-primary rounded" />
                           </div>
-                          {formData.selectedBaskets.some(b => b.id === basket.id) && (
+                          {formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id) && (
                             <div className="flex gap-3 ml-6 mt-2">
-                              <label className="flex items-center gap-2"><input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find(b => b.id === basket.id)?.version === 'standard'} onChange={() => updateBasketVersion(basket.id, 'standard')} className="w-4 h-4 text-primary" /><span className="text-sm">{t('giftbaskets.standard') || 'Standard'}: {basket.standard.toLocaleString()} RWF</span></label>
-                              <label className="flex items-center gap-2"><input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find(b => b.id === basket.id)?.version === 'premium'} onChange={() => updateBasketVersion(basket.id, 'premium')} className="w-4 h-4 text-primary" /><span className="text-sm">{t('giftbaskets.premium') || 'Premium'}: {basket.premium.toLocaleString()} RWF</span></label>
+                              <label className="flex items-center gap-2">
+                                <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b: { id: number }) => b.id === basket.id)?.version === 'standard'} onChange={() => updateBasketVersion(basket.id, 'standard')} className="w-4 h-4 text-primary" />
+                                <span className="text-sm">{t('giftbaskets.standard') || 'Standard'}: {basket.standard.toLocaleString()} RWF</span>
+                              </label>
+                              <label className="flex items-center gap-2">
+                                <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b: { id: number }) => b.id === basket.id)?.version === 'premium'} onChange={() => updateBasketVersion(basket.id, 'premium')} className="w-4 h-4 text-primary" />
+                                <span className="text-sm">{t('giftbaskets.premium') || 'Premium'}: {basket.premium.toLocaleString()} RWF</span>
+                              </label>
                             </div>
                           )}
-                          <p className="text-xs text-gray-500 ml-6 mt-1">{basket.desc}</p>
+                          <p className="text-xs text-gray-500 ml-6 mt-1">{t(`giftbaskets.${basket.nameKey}Desc`) || basket.desc}</p>
                         </div>
                       ))}
                     </div>
@@ -489,18 +555,19 @@ export default function ContactForm() {
                   <div className="bg-primaryLight rounded-xl p-5">
                     <h4 className="font-semibold text-dark mb-3">{t('contactForm.review.services') || 'Récapitulatif des services'}</h4>
                     <div className="space-y-2 text-sm">
-                      {formData.selectedPacks.map(packId => {
-                        const pack = servicesData[0]?.packs?.find(p => p.id === packId)
+                      {formData.selectedPacks.map((packId: number) => {
+                        const pack = packs.find((p: Pack) => p.id === packId)
                         return <div key={packId} className="flex justify-between"><span>{pack?.name}</span><span className="font-bold">{pack?.price.toLocaleString()} RWF</span></div>
                       })}
-                      {formData.selectedServices.includes(2) && <div className="flex justify-between"><span>Surprise Planner</span><span className="font-bold">200 000 RWF</span></div>}
-                      {formData.selectedServices.includes(3) && <div className="flex justify-between"><span>Custom Website</span><span className="font-bold">~35 000 RWF</span></div>}
-                      {formData.selectedServices.includes(4) && <div className="flex justify-between"><span>Flower Bouquet</span><span className="font-bold">15 000 RWF</span></div>}
-                      {formData.selectedBaskets.map(b => {
-                        const basket = basketsData.find(bk => bk.id === b.id)
-                        return <div key={b.id} className="flex justify-between"><span>{basket?.name} ({b.version})</span><span className="font-bold">{b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</span></div>
+                      {formData.selectedServices.includes(2) && <div className="flex justify-between"><span>{t('services.surprise.title') || 'Surprise Planner'}</span><span className="font-bold">200 000 RWF</span></div>}
+                      {formData.selectedServices.includes(3) && <div className="flex justify-between"><span>{t('services.custom.title') || 'Custom Website'}</span><span className="font-bold">~35 000 RWF</span></div>}
+                      {formData.selectedServices.includes(4) && <div className="flex justify-between"><span>{t('services.flower.title') || 'Flower Bouquet'}</span><span className="font-bold">15 000 RWF</span></div>}
+                      {formData.selectedBaskets.map((b: { id: number; version: 'standard' | 'premium' }) => {
+                        const basket = STATIC_BASKETS.find((bk: StaticBasket) => bk.id === b.id)
+                        const basketName = basketsDataFromCMS?.find((bk: any) => bk.id === b.id)?.name || basket?.nameKey
+                        return <div key={b.id} className="flex justify-between"><span>{basketName} ({b.version})</span><span className="font-bold">{b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</span></div>
                       })}
-                      {formData.deliveryMethod === 'delivery' && <div className="flex justify-between"><span>Livraison</span><span className="font-bold">+5 000 RWF</span></div>}
+                      {formData.deliveryMethod === 'delivery' && <div className="flex justify-between"><span>{t('contactForm.deliveryMethods.delivery') || 'Livraison'}</span><span className="font-bold">+5 000 RWF</span></div>}
                       <div className="border-t pt-2 mt-2 flex justify-between"><span className="font-bold">{t('contactForm.review.total') || 'Total'} :</span><span className="font-bold text-primary text-lg">{totalPrice.toLocaleString()} RWF</span></div>
                     </div>
                   </div>

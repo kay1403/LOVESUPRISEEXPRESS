@@ -1,9 +1,11 @@
+// components/About.tsx
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, Sparkles, Users, Clock, Award, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAboutImagesSafe } from '@/lib/api-wrapper'
 
 interface AboutImage {
   id: number
@@ -14,40 +16,24 @@ interface AboutImage {
 
 export default function About() {
   const { t } = useTranslation()
+  const { data: imagesFromHook, loading: hookLoading } = useAboutImagesSafe()
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isHovering, setIsHovering] = useState(false)
   const [imagesLoaded, setImagesLoaded] = useState(false)
   const [images, setImages] = useState<AboutImage[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Utiliser les données du hook sécurisé
   useEffect(() => {
-    fetchAboutImages()
-  }, [])
-
-  const fetchAboutImages = async () => {
-    try {
-      const response = await fetch('/api/cms/about-images')
-      const data = await response.json()
-      if (data.success && data.images && data.images.length > 0) {
-        setImages(data.images)
-      }
-    } catch (error) {
-      console.error('Erreur chargement images about:', error)
-    } finally {
+    if (imagesFromHook && imagesFromHook.length > 0) {
+      setImages(imagesFromHook)
+      setLoading(false)
+    } else if (!hookLoading) {
       setLoading(false)
     }
-  }
+  }, [imagesFromHook, hookLoading])
 
-  useEffect(() => {
-    if (loading || images.length === 0 || isHovering) return
-    
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % images.length)
-    }, 7000)
-    
-    return () => clearInterval(interval)
-  }, [isHovering, images.length, loading])
-
+  // Préchargement des images
   useEffect(() => {
     if (loading || images.length === 0) return
     
@@ -69,6 +55,17 @@ export default function About() {
       }
     })
   }, [images, loading])
+
+  // Auto-rotation du carrousel
+  useEffect(() => {
+    if (loading || images.length === 0 || isHovering) return
+    
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prev) => (prev + 1) % images.length)
+    }, 7000)
+    
+    return () => clearInterval(interval)
+  }, [isHovering, images.length, loading])
 
   const nextImage = () => {
     if (images.length === 0) return
@@ -120,7 +117,7 @@ export default function About() {
     return (
       <section className="py-24 bg-primaryLight">
         <div className="container-custom text-center">
-          <p className="text-gray-500">{t('about.noImages')}</p>
+          <p className="text-gray-500">{t('about.noImages') || 'Aucune image disponible'}</p>
         </div>
       </section>
     )
@@ -130,7 +127,7 @@ export default function About() {
     <section className="py-24 bg-primaryLight">
       <div className="container-custom">
         <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Carrousel photo - inchangé (vient du CMS) */}
+          {/* Carrousel photo */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -151,17 +148,18 @@ export default function About() {
                   className="absolute inset-0"
                 >
                   <img
-                    src={images[currentImageIndex].src}
-                    alt={images[currentImageIndex].alt}
+                    src={images[currentImageIndex]?.src}
+                    alt={images[currentImageIndex]?.alt || 'Photo LoveExpress'}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.error('Erreur chargement image:', images[currentImageIndex].src)
+                      console.error('Erreur chargement image:', images[currentImageIndex]?.src)
                       e.currentTarget.src = '/images/placeholder.jpg'
                     }}
                   />
                 </motion.div>
               </AnimatePresence>
 
+              {/* Barre de progression */}
               <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/30 z-20">
                 <motion.div
                   className="h-full bg-primary"
@@ -172,6 +170,7 @@ export default function About() {
                 />
               </div>
 
+              {/* Boutons navigation */}
               <button
                 onClick={prevImage}
                 className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white hover:bg-primary transition-all duration-300 z-20 opacity-0 group-hover:opacity-100"
@@ -187,6 +186,7 @@ export default function About() {
                 <ChevronRight size={20} />
               </button>
 
+              {/* Indicateurs */}
               <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
                 {images.map((_, idx) => (
                   <button
@@ -204,7 +204,7 @@ export default function About() {
             </div>
           </motion.div>
 
-          {/* Texte à propos - TRADUIT via i18n */}
+          {/* Texte à propos */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -213,19 +213,19 @@ export default function About() {
           >
             <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-6">
               <Heart size={16} className="text-primary" />
-              <span className="text-primary font-semibold text-sm">{t('about.ourStory')}</span>
+              <span className="text-primary font-semibold text-sm">{t('about.ourStory') || 'Notre Histoire'}</span>
             </div>
             
             <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-              {t('about.title')}
+              {t('about.title') || 'Derrière chaque surprise, une histoire'}
             </h2>
             
             <p className="text-gray-600 mb-6 leading-relaxed">
-              {t('about.description1')}
+              {t('about.description1') || 'Chez LoveExpress, nous croyons que chaque moment mérite d\'être célébré avec magie et émotion. Depuis notre création, nous nous consacrons à créer des surprises inoubliables.'}
             </p>
             
             <p className="text-gray-600 mb-6 leading-relaxed">
-              {t('about.description2')}
+              {t('about.description2') || 'Notre équipe passionnée met tout en œuvre pour transformer vos idées en réalité, avec une attention particulière aux détails et une discrétion absolue.'}
             </p>
 
             <div className="flex flex-wrap gap-3 mb-8">
