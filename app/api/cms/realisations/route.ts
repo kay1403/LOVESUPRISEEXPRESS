@@ -1,4 +1,4 @@
-// app/api/cms/realisations/route.ts (version mise à jour)
+// app/api/cms/realisations/route.ts (version finale)
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
@@ -29,10 +29,38 @@ export async function GET(request: Request) {
           const filePath = path.join(contentPath, file);
           const content = fs.readFileSync(filePath, 'utf-8');
           const realisation = JSON.parse(content);
-          // S'assurer que mediaType est défini pour la rétrocompatibilité
+          
+          // 🎯 NORMALISER LES DONNÉES VIDÉO
+          if (realisation.mediaType === 'video') {
+            // Priorité 1: vidéo uploadée
+            if (realisation.video_options?.upload) {
+              realisation.video = realisation.video_options.upload;
+            }
+            // Priorité 2: lien YouTube/Vimeo
+            else if (realisation.video_options?.link) {
+              realisation.video = realisation.video_options.link;
+            }
+            // Priorité 3: ancien champ video (rétrocompatibilité)
+            else if (realisation.video) {
+              realisation.video = realisation.video;
+            }
+            
+            // Utiliser la miniature personnalisée si disponible, sinon l'image principale
+            if (realisation.thumbnail) {
+              realisation.thumbnail = realisation.thumbnail;
+            } else if (realisation.image) {
+              realisation.thumbnail = realisation.image;
+            }
+          }
+          
+          // Rétrocompatibilité pour les anciennes données
           if (!realisation.mediaType) {
             realisation.mediaType = 'image';
           }
+          
+          // Nettoyer les données temporaires
+          delete realisation.video_options;
+          
           realisations.push(realisation);
         }
       }
@@ -46,7 +74,7 @@ export async function GET(request: Request) {
     // Trier par ID
     realisations.sort((a, b) => a.id - b.id);
     
-    // ✅ Appliquer la traduction si nécessaire
+    // Appliquer la traduction si nécessaire
     if (lang !== 'fr' && cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations]) {
       const translations = cmsTranslations.realisations[lang as keyof typeof cmsTranslations.realisations];
       const translatedRealisations = realisations.map((r, idx) => ({
