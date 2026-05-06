@@ -19,7 +19,7 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'development',
     formats: ['image/avif', 'image/webp'],
   },
-  output: 'standalone',
+  // output: 'standalone', ← SUPPRIMÉ (problème sur Netlify)
   swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -30,7 +30,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: process.env.NODE_ENV === 'development',
   },
-   webpack(config) {
+  webpack(config) {
     config.module.rules.push({
       test: /\.(mp4|webm|ogg)$/,
       type: 'asset/resource',

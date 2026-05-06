@@ -16,9 +16,9 @@ const defaultServices = [
     priceRange: "60 000 RWF",
     image: "https://images.pexels.com/photos/11474201/pexels-photo-11474201.jpeg",
     packs: [
-      { name: "Pack Premier Frisson", price: 60000, desc: "15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie" },
-      { name: "Pack Love XL", price: 100000, desc: "25 ballons, lettre/chiffre lumineux, table dressée pour deux, bougie parfumée, playlist personnalisée" },
-      { name: "Pack ROYAL SURPRISE", price: 200000, desc: "Rideau de ballons + néon personnalisé, plateau de fruits + vin, photographe 20 min, bouquet de fleurs" }
+      { id: 1, name: "Pack Premier Frisson", price: 60000, desc: "15 ballons, message au sol en pétale, 5 photos suspendues, LED ou bougie" },
+      { id: 2, name: "Pack Love XL", price: 100000, desc: "25 ballons, lettre/chiffre lumineux, table dressée pour deux, bougie parfumée, playlist personnalisée" },
+      { id: 3, name: "Pack ROYAL SURPRISE", price: 200000, desc: "Rideau de ballons + néon personnalisé, plateau de fruits + vin, photographe 20 min, bouquet de fleurs" }
     ],
     includes: ["Installation complète", "Décoration sur mesure", "Démontage inclus", "Discrétion garantie"],
     duration: "4-8 heures",
@@ -89,32 +89,38 @@ export async function GET(request: Request) {
     
     const contentPath = path.join(process.cwd(), 'content', 'services');
     let services = [];
-    let useDefault = false;
     
     if (fs.existsSync(contentPath)) {
-      const files = fs.readdirSync(contentPath);
-      
+      // ✅ Lire TOUS les fichiers et dédupliquer par ID
+      const files = fs.readdirSync(contentPath)
+        .filter(f => f.endsWith('.json'))
+        .map(f => ({
+          path: path.join(contentPath, f),
+          mtime: fs.statSync(path.join(contentPath, f)).mtime.getTime()
+        }))
+        .sort((a, b) => a.mtime - b.mtime); // Plus ancien d'abord (le dernier écrase)
+
+      const serviceMap = new Map();
+
       for (const file of files) {
-        if (file.endsWith('.json')) {
-          const filePath = path.join(contentPath, file);
-          const content = fs.readFileSync(filePath, 'utf-8');
-          const service = JSON.parse(content);
-          services.push(service);
-        }
+        const content = fs.readFileSync(file.path, 'utf-8');
+        const service = JSON.parse(content);
+        // Le dernier fichier (plus récent) écrase l'ancien
+        serviceMap.set(service.id, service);
       }
+
+      services = Array.from(serviceMap.values());
     }
     
     // Si aucun fichier trouvé, utiliser les données par défaut
     if (services.length === 0) {
       services = [...defaultServices];
-      useDefault = true;
     }
     
     // Trier les services par ID
     services.sort((a, b) => (a.id || 0) - (b.id || 0));
     
     // ✅ TOUJOURS appliquer la traduction si la langue n'est pas française
-    // (même pour les données par défaut)
     if (lang !== 'fr') {
       const translatedServices = services.map((service, idx) => translateService(service, lang, idx));
       return NextResponse.json({ success: true, services: translatedServices });
@@ -123,7 +129,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ success: true, services });
   } catch (error) {
     console.error('Erreur lecture services:', error);
-    // ✅ En cas d'erreur, retourner les services par défaut dans la bonne langue
     const lang = new URL(request.url).searchParams.get('lang') || 'fr';
     let defaultData = [...defaultServices];
     if (lang !== 'fr') {

@@ -1,4 +1,4 @@
-// app/api/cms/realisations/route.ts (version finale)
+// app/api/cms/realisations/route.ts (version finale corrigée)
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
@@ -22,48 +22,57 @@ export async function GET(request: Request) {
     let realisations = [];
     
     if (fs.existsSync(contentPath)) {
-      const files = fs.readdirSync(contentPath);
-      
+      // ✅ Lire TOUS les fichiers et dédupliquer par ID
+      const files = fs.readdirSync(contentPath)
+        .filter(f => f.endsWith('.json'))
+        .map(f => ({
+          path: path.join(contentPath, f),
+          mtime: fs.statSync(path.join(contentPath, f)).mtime.getTime()
+        }))
+        .sort((a, b) => a.mtime - b.mtime);
+
+      const realisationMap = new Map();
+
       for (const file of files) {
-        if (file.endsWith('.json')) {
-          const filePath = path.join(contentPath, file);
-          const content = fs.readFileSync(filePath, 'utf-8');
-          const realisation = JSON.parse(content);
-          
-          // 🎯 NORMALISER LES DONNÉES VIDÉO
-          if (realisation.mediaType === 'video') {
-            // Priorité 1: vidéo uploadée
-            if (realisation.video_options?.upload) {
-              realisation.video = realisation.video_options.upload;
-            }
-            // Priorité 2: lien YouTube/Vimeo
-            else if (realisation.video_options?.link) {
-              realisation.video = realisation.video_options.link;
-            }
-            // Priorité 3: ancien champ video (rétrocompatibilité)
-            else if (realisation.video) {
-              realisation.video = realisation.video;
-            }
-            
-            // Utiliser la miniature personnalisée si disponible, sinon l'image principale
-            if (realisation.thumbnail) {
-              realisation.thumbnail = realisation.thumbnail;
-            } else if (realisation.image) {
-              realisation.thumbnail = realisation.image;
-            }
+        const content = fs.readFileSync(file.path, 'utf-8');
+        const realisation = JSON.parse(content);
+        
+        // 🎯 NORMALISER LES DONNÉES VIDÉO
+        if (realisation.mediaType === 'video') {
+          // Priorité 1: vidéo uploadée
+          if (realisation.video_options?.upload) {
+            realisation.video = realisation.video_options.upload;
+          }
+          // Priorité 2: lien YouTube/Vimeo
+          else if (realisation.video_options?.link) {
+            realisation.video = realisation.video_options.link;
+          }
+          // Priorité 3: ancien champ video (rétrocompatibilité)
+          else if (realisation.video) {
+            realisation.video = realisation.video;
           }
           
-          // Rétrocompatibilité pour les anciennes données
-          if (!realisation.mediaType) {
-            realisation.mediaType = 'image';
+          // Utiliser la miniature personnalisée si disponible, sinon l'image principale
+          if (realisation.thumbnail) {
+            realisation.thumbnail = realisation.thumbnail;
+          } else if (realisation.image) {
+            realisation.thumbnail = realisation.image;
           }
-          
-          // Nettoyer les données temporaires
-          delete realisation.video_options;
-          
-          realisations.push(realisation);
         }
+        
+        // Rétrocompatibilité pour les anciennes données
+        if (!realisation.mediaType) {
+          realisation.mediaType = 'image';
+        }
+        
+        // Nettoyer les données temporaires
+        delete realisation.video_options;
+        
+        // Déduplication par ID
+        realisationMap.set(realisation.id, realisation);
       }
+      
+      realisations = Array.from(realisationMap.values());
     }
     
     // Si aucun fichier trouvé, utiliser les données par défaut

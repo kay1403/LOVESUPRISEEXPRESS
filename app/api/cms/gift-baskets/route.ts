@@ -20,16 +20,24 @@ export async function GET(request: Request) {
     let baskets = [];
     
     if (fs.existsSync(contentPath)) {
-      const files = fs.readdirSync(contentPath);
-      
+      // ✅ Lire TOUS les fichiers et dédupliquer par ID
+      const files = fs.readdirSync(contentPath)
+        .filter(f => f.endsWith('.json'))
+        .map(f => ({
+          path: path.join(contentPath, f),
+          mtime: fs.statSync(path.join(contentPath, f)).mtime.getTime()
+        }))
+        .sort((a, b) => a.mtime - b.mtime);
+
+      const basketMap = new Map();
+
       for (const file of files) {
-        if (file.endsWith('.json')) {
-          const filePath = path.join(contentPath, file);
-          const content = fs.readFileSync(filePath, 'utf-8');
-          const basket = JSON.parse(content);
-          baskets.push(basket);
-        }
+        const content = fs.readFileSync(file.path, 'utf-8');
+        const basket = JSON.parse(content);
+        basketMap.set(basket.id, basket);
       }
+
+      baskets = Array.from(basketMap.values());
     }
     
     // Si aucun fichier trouvé, utiliser les données par défaut

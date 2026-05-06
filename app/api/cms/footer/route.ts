@@ -1,4 +1,4 @@
-// app/api/cms/footer/route.ts (corrigé - ligne 85)
+// app/api/cms/footer/route.ts - VERSION CORRIGÉE
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
@@ -26,25 +26,6 @@ const DEFAULT_FOOTER = {
   year: new Date().getFullYear()
 };
 
-// Fonction pour valider et nettoyer les données du footer
-function validateFooter(data: any): any {
-  return {
-    companyName: data?.companyName || DEFAULT_FOOTER.companyName,
-    slogan: data?.slogan || DEFAULT_FOOTER.slogan,
-    phone1: data?.phone1 || DEFAULT_FOOTER.phone1,
-    phone2: data?.phone2 || DEFAULT_FOOTER.phone2,
-    address: data?.address || DEFAULT_FOOTER.address,
-    hours: Array.isArray(data?.hours) && data.hours.length > 0 
-      ? data.hours.map((h: any) => ({ day: h?.day || '', time: h?.time || '' }))
-      : DEFAULT_FOOTER.hours,
-    services: Array.isArray(data?.services) && data.services.length > 0
-      ? data.services
-      : DEFAULT_FOOTER.services,
-    copyright: data?.copyright || DEFAULT_FOOTER.copyright,
-    year: data?.year || DEFAULT_FOOTER.year,
-  };
-}
-
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
@@ -52,41 +33,50 @@ export async function GET(request: Request) {
     
     const contentPath = path.join(process.cwd(), 'content', 'footer');
     let footerData = null;
+    let usedFile = null;
     
     if (fs.existsSync(contentPath)) {
-      const files = fs.readdirSync(contentPath);
+      // ✅ Lire TOUS les fichiers JSON et prendre le PLUS RÉCENT
+      const files = fs.readdirSync(contentPath)
+        .filter(f => f.endsWith('.json'))
+        .map(f => ({
+          name: f,
+          path: path.join(contentPath, f),
+          mtime: fs.statSync(path.join(contentPath, f)).mtime.getTime()
+        }))
+        .sort((a, b) => b.mtime - a.mtime); // Plus récent en premier
       
-      for (const file of files) {
-        if (file.endsWith('.json')) {
-          const filePath = path.join(contentPath, file);
-          const content = fs.readFileSync(filePath, 'utf-8');
-          footerData = JSON.parse(content);
-          break;
-        }
+      if (files.length > 0) {
+        usedFile = files[0].name;
+        const content = fs.readFileSync(files[0].path, 'utf-8');
+        footerData = JSON.parse(content);
+        console.log(`✅ Footer chargé depuis: ${usedFile} (modifié le ${new Date(files[0].mtime).toISOString()})`);
+      }
+      
+      // ⚠️ Log d'avertissement si plusieurs fichiers
+      if (files.length > 1) {
+        console.warn(`⚠️ Plusieurs fichiers footer trouvés: ${files.map(f => f.name).join(', ')}. Utilisation du plus récent: ${usedFile}`);
       }
     }
     
-    // Toujours valider les données
-    let footer = validateFooter(footerData);
+    // ✅ Fusion simple sans validateFooter qui écrase
+    let footer = footerData ? { ...DEFAULT_FOOTER, ...footerData } : DEFAULT_FOOTER;
     
     // ✅ Appliquer traduction si nécessaire (sans casser la structure)
     if (lang !== 'fr' && cmsTranslations.footer?.[lang as keyof typeof cmsTranslations.footer]) {
       const t = cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer];
       footer = {
         ...footer,
-        // Ne fusionner que les propriétés qui existent dans la traduction
         ...(t.companyName && { companyName: t.companyName }),
         ...(t.slogan && { slogan: t.slogan }),
         ...(t.hours && Array.isArray(t.hours) && { hours: t.hours }),
         ...(t.copyright && { copyright: t.copyright }),
-        // 🔧 CORRECTION : Ne pas toucher à services si absent
-        services: footer.services, // Garder les services par défaut
       };
     }
     
     return NextResponse.json({ success: true, footer });
   } catch (error) {
-    console.error('Erreur lecture footer:', error);
+    console.error('❌ Erreur lecture footer:', error);
     return NextResponse.json({ success: true, footer: DEFAULT_FOOTER });
   }
 }
