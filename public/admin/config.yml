@@ -69,6 +69,7 @@ collections:
         widget: "list"
         field: { label: "Item", name: "item", widget: "string" }
 
+  # public/admin/config.yml (mise à jour de la section realisations)
   - name: "realisations"
     label: "📸 Réalisations"
     folder: "content/realisations"
@@ -80,7 +81,16 @@ collections:
       - { label: "ID", name: "id", widget: "number" }
       - { label: "Titre", name: "title", widget: "string" }
       - { label: "Catégorie", name: "category", widget: "string" }
-      - { label: "Image", name: "image", widget: "image" }
+      - label: "Type de média"
+        name: "mediaType"
+        widget: "select"
+        options:
+          - { label: "Image", value: "image" }
+          - { label: "Vidéo", value: "video" }
+        default: "image"
+      - { label: "Image", name: "image", widget: "image", required: false, hint: "Pour les images ou la miniature des vidéos" }
+      - { label: "Lien vidéo", name: "video", widget: "string", required: false, hint: "URL YouTube, Vimeo ou chemin vers fichier MP4" }
+      - { label: "Miniature vidéo", name: "thumbnail", widget: "image", required: false, hint: "Optionnel - image d'aperçu pour la vidéo" }
 
   - name: "hero_slides"
     label: "🎬 Hero Slides"

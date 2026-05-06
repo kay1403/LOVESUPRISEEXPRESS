@@ -1,8 +1,9 @@
+// components/Realizations.tsx (version mise à jour)
 'use client'
 
 import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
-import { ArrowRight, Heart, ChevronDown } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { ArrowRight, Heart, ChevronDown, Play, X } from 'lucide-react'
 import Link from 'next/link'
 import { useTranslation } from 'react-i18next'
 
@@ -10,17 +11,20 @@ interface Realisation {
   id: number
   title: string
   category: string
-  image: string
+  mediaType: 'image' | 'video'
+  image?: string
+  video?: string
+  thumbnail?: string
 }
 
 export default function Realizations() {
   const { t, i18n } = useTranslation()
   const [realizations, setRealisations] = useState<Realisation[]>([])
-  const [selectedImage, setSelectedImage] = useState<Realisation | null>(null)
+  const [selectedMedia, setSelectedMedia] = useState<Realisation | null>(null)
   const [loading, setLoading] = useState(true)
-  
   const [visibleCount, setVisibleCount] = useState(6)
   const [isMobile, setIsMobile] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -74,6 +78,79 @@ export default function Realizations() {
     }
   }
 
+  // Fonction pour obtenir l'ID d'intégration YouTube
+  const getYouTubeId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/
+    const match = url.match(regExp)
+    return (match && match[2].length === 11) ? match[2] : null
+  }
+
+  // Fonction pour obtenir l'ID d'intégration Vimeo
+  const getVimeoId = (url: string) => {
+    const regExp = /vimeo\.com\/(?:.*#|.*\/videos\/)?([0-9]+)/
+    const match = url.match(regExp)
+    return match ? match[1] : null
+  }
+
+  // Rendu du média (image ou vidéo embed)
+  const renderMedia = (item: Realisation) => {
+    if (item.mediaType === 'video' && item.video) {
+      const youtubeId = getYouTubeId(item.video)
+      const vimeoId = getVimeoId(item.video)
+      
+      if (youtubeId) {
+        return (
+          <div className="relative w-full h-80 bg-black">
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=0&controls=1&rel=0`}
+              className="absolute inset-0 w-full h-full"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        )
+      }
+      
+      if (vimeoId) {
+        return (
+          <div className="relative w-full h-80 bg-black">
+            <iframe
+              src={`https://player.vimeo.com/video/${vimeoId}?autoplay=0&controls=1`}
+              className="absolute inset-0 w-full h-full"
+              frameBorder="0"
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        )
+      }
+      
+      // Vidéo locale
+      return (
+        <video
+          ref={videoRef}
+          className="w-full h-80 object-cover"
+          poster={item.thumbnail || item.image}
+          controls
+          preload="metadata"
+        >
+          <source src={item.video} type="video/mp4" />
+          {t('realizations.videoNotSupported')}
+        </video>
+      )
+    }
+    
+    // Image par défaut
+    return (
+      <img
+        src={item.image}
+        alt={item.title}
+        className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
+      />
+    )
+  }
+
   if (loading) {
     return (
       <section className="py-24 bg-white">
@@ -100,25 +177,29 @@ export default function Realizations() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visibleRealisations.map((image, index) => (
+            {visibleRealisations.map((item, index) => (
               <motion.div
-                key={image.id}
+                key={item.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 transition={{ delay: (index % 6) * 0.1 }}
                 viewport={{ once: true }}
                 whileHover={{ scale: 1.02 }}
                 className="cursor-pointer group"
-                onClick={() => setSelectedImage(image)}
+                onClick={() => setSelectedMedia(item)}
               >
                 <div className="relative overflow-hidden rounded-2xl">
-                  <img
-                    src={image.image}
-                    alt={image.title}
-                    className="w-full h-80 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
+                  {renderMedia(item)}
+                  
+                  {/* Badge vidéo */}
+                  {item.mediaType === 'video' && (
+                    <div className="absolute top-4 right-4 bg-black/70 rounded-full p-2 backdrop-blur-sm">
+                      <Play size={20} className="text-white fill-white" />
+                    </div>
+                  )}
+                  
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-start p-4">
-                    <p className="text-white font-semibold text-lg">{image.title}</p>
+                    <p className="text-white font-semibold text-lg">{item.title}</p>
                   </div>
                 </div>
               </motion.div>
@@ -162,23 +243,80 @@ export default function Realizations() {
         </div>
       </section>
 
-      {selectedImage && (
+      {/* Modal amélioré pour afficher images ou vidéos */}
+      {selectedMedia && (
         <div 
-          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 cursor-pointer"
-          onClick={() => setSelectedImage(null)}
+          className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4"
+          onClick={() => setSelectedMedia(null)}
         >
+          <button
+            onClick={() => setSelectedMedia(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+          >
+            <X size={32} />
+          </button>
+          
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            className="max-w-4xl w-full"
+            className="max-w-5xl w-full"
+            onClick={(e) => e.stopPropagation()}
           >
-            <img 
-              src={selectedImage.image} 
-              alt={selectedImage.title}
-              className="w-full h-auto rounded-2xl"
-            />
-            <p className="text-white text-center mt-4 text-lg">{selectedImage.title}</p>
+            {selectedMedia.mediaType === 'video' && selectedMedia.video ? (
+              <div className="relative aspect-video bg-black rounded-2xl overflow-hidden">
+                {(() => {
+                  const youtubeId = getYouTubeId(selectedMedia.video!)
+                  const vimeoId = getVimeoId(selectedMedia.video!)
+                  
+                  if (youtubeId) {
+                    return (
+                      <iframe
+                        src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&controls=1&rel=0&modestbranding=1`}
+                        className="absolute inset-0 w-full h-full"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    )
+                  }
+                  
+                  if (vimeoId) {
+                    return (
+                      <iframe
+                        src={`https://player.vimeo.com/video/${vimeoId}?autoplay=1&controls=1`}
+                        className="absolute inset-0 w-full h-full"
+                        frameBorder="0"
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        allowFullScreen
+                      />
+                    )
+                  }
+                  
+                  return (
+                    <video
+                      controls
+                      autoPlay
+                      className="absolute inset-0 w-full h-full"
+                      poster={selectedMedia.thumbnail || selectedMedia.image}
+                    >
+                      <source src={selectedMedia.video} type="video/mp4" />
+                      {t('realizations.videoNotSupported')}
+                    </video>
+                  )
+                })()}
+              </div>
+            ) : (
+              <img 
+                src={selectedMedia.image} 
+                alt={selectedMedia.title}
+                className="w-full h-auto rounded-2xl"
+              />
+            )}
+            <p className="text-white text-center mt-4 text-lg">{selectedMedia.title}</p>
+            {selectedMedia.category && (
+              <p className="text-gray-400 text-center mt-2">{selectedMedia.category}</p>
+            )}
           </motion.div>
         </div>
       )}
