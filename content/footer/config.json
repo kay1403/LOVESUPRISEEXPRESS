@@ -1,14 +1,9 @@
 {
-  "companyName": "Love",
-  "slogan": "We deliver love and kindness. Créons ensemble des moments inoubliables.",
+  "companyName": "LoveExpressTEST",
+  "slogan": "We deliver love and kindness. Créons ensemble des moments inoubliables.TEST",
   "phone1": "+250 799 366 007",
   "phone2": "+250 737 769 092",
-  "address": "Kigali, Rwanda",
-  "hours": [
-    { "day": "Lundi - Vendredi", "time": "8h - 20h" },
-    { "day": "Samedi", "time": "9h - 18h" },
-    { "day": "Dimanche", "time": "Fermé" }
-  ],
+  "address": "Kigali, Rwanda TEST",
   "services": [
     "Party Decoration",
     "Surprise Planner",
@@ -16,5 +11,18 @@
     "Paniers Cadeaux"
   ],
   "copyright": "Tous droits réservés",
-  "year": 2026
+  "hours": [
+    {
+      "day": "lundi-vendri",
+      "time": "9h-19h"
+    },
+    {
+      "day": "samedi",
+      "time": "9h-13h"
+    },
+    {
+      "day": "dimanche ",
+      "time": "sur rdv"
+    }
+  ]
 }
