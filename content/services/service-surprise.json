@@ -1,18 +1,29 @@
 {
-  "id": 2,
-  "title": "Surprise",
-  "subtitle": "Planner",
-  "badge": "Expert en émotions",
-  "description": "Dites nous l'occasion et on planifie toute la surprise",
   "longDescription": "Vous avez l'idée, nous exécutons. Notre service de planification de surprise prend en charge TOUS les détails : logistique, coordination, timing, et même la complicité des invités.",
-  "basePrice": 200000,
-  "priceRange": "200 000 RWF",
-  "image": "https://i.pinimg.com/1200x/44/8c/f2/448cf2102dc4b6f9156ed867f181e985.jpg",
-  "duration": "1-2 semaines",
+  "badge": "Expert en émotions",
   "coverage": "Tout le Rwanda",
-  "includes": ["Consultation et planification", "Coordination avec tous les prestataires", "Timing et discrétion garantis", "Présence sur place"],
+  "includes": [
+    "Consultation et planification",
+    "Coordination avec tous les prestataires",
+    "Timing et discrétion garantis",
+    "Présence sur place"
+  ],
+  "priceRange": "600 000 RWF",
+  "duration": "1-2 semaines",
+  "subtitle": "Planner",
+  "basePrice": 300000,
+  "title": "Surprise",
+  "id": 2,
+  "image": "https://i.pinimg.com/1200x/44/8c/f2/448cf2102dc4b6f9156ed867f181e985.jpg",
+  "description": "Dites nous l'occasion et on planifie toute la surprise",
   "options": [
-    { "name": "Photographe professionnel", "price": 50000 },
-    { "name": "Violoniste / Musicien", "price": 60000 }
+    {
+      "name": "Photographe professionnel",
+      "price": 50000
+    },
+    {
+      "name": "Violoniste / Musicien",
+      "price": 60000
+    }
   ]
 }
