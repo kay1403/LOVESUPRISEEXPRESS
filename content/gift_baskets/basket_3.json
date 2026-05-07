@@ -1,13 +1,18 @@
 {
-  "id": 3,
-  "name": "New Baby",
-  "subtitle": "Gift Basket",
-  "badge": "Naissance",
-  "description": "Bienvenue au nouveau-né",
   "longDescription": "Vêtements bébé, couches, produits de soin, doudou.",
+  "badge": "Naissance",
   "priceStandard": 40000,
+  "includes": [
+    "Vêtements bébé",
+    "Couches",
+    "Produits de soin",
+    "Doudou"
+  ],
+  "name": "New Baby TEST",
   "pricePremium": 80000,
+  "subtitle": "Gift Basket",
   "popular": false,
+  "id": 3,
   "image": "https://i.pinimg.com/1200x/48/b0/79/48b07903362683f89724cc49e705a008.jpg",
-  "includes": ["Vêtements bébé", "Couches", "Produits de soin", "Doudou"]
+  "description": "Bienvenue au nouveau-né"
 }
