@@ -52,29 +52,18 @@ export function useFooterSafe() {
   return useCMSSafe(
     async () => {
       const lang = i18n.language;
-      const res = await fetch(`/api/cms/footer?lang=${lang}`);
+      // ✅ AJOUTER cache: 'no-store' pour éviter le cache
+      const res = await fetch(`/api/cms/footer?lang=${lang}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
       const data = await res.json();
       
-      // ✅ PRIORITÉ ABSOLUE AUX DONNÉES CMS
-      // Le fallback n'est utilisé que si le champ est ABSENT ou VIDE
       if (data.success && data.footer) {
-        return {
-          companyName: data.footer.companyName ?? CMS_FALLBACKS.footer.companyName,
-          slogan: data.footer.slogan ?? CMS_FALLBACKS.footer.slogan,
-          phone1: data.footer.phone1 ?? CMS_FALLBACKS.footer.phone1,
-          phone2: data.footer.phone2 ?? CMS_FALLBACKS.footer.phone2,
-          address: data.footer.address ?? CMS_FALLBACKS.footer.address,
-          hours: (data.footer.hours && data.footer.hours.length > 0) 
-            ? data.footer.hours 
-            : CMS_FALLBACKS.footer.hours,
-          services: (data.footer.services && data.footer.services.length > 0) 
-            ? data.footer.services 
-            : CMS_FALLBACKS.footer.services,
-          copyright: data.footer.copyright ?? CMS_FALLBACKS.footer.copyright,
-          year: data.footer.year ?? CMS_FALLBACKS.footer.year,
-        };
+        return data.footer;
       }
-      // ⚠️ Fallback UNIQUEMENT si pas de données CMS
       return CMS_FALLBACKS.footer;
     },
     CMS_FALLBACKS.footer,
