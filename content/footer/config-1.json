@@ -10,5 +10,11 @@
     "Flower Bouquet",
     "Gift Baskets"
   ],
-  "copyright": "Tous droits réservés"
+  "copyright": "Tous droits réservés",
+  "hours": [
+    {
+      "day": "lundi",
+      "time": "4h"
+    }
+  ]
 }
