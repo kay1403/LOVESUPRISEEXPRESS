@@ -254,7 +254,6 @@ export const cmsTranslations = {
   // ==================== FOOTER ====================
   footer: {
     fr: {
-      companyName: "LoveExpress",
       slogan: "We deliver love and kindness. Créons ensemble des moments inoubliables.",
       hours: [
         { day: "Lundi - Samedi", time: "9h - 19h" },
@@ -264,7 +263,6 @@ export const cmsTranslations = {
       copyright: "Tous droits réservés"
     },
     en: {
-      companyName: "LoveExpress",
       slogan: "We deliver love and kindness. Let's create unforgettable moments together.",
       hours: [
         { day: "Monday - Saturday", time: "9am - 7pm" },
@@ -274,7 +272,6 @@ export const cmsTranslations = {
       copyright: "All rights reserved"
     },
     rw: {
-      companyName: "LoveExpress",
       slogan: "Dutanga urukundo n'ubuntu. Reka dureme hamwe ibihe bitibagirana.",
       hours: [
         { day: "Kuwa mbere - Kuwa gatandatu", time: "9h - 19h" },

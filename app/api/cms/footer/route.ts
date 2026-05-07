@@ -32,49 +32,48 @@ export async function GET(request: Request) {
     const lang = url.searchParams.get('lang') || 'fr';
     
     const contentPath = path.join(process.cwd(), 'content', 'footer');
-    console.log('📁 Recherche footer dans:', contentPath);
-    
     let footerData = null;
     let usedFile = null;
     
     if (fs.existsSync(contentPath)) {
+      // ✅ Tri par ordre alphabétique INVERSÉ (config-1.json avant config.json)
+      // Netlify ne préserve pas les mtime donc on utilise le nom
       const files = fs.readdirSync(contentPath)
         .filter(f => f.endsWith('.json'))
-        .map(f => ({
-          name: f,
-          path: path.join(contentPath, f),
-          mtime: fs.statSync(path.join(contentPath, f)).mtime.getTime()
-        }))
-        .sort((a, b) => b.mtime - a.mtime); // Plus récent en premier
-      
-      console.log(`📁 Fichiers trouvés: ${files.map(f => f.name).join(', ') || 'aucun'}`);
+        .sort((a, b) => b.localeCompare(a)); // ← config-1 avant config
       
       if (files.length > 0) {
-        usedFile = files[0].name;
-        const content = fs.readFileSync(files[0].path, 'utf-8');
+        usedFile = files[0];
+        const filePath = path.join(contentPath, files[0]);
+        const content = fs.readFileSync(filePath, 'utf-8');
         footerData = JSON.parse(content);
-        console.log(`✅ Footer chargé depuis: ${usedFile}`, footerData);
+        console.log(`✅ Footer chargé depuis: ${usedFile}`);
       }
-    } else {
-      console.log('⚠️ Dossier content/footer inexistant');
+      
+      // ⚠️ Log d'avertissement si plusieurs fichiers
+      if (files.length > 1) {
+        console.warn(`⚠️ Plusieurs fichiers footer trouvés: ${files.join(', ')}. Utilisation du plus récent alphabétique: ${usedFile}`);
+      }
     }
     
-    // ✅ Fusion : les données CMS écrasent les valeurs par défaut (sauf si absentes)
+    // ✅ Fusion : les données CMS écrasent les valeurs par défaut
     let footer = footerData ? { ...DEFAULT_FOOTER, ...footerData } : DEFAULT_FOOTER;
     
-    // ✅ Appliquer la traduction pour la langue demandée
+    // ✅ Appliquer traduction UNIQUEMENT pour les champs textuels
+    // Ne JAMAIS écraser companyName, phone1, phone2, address (éditables uniquement via CMS)
     if (lang !== 'fr' && cmsTranslations.footer?.[lang as keyof typeof cmsTranslations.footer]) {
       const t = cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer];
       footer = {
         ...footer,
-        companyName: t.companyName || footer.companyName,
-        slogan: t.slogan || footer.slogan,
-        hours: (t.hours && Array.isArray(t.hours)) ? t.hours : footer.hours,
-        copyright: t.copyright || footer.copyright,
+        // ✅ Seulement les champs TEXTUELS traduisibles
+        ...(t.slogan && { slogan: t.slogan }),
+        ...(t.hours && Array.isArray(t.hours) && { hours: t.hours }),
+        ...(t.copyright && { copyright: t.copyright }),
+        // ❌ companyName, phone1, phone2, address → toujours depuis le CMS, jamais de la traduction
       };
     }
     
-    console.log(`📦 Footer retourné pour langue ${lang}:`, { companyName: footer.companyName, slogan: footer.slogan });
+    console.log(`📦 Footer retourné pour langue ${lang}: companyName="${footer.companyName}"`);
     
     return NextResponse.json({ success: true, footer });
   } catch (error) {
