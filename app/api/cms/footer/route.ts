@@ -1,10 +1,10 @@
-// app/api/cms/footer/route.ts - VERSION UNIFIÉE ET ROBUSTE (SANS ERREUR TS)
+// app/api/cms/footer/route.ts
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
-import { cmsTranslations } from '@/lib/cms-translations';
 
-// Structure unifiée - CE FORMAT EST LE SEUL VALABLE
+export const dynamic = 'force-dynamic'; // ← AJOUTER OBLIGATOIREMENT
+
 const DEFAULT_FOOTER = {
   companyName: "LoveExpress",
   slogan: "We deliver love and kindness. Créons ensemble des moments inoubliables.",
@@ -21,76 +21,49 @@ const DEFAULT_FOOTER = {
   year: new Date().getFullYear()
 };
 
-// Interface pour typer les heures
-interface Hour {
-  day: string;
-  time: string;
-}
-
 export async function GET(request: Request) {
+  console.log('🚀 FOOTER API CALLED');
+  
   try {
     const url = new URL(request.url);
     const lang = url.searchParams.get('lang') || 'fr';
     
-    const contentPath = path.join(process.cwd(), 'content', 'footer');
-    let footerData: any = null;
-    let usedFile: string | null = null;
+    // Chercher le fichier à plusieurs endroits
+    const possiblePaths = [
+      path.join(process.cwd(), 'content', 'footer', 'config.json'),
+      path.join(process.cwd(), '.next', 'server', 'content', 'footer', 'config.json'),
+      path.join(process.env.PWD || '', 'content', 'footer', 'config.json'),
+    ];
     
-    // Lecture du fichier CMS
-    if (fs.existsSync(contentPath)) {
-      const files = fs.readdirSync(contentPath)
-        .filter(f => f.endsWith('.json'))
-        .sort((a, b) => b.localeCompare(a));
-      
-      if (files.length > 0) {
-        usedFile = files[0];
-        const filePath = path.join(contentPath, files[0]);
+    let footerData = null;
+    let loadedFrom = null;
+    
+    for (const filePath of possiblePaths) {
+      if (fs.existsSync(filePath)) {
         const content = fs.readFileSync(filePath, 'utf-8');
         footerData = JSON.parse(content);
-        console.log(`✅ Footer chargé depuis: ${usedFile}`);
+        loadedFrom = filePath;
+        console.log(`✅ Footer chargé depuis: ${loadedFrom}`);
+        break;
       }
     }
     
-    // Fusion intelligente avec validation des types
-    let footer = { ...DEFAULT_FOOTER };
-    
-    if (footerData) {
-      // Mise à jour uniquement des champs présents
-      if (footerData.companyName) footer.companyName = footerData.companyName;
-      if (footerData.slogan) footer.slogan = footerData.slogan;
-      if (footerData.phone1) footer.phone1 = footerData.phone1;
-      if (footerData.phone2) footer.phone2 = footerData.phone2;
-      if (footerData.address) footer.address = footerData.address;
-      if (footerData.copyright) footer.copyright = footerData.copyright;
-      if (footerData.year) footer.year = footerData.year;
-      
-      // Traitement spécial pour hours (doit être un tableau valide)
-      if (footerData.hours && Array.isArray(footerData.hours) && footerData.hours.length > 0) {
-        footer.hours = footerData.hours.map((h: Hour) => ({
-          day: h.day || "",
-          time: h.time || ""
-        }));
-      }
-      
-      // Traitement spécial pour services
-      if (footerData.services && Array.isArray(footerData.services) && footerData.services.length > 0) {
-        footer.services = footerData.services;
-      }
+    if (!footerData) {
+      console.log('⚠️ Aucun fichier footer trouvé, utilisation du fallback');
+      return NextResponse.json({ success: true, footer: DEFAULT_FOOTER });
     }
     
-    // Application de la traduction (uniquement pour les langues non-françaises)
-    if (lang !== 'fr' && cmsTranslations.footer?.[lang as keyof typeof cmsTranslations.footer]) {
-      const t = cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer];
-      if (t.slogan) footer.slogan = t.slogan;
-      if (t.hours && Array.isArray(t.hours)) footer.hours = t.hours;
-      if (t.copyright) footer.copyright = t.copyright;
-    }
+    // Fusionner avec les valeurs par défaut pour les champs manquants
+    const footer = {
+      ...DEFAULT_FOOTER,
+      ...footerData,
+    };
     
-    console.log(`📦 Footer: companyName="${footer.companyName}", hours.length=${footer.hours.length}`);
+    console.log(`📦 Footer retourné: companyName="${footer.companyName}"`);
     
     return NextResponse.json({ success: true, footer });
   } catch (error) {
-    console.error('❌ Erreur footer:', error);
+    console.error('❌ Erreur:', error);
     return NextResponse.json({ success: true, footer: DEFAULT_FOOTER });
   }
 }
