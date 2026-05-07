@@ -10,5 +10,19 @@
     "Flower Bouquet",
     "Gift Baskets"
   ],
-  "copyright": "Tous droits réservés"
+  "copyright": "Tous droits réservés",
+  "hours": [
+    {
+      "day": "lundi-vendri",
+      "time": "9h-19h"
+    },
+    {
+      "day": "samedi",
+      "time": "9h-13h"
+    },
+    {
+      "day": "dimanche ",
+      "time": "sur rdv"
+    }
+  ]
 }
