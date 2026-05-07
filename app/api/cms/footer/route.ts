@@ -1,9 +1,10 @@
-// app/api/cms/footer/route.ts
+// app/api/cms/footer/route.ts - VERSION FINALE CORRECTE
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { cmsTranslations } from '@/lib/cms-translations';
 
-export const dynamic = 'force-dynamic'; // ← AJOUTER OBLIGATOIREMENT
+export const dynamic = 'force-dynamic';
 
 const DEFAULT_FOOTER = {
   companyName: "LoveExpress",
@@ -28,40 +29,49 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const lang = url.searchParams.get('lang') || 'fr';
     
-    // Chercher le fichier à plusieurs endroits
+    // Chercher le fichier JSON
     const possiblePaths = [
       path.join(process.cwd(), 'content', 'footer', 'config.json'),
       path.join(process.cwd(), '.next', 'server', 'content', 'footer', 'config.json'),
-      path.join(process.env.PWD || '', 'content', 'footer', 'config.json'),
     ];
     
     let footerData = null;
-    let loadedFrom = null;
     
     for (const filePath of possiblePaths) {
       if (fs.existsSync(filePath)) {
         const content = fs.readFileSync(filePath, 'utf-8');
         footerData = JSON.parse(content);
-        loadedFrom = filePath;
-        console.log(`✅ Footer chargé depuis: ${loadedFrom}`);
+        console.log(`✅ Footer chargé depuis: ${filePath}`);
         break;
       }
     }
     
-    if (!footerData) {
-      console.log('⚠️ Aucun fichier footer trouvé, utilisation du fallback');
-      return NextResponse.json({ success: true, footer: DEFAULT_FOOTER });
+    // Fusion avec les valeurs par défaut
+    let footer = { ...DEFAULT_FOOTER, ...footerData };
+    
+    // ✅ APPLIQUER LES TRADUCTIONS SELON LA LANGUE
+    if (lang !== 'fr' && cmsTranslations.footer?.[lang as keyof typeof cmsTranslations.footer]) {
+      const t = cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer];
+      footer = {
+        ...footer,
+        slogan: t.slogan || footer.slogan,
+        hours: (t.hours && Array.isArray(t.hours)) ? t.hours : footer.hours,
+        copyright: t.copyright || footer.copyright,
+      };
     }
     
-    // Fusionner avec les valeurs par défaut pour les champs manquants
-    const footer = {
-      ...DEFAULT_FOOTER,
-      ...footerData,
-    };
+    console.log(`📦 Footer pour ${lang}: companyName="${footer.companyName}"`);
     
-    console.log(`📦 Footer retourné: companyName="${footer.companyName}"`);
-    
-    return NextResponse.json({ success: true, footer });
+    // Retourner avec headers anti-cache
+    return NextResponse.json(
+      { success: true, footer },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'CDN-Cache-Control': 'no-cache',
+        }
+      }
+    );
   } catch (error) {
     console.error('❌ Erreur:', error);
     return NextResponse.json({ success: true, footer: DEFAULT_FOOTER });
