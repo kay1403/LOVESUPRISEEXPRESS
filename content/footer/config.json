@@ -11,6 +11,10 @@
     {
       "day": "Dimanche",
       "time": "Sur rendez-vous"
+    },
+    {
+      "day": "Livraison 24/24",
+      "time": "Sur demande"
     }
   ],
   "address": "Kigali, Rwanda",
