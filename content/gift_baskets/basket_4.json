@@ -1,13 +1,19 @@
 {
-  "id": 4,
-  "name": "Gourmet",
-  "subtitle": "Gift Basket",
-  "badge": "Gastronomie",
-  "description": "Pour les gourmands",
   "longDescription": "Biscuits, fruits, chocolat, jus, bonbons.",
-  "priceStandard": 20000,
+  "badge": "Gastronomie",
+  "priceStandard": 30000,
+  "includes": [
+    "Biscuits",
+    "Fruits",
+    "Chocolat",
+    "Jus",
+    "Bonbons"
+  ],
+  "name": "Gourmet",
   "pricePremium": 70000,
+  "subtitle": "Gift Basket",
   "popular": true,
+  "id": 4,
   "image": "https://i.pinimg.com/1200x/5d/1c/43/5d1c43fa44d4ceec1d095ce415241b0a.jpg",
-  "includes": ["Biscuits", "Fruits", "Chocolat", "Jus", "Bonbons"]
+  "description": "Pour les gourmands"
 }
