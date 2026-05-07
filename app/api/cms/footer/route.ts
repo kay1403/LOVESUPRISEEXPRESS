@@ -1,4 +1,4 @@
-// app/api/cms/footer/route.ts - VERSION CORRIGÉE
+// app/api/cms/footer/route.ts - VERSION FINALE CORRIGÉE
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
@@ -32,11 +32,12 @@ export async function GET(request: Request) {
     const lang = url.searchParams.get('lang') || 'fr';
     
     const contentPath = path.join(process.cwd(), 'content', 'footer');
+    console.log('📁 Recherche footer dans:', contentPath);
+    
     let footerData = null;
     let usedFile = null;
     
     if (fs.existsSync(contentPath)) {
-      // ✅ Lire TOUS les fichiers JSON et prendre le PLUS RÉCENT
       const files = fs.readdirSync(contentPath)
         .filter(f => f.endsWith('.json'))
         .map(f => ({
@@ -46,33 +47,34 @@ export async function GET(request: Request) {
         }))
         .sort((a, b) => b.mtime - a.mtime); // Plus récent en premier
       
+      console.log(`📁 Fichiers trouvés: ${files.map(f => f.name).join(', ') || 'aucun'}`);
+      
       if (files.length > 0) {
         usedFile = files[0].name;
         const content = fs.readFileSync(files[0].path, 'utf-8');
         footerData = JSON.parse(content);
-        console.log(`✅ Footer chargé depuis: ${usedFile} (modifié le ${new Date(files[0].mtime).toISOString()})`);
+        console.log(`✅ Footer chargé depuis: ${usedFile}`, footerData);
       }
-      
-      // ⚠️ Log d'avertissement si plusieurs fichiers
-      if (files.length > 1) {
-        console.warn(`⚠️ Plusieurs fichiers footer trouvés: ${files.map(f => f.name).join(', ')}. Utilisation du plus récent: ${usedFile}`);
-      }
+    } else {
+      console.log('⚠️ Dossier content/footer inexistant');
     }
     
-    // ✅ Fusion simple sans validateFooter qui écrase
+    // ✅ Fusion : les données CMS écrasent les valeurs par défaut (sauf si absentes)
     let footer = footerData ? { ...DEFAULT_FOOTER, ...footerData } : DEFAULT_FOOTER;
     
-    // ✅ Appliquer traduction si nécessaire (sans casser la structure)
+    // ✅ Appliquer la traduction pour la langue demandée
     if (lang !== 'fr' && cmsTranslations.footer?.[lang as keyof typeof cmsTranslations.footer]) {
       const t = cmsTranslations.footer[lang as keyof typeof cmsTranslations.footer];
       footer = {
         ...footer,
-        ...(t.companyName && { companyName: t.companyName }),
-        ...(t.slogan && { slogan: t.slogan }),
-        ...(t.hours && Array.isArray(t.hours) && { hours: t.hours }),
-        ...(t.copyright && { copyright: t.copyright }),
+        companyName: t.companyName || footer.companyName,
+        slogan: t.slogan || footer.slogan,
+        hours: (t.hours && Array.isArray(t.hours)) ? t.hours : footer.hours,
+        copyright: t.copyright || footer.copyright,
       };
     }
+    
+    console.log(`📦 Footer retourné pour langue ${lang}:`, { companyName: footer.companyName, slogan: footer.slogan });
     
     return NextResponse.json({ success: true, footer });
   } catch (error) {
