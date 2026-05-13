@@ -196,14 +196,14 @@ collections:
 
   - name: "maintenance"
     label: "🔧 Maintenance"
-    folder: "content/maintenance"
+    folder: "public/data/maintenance"
     create: true
     slug: "config"
     format: "json"
     extension: "json"
     fields:
-      - { label: "Activer le mode maintenance", name: "enabled", widget: "boolean", default: false }
-      - { label: "Message d'information", name: "message", widget: "text", required: false, default: "Le formulaire de commande est temporairement désactivé pour maintenance. Veuillez nous contacter directement par WhatsApp pour toute demande." }
-      - { label: "Date de fin estimée (optionnelle)", name: "endDate", widget: "string", required: false, placeholder: "Ex: 15 mai 2025" }
-      - { label: "Email de contact alternatif", name: "contactEmail", widget: "string", required: false, placeholder: "contact@loveexpress.com" }
-      - { label: "Afficher le bouton WhatsApp", name: "showWhatsApp", widget: "boolean", default: true }
+    - { label: "Activer le mode maintenance", name: "enabled", widget: "boolean", default: false }
+    - { label: "Message d'information", name: "message", widget: "text", required: false }
+    - { label: "Date de fin estimée", name: "endDate", widget: "string", required: false }
+    - { label: "Email de contact alternatif", name: "contactEmail", widget: "string", required: false }
+    - { label: "Afficher le bouton WhatsApp", name: "showWhatsApp", widget: "boolean", default: true }

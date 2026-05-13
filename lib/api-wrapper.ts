@@ -52,12 +52,9 @@ export function useFooterSafe() {
   return useCMSSafe(
     async () => {
       const lang = i18n.language;
-      // ✅ AJOUTER cache: 'no-store' pour éviter le cache
       const res = await fetch(`/api/cms/footer?lang=${lang}`, {
         cache: 'no-store',
-        headers: {
-          'Cache-Control': 'no-cache'
-        }
+        headers: { 'Cache-Control': 'no-cache' }
       });
       const data = await res.json();
       
@@ -83,7 +80,6 @@ export function useServicesSafe() {
       const res = await fetch(`/api/cms/services?lang=${lang}`);
       const data = await res.json();
       
-      // ✅ Priorité aux données CMS
       if (data.success && data.services && data.services.length > 0) {
         return data.services;
       }
@@ -106,7 +102,6 @@ export function useGiftBasketsSafe() {
       const res = await fetch(`/api/cms/gift-baskets?lang=${lang}`);
       const data = await res.json();
       
-      // ✅ Priorité aux données CMS
       if (data.success && data.giftBaskets && data.giftBaskets.length > 0) {
         return data.giftBaskets;
       }
@@ -129,7 +124,6 @@ export function useHeroSlidesSafe() {
       const res = await fetch(`/api/cms/hero-slides?lang=${lang}`);
       const data = await res.json();
       
-      // ✅ Priorité aux données CMS
       if (data.success && data.slides && data.slides.length > 0) {
         return data.slides;
       }
@@ -152,7 +146,6 @@ export function useRealisationsSafe() {
       const res = await fetch(`/api/cms/realisations?lang=${lang}`);
       const data = await res.json();
       
-      // ✅ Priorité aux données CMS
       if (data.success && data.realisations && data.realisations.length > 0) {
         return data.realisations;
       }
@@ -172,7 +165,6 @@ export function useAboutImagesSafe() {
       const res = await fetch(`/api/cms/about-images`);
       const data = await res.json();
       
-      // ✅ Priorité aux données CMS
       if (data.success && data.images && data.images.length > 0) {
         return data.images;
       }
@@ -184,31 +176,24 @@ export function useAboutImagesSafe() {
 }
 
 // ============================================================
-// MAINTENANCE - PRIORITÉ ABSOLUE AUX DONNÉES CMS
+// MAINTENANCE - LECTURE DIRECTE DU FICHIER STATIQUE (sans API)
 // ============================================================
 export function useMaintenanceSafe() {
   const [maintenance, setMaintenance] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    const fetchMaintenance = async () => {
-      try {
-        const res = await fetch('/api/cms/maintenance', {
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        const data = await res.json();
-        if (data.success && data.maintenance) {
-          setMaintenance(data.maintenance);
-        }
-      } catch (error) {
-        console.error('Erreur chargement maintenance:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchMaintenance();
+    fetch('/data/maintenance/config.json', { cache: 'no-store' })
+      .then(res => {
+        if (!res.ok) throw new Error('Fichier maintenance non trouvé');
+        return res.json();
+      })
+      .then(data => setMaintenance(data))
+      .catch(err => {
+        console.error('Erreur chargement maintenance:', err);
+        setMaintenance({ enabled: false });
+      })
+      .finally(() => setLoading(false));
   }, []);
   
   return { maintenance, loading };
