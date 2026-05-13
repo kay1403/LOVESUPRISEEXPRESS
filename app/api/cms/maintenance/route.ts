@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 const DEFAULT_MAINTENANCE = {
   enabled: false,
-  message: "Le formulaire de commande est temporairement désactivé pour maintenance. Veuillez nous contacter directement par WhatsApp pour toute demande.",
+  message: "Le formulaire de commande est temporairement désactivé pour maintenance.",
   endDate: "",
   contactEmail: "",
   showWhatsApp: true
@@ -32,7 +32,6 @@ export async function GET() {
     
     const maintenance = { ...DEFAULT_MAINTENANCE, ...maintenanceData };
     
-    // ✅ Important : retourner la valeur enabled telle quelle
     return NextResponse.json(
       { success: true, maintenance },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }
