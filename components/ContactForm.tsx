@@ -1,11 +1,12 @@
-// components/ContactForm.tsx (VERSION CORRIGÉE SANS ERREURS TS)
+// components/ContactForm.tsx (VERSION FINALE AVEC MODE MAINTENANCE)
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Download, CheckCircle, Heart, AlertCircle, Package, Sparkles, Globe, Flower2, Gift, PartyPopper, Baby, Coffee, LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useServicesSafe, useGiftBasketsSafe } from '@/lib/api-wrapper'
+import { useServicesSafe, useGiftBasketsSafe, useMaintenanceSafe } from '@/lib/api-wrapper'
+import MaintenanceBanner from './MaintenanceBanner'
 
 interface FormData {
   clientName: string
@@ -88,6 +89,7 @@ export default function ContactForm() {
   const { t } = useTranslation()
   const { data: servicesData } = useServicesSafe()
   const { data: basketsDataFromCMS } = useGiftBasketsSafe()
+  const { maintenance, loading: maintenanceLoading } = useMaintenanceSafe()
   
   const [step, setStep] = useState<number>(1)
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false)
@@ -124,6 +126,42 @@ export default function ContactForm() {
   })
 
   useEffect(() => { setIsMounted(true) }, [])
+
+  // Si le mode maintenance est activé, afficher la bannière à la place du formulaire
+  if (!maintenanceLoading && maintenance?.enabled === true) {
+    return (
+      <section id="contact" className="py-24 bg-white">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+              <Heart size={14} className="text-primary" />
+              <span className="text-xs font-medium text-primary uppercase tracking-wider">{t('contactForm.badge') || 'Devis gratuit'}</span>
+            </div>
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+              {t('contactForm.title') || 'Planifiez Votre Surprise'}
+            </h2>
+            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+              {t('contactForm.subtitle') || 'Remplissez ce formulaire et nous nous occupons de tout'}
+            </p>
+          </motion.div>
+          
+          <div className="max-w-3xl mx-auto">
+            <MaintenanceBanner 
+              message={maintenance.message || "Le formulaire de commande est temporairement désactivé pour maintenance."}
+              endDate={maintenance.endDate}
+              contactEmail={maintenance.contactEmail}
+              showWhatsApp={maintenance.showWhatsApp !== false}
+            />
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   const validateStep = (stepToValidate: number): boolean => {
     setStepError('')

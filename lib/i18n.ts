@@ -1,3 +1,4 @@
+// lib/i18n.ts
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
@@ -250,6 +251,13 @@ const fr = {
       sunday: 'Dimanche: Sur rendez-vous',
       delivery247: 'Livraison 24/24 sur demande',
       rights: 'Tous droits réservés'
+    },
+    maintenance: {
+      title: 'Formulaire temporairement indisponible',
+      expectedEnd: 'Reprise estimée',
+      contactWhatsApp: 'Nous contacter sur WhatsApp',
+      sendEmail: 'Envoyer un email',
+      callUs: 'Nous appeler'
     }
   }
 }
@@ -502,6 +510,13 @@ const en = {
       sunday: 'Sunday: By appointment',
       delivery247: '24/7 delivery on request',
       rights: 'All rights reserved'
+    },
+    maintenance: {
+      title: 'Contact form temporarily unavailable',
+      expectedEnd: 'Estimated return',
+      contactWhatsApp: 'Contact us on WhatsApp',
+      sendEmail: 'Send an email',
+      callUs: 'Call us'
     }
   }
 }
@@ -754,6 +769,13 @@ const rw = {
       sunday: 'Ku cyumweru: Ku gahunda',
       delivery247: 'Iboneza buri gihe',
       rights: 'Uburenganzira bwose burakumwe'
+    },
+    maintenance: {
+      title: 'Furu ya gukoresha igerageza ntiboneka',
+      expectedEnd: 'Igenewe gutangira',
+      contactWhatsApp: 'Twandikire kuri WhatsApp',
+      sendEmail: 'Ohereza email',
+      callUs: 'Duhamagare'
     }
   }
 }

@@ -182,3 +182,34 @@ export function useAboutImagesSafe() {
     []
   );
 }
+
+// ============================================================
+// MAINTENANCE - PRIORITÉ ABSOLUE AUX DONNÉES CMS
+// ============================================================
+export function useMaintenanceSafe() {
+  const [maintenance, setMaintenance] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const fetchMaintenance = async () => {
+      try {
+        const res = await fetch('/api/cms/maintenance', {
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        const data = await res.json();
+        if (data.success && data.maintenance) {
+          setMaintenance(data.maintenance);
+        }
+      } catch (error) {
+        console.error('Erreur chargement maintenance:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchMaintenance();
+  }, []);
+  
+  return { maintenance, loading };
+}
