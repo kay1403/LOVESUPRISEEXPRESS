@@ -32,6 +32,7 @@ export async function GET() {
     
     const maintenance = { ...DEFAULT_MAINTENANCE, ...maintenanceData };
     
+    // ✅ Important : retourner la valeur enabled telle quelle
     return NextResponse.json(
       { success: true, maintenance },
       { headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' } }

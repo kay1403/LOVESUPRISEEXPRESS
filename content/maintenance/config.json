@@ -1,6 +1,6 @@
 {
-  "enabled": false,
-  "message": "Le formulaire de commande est temporairement désactivé pour maintenance. Veuillez nous contacter directement par WhatsApp pour toute demande.",
+  "enabled": true,
+  "message": "Le formulaire de commande est temporairement désactivé...",
   "endDate": "",
   "contactEmail": "",
   "showWhatsApp": true
