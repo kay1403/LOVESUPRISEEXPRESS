@@ -1,7 +1,7 @@
 {
-  "enabled": false,
+  "enabled": true,
   "showWhatsApp": true,
-  "message": "none",
+  "message": "ESLON",
   "endDate": "none",
   "contactEmail": "none"
 }
