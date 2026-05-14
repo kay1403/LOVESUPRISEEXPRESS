@@ -178,8 +178,18 @@ export function useAboutImagesSafe() {
 // ============================================================
 // MAINTENANCE - LECTURE DIRECTE DU FICHIER STATIQUE (sans API)
 // ============================================================
-export function useMaintenanceSafe() {
-  const [maintenance, setMaintenance] = useState({ enabled: false }); // ✅ plus jamais null
+// lib/api-wrapper.ts (extrait modifié)
+
+interface MaintenanceConfig {
+  enabled: boolean;
+  message?: string;
+  endDate?: string;
+  contactEmail?: string;
+  showWhatsApp?: boolean;
+}
+
+export function useMaintenanceSafe(): { maintenance: MaintenanceConfig; loading: boolean } {
+  const [maintenance, setMaintenance] = useState<MaintenanceConfig>({ enabled: false });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -188,10 +198,10 @@ export function useMaintenanceSafe() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then(data => setMaintenance(data))
+      .then(data => setMaintenance(data as MaintenanceConfig))
       .catch(err => {
         console.error('Erreur chargement maintenance:', err);
-        setMaintenance({ enabled: false }); // fallback sécurisé
+        setMaintenance({ enabled: false });
       })
       .finally(() => setLoading(false));
   }, []);
