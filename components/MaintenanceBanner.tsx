@@ -1,4 +1,3 @@
-// components/MaintenanceBanner.tsx
 'use client'
 
 import { motion } from 'framer-motion'
@@ -7,17 +6,17 @@ import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 
 interface MaintenanceBannerProps {
-  message: string
+  message?: string
   endDate?: string
   contactEmail?: string
-  showWhatsApp: boolean
+  showWhatsApp?: boolean
 }
 
 export default function MaintenanceBanner({ 
-  message, 
+  message = '', 
   endDate, 
   contactEmail, 
-  showWhatsApp 
+  showWhatsApp = true 
 }: MaintenanceBannerProps) {
   const { t } = useTranslation()
   const [isVisible, setIsVisible] = useState(true)
@@ -25,6 +24,7 @@ export default function MaintenanceBanner({
   if (!isVisible) return null
 
   const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_BUSINESS || '250799366007'
+  const safeMessage = message || t('maintenance.defaultMessage') || 'Formulaire temporairement indisponible.'
 
   return (
     <motion.div
@@ -51,7 +51,7 @@ export default function MaintenanceBanner({
             {t('maintenance.title') || 'Formulaire temporairement indisponible'}
           </h3>
           
-          <p className="text-gray-700 mb-4">{message}</p>
+          <p className="text-gray-700 mb-4">{safeMessage}</p>
           
           {endDate && (
             <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">

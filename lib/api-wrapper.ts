@@ -179,7 +179,7 @@ export function useAboutImagesSafe() {
 // MAINTENANCE - LECTURE DIRECTE DU FICHIER STATIQUE (sans API)
 // ============================================================
 export function useMaintenanceSafe() {
-  const [maintenance, setMaintenance] = useState<any>(null);
+  const [maintenance, setMaintenance] = useState({ enabled: false }); // ✅ plus jamais null
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -191,7 +191,7 @@ export function useMaintenanceSafe() {
       .then(data => setMaintenance(data))
       .catch(err => {
         console.error('Erreur chargement maintenance:', err);
-        setMaintenance({ enabled: false }); // mode normal par défaut
+        setMaintenance({ enabled: false }); // fallback sécurisé
       })
       .finally(() => setLoading(false));
   }, []);

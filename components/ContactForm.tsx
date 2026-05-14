@@ -128,7 +128,7 @@ export default function ContactForm() {
   useEffect(() => { setIsMounted(true) }, [])
 
   // Si le mode maintenance est activé, afficher la bannière à la place du formulaire
-  if (!maintenanceLoading && maintenance?.enabled === true) {
+if (!maintenanceLoading && maintenance.enabled === true) {  
     return (
       <section id="contact" className="py-24 bg-white">
         <div className="container-custom">
