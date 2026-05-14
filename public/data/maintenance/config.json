@@ -1,7 +1,7 @@
 {
   "enabled": true,
-  "message": "Le formulaire de commande est temporairement désactivé.",
+  "showWhatsApp": true,
+  "message": "none",
   "endDate": "none",
-  "contactEmail": "none",
-  "showWhatsApp": true
+  "contactEmail": "none"
 }
