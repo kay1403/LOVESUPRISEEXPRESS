@@ -188,8 +188,16 @@ interface MaintenanceConfig {
   showWhatsApp?: boolean;
 }
 
+const DEFAULT_MAINTENANCE: MaintenanceConfig = {
+  enabled: false,
+  message: '',
+  endDate: '',
+  contactEmail: '',
+  showWhatsApp: true,
+};
+
 export function useMaintenanceSafe(): { maintenance: MaintenanceConfig; loading: boolean } {
-  const [maintenance, setMaintenance] = useState<MaintenanceConfig>({ enabled: false });
+  const [maintenance, setMaintenance] = useState<MaintenanceConfig>(DEFAULT_MAINTENANCE);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -200,16 +208,16 @@ export function useMaintenanceSafe(): { maintenance: MaintenanceConfig; loading:
       })
       .then(data => {
         setMaintenance({
-          enabled: data.enabled ?? false,
-          message: data.message ?? '',
-          endDate: data.endDate ?? '',
-          contactEmail: data.contactEmail ?? '',
-          showWhatsApp: data.showWhatsApp ?? true,
+          enabled: data.enabled ?? DEFAULT_MAINTENANCE.enabled,
+          message: data.message ?? DEFAULT_MAINTENANCE.message,
+          endDate: data.endDate ?? DEFAULT_MAINTENANCE.endDate,
+          contactEmail: data.contactEmail ?? DEFAULT_MAINTENANCE.contactEmail,
+          showWhatsApp: data.showWhatsApp ?? DEFAULT_MAINTENANCE.showWhatsApp,
         });
       })
       .catch(err => {
         console.error('Erreur chargement maintenance:', err);
-        setMaintenance({ enabled: false });
+        setMaintenance(DEFAULT_MAINTENANCE);
       })
       .finally(() => setLoading(false));
   }, []);
