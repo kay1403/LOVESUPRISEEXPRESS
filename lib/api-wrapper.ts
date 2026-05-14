@@ -198,7 +198,15 @@ export function useMaintenanceSafe(): { maintenance: MaintenanceConfig; loading:
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
-      .then(data => setMaintenance(data as MaintenanceConfig))
+      .then(data => {
+        setMaintenance({
+          enabled: data.enabled ?? false,
+          message: data.message ?? '',
+          endDate: data.endDate ?? '',
+          contactEmail: data.contactEmail ?? '',
+          showWhatsApp: data.showWhatsApp ?? true,
+        });
+      })
       .catch(err => {
         console.error('Erreur chargement maintenance:', err);
         setMaintenance({ enabled: false });
