@@ -8,6 +8,7 @@ import About from '@/components/About'
 import AvisForm from '@/components/AvisForm'
 import ContactForm from '@/components/ContactForm'
 import Footer from '@/components/Footer'
+import ErrorBoundary from '@/components/ErrorBoundary'   // ← ajout
 
 export default function Home() {
   return (
@@ -18,7 +19,9 @@ export default function Home() {
       <Realizations />
       <About />
       <AvisForm />
-      <ContactForm />
+      <ErrorBoundary>          {/* ← ajout */}
+        <ContactForm />
+      </ErrorBoundary>         {/* ← ajout */}
       <Footer />
     </main>
   )
