@@ -1,4 +1,4 @@
-// components/ContactForm.tsx (VERSION FINALE AVEC MODE MAINTENANCE)
+// components/ContactForm.tsx (VERSION FINALE CORRIGÉE - SANS RETURN CONDITIONNEL)
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
@@ -126,42 +126,6 @@ export default function ContactForm() {
   })
 
   useEffect(() => { setIsMounted(true) }, [])
-
-  // Si le mode maintenance est activé, afficher la bannière à la place du formulaire
-if (!maintenanceLoading && maintenance.enabled === true) {  
-    return (
-      <section id="contact" className="py-24 bg-white">
-        <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
-              <Heart size={14} className="text-primary" />
-              <span className="text-xs font-medium text-primary uppercase tracking-wider">{t('contactForm.badge') || 'Devis gratuit'}</span>
-            </div>
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
-              {t('contactForm.title') || 'Planifiez Votre Surprise'}
-            </h2>
-            <p className="text-gray-500 text-lg max-w-2xl mx-auto">
-              {t('contactForm.subtitle') || 'Remplissez ce formulaire et nous nous occupons de tout'}
-            </p>
-          </motion.div>
-          
-          <div className="max-w-3xl mx-auto">
-            <MaintenanceBanner 
-              message={maintenance.message || "Le formulaire de commande est temporairement désactivé pour maintenance."}
-              endDate={maintenance.endDate}
-              contactEmail={maintenance.contactEmail}
-              showWhatsApp={maintenance.showWhatsApp !== false}
-            />
-          </div>
-        </div>
-      </section>
-    )
-  }
 
   const validateStep = (stepToValidate: number): boolean => {
     setStepError('')
@@ -396,261 +360,288 @@ if (!maintenanceLoading && maintenance.enabled === true) {
     </div>
   )
 
+  // Rendu conditionnel via la variable showMaintenance (pas de return conditionnel avant les hooks)
+  const showMaintenance = !maintenanceLoading && maintenance.enabled === true
+
   return (
     <section id="contact" className="py-24 bg-white">
       <div className="container-custom">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4"><Heart size={14} className="text-primary" /><span className="text-xs font-medium text-primary uppercase tracking-wider">{t('contactForm.badge') || 'Devis gratuit'}</span></div>
-          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">{t('contactForm.title') || 'Planifiez Votre Surprise'}</h2>
-          <p className="text-gray-500 text-lg max-w-2xl mx-auto">{t('contactForm.subtitle') || 'Remplissez ce formulaire et nous nous occupons de tout'}</p>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-4">
+            <Heart size={14} className="text-primary" />
+            <span className="text-xs font-medium text-primary uppercase tracking-wider">{t('contactForm.badge') || 'Devis gratuit'}</span>
+          </div>
+          <h2 className="font-display text-4xl md:text-5xl font-bold text-dark mb-4">
+            {t('contactForm.title') || 'Planifiez Votre Surprise'}
+          </h2>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto">
+            {t('contactForm.subtitle') || 'Remplissez ce formulaire et nous nous occupons de tout'}
+          </p>
         </motion.div>
 
         <div className="max-w-3xl mx-auto">
-          <div className="mb-8">
-            <div className="flex justify-between mb-2 text-sm text-gray-500">
-              <span>{t('contactForm.step') || 'Étape'} {step} / 6</span>
-              <span>{Math.round((step / 6) * 100)}%</span>
-            </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <motion.div className="h-full bg-primary" initial={{ width: `${((step - 1) / 6) * 100}%` }} animate={{ width: `${((step - 1) / 6) * 100}%` }} transition={{ duration: 0.3 }} />
-            </div>
-          </div>
+          {showMaintenance ? (
+            <MaintenanceBanner 
+              message={maintenance.message || "Le formulaire de commande est temporairement désactivé pour maintenance."}
+              endDate={maintenance.endDate}
+              contactEmail={maintenance.contactEmail}
+              showWhatsApp={maintenance.showWhatsApp !== false}
+            />
+          ) : (
+            <>
+              <div className="mb-8">
+                <div className="flex justify-between mb-2 text-sm text-gray-500">
+                  <span>{t('contactForm.step') || 'Étape'} {step} / 6</span>
+                  <span>{Math.round((step / 6) * 100)}%</span>
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <motion.div className="h-full bg-primary" initial={{ width: `${((step - 1) / 6) * 100}%` }} animate={{ width: `${((step - 1) / 6) * 100}%` }} transition={{ duration: 0.3 }} />
+                </div>
+              </div>
 
-          {stepError && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm flex items-center gap-2">
-              <AlertCircle size={16} />
-              {stepError}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <AnimatePresence mode="wait">
-              {step === 1 && (
-                <motion.div key="step1" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
-                  <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.0') || 'Qui êtes-vous ?'}</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.fullName') || 'Nom complet'} <span className="text-red-500">*</span></label>
-                    <input type="text" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" placeholder={t('contactForm.placeholders.fullName') || 'Votre nom'} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.phone') || 'Téléphone WhatsApp'} <span className="text-red-500">*</span></label>
-                    <input type="tel" value={formData.clientPhone} onChange={(e) => setFormData({...formData, clientPhone: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.phone') || '+250 7XX XXX XXX'} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.email') || 'Email'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
-                    <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.email') || 'exemple@email.com'} />
-                  </div>
-                  <button type="button" onClick={nextStep} className="btn-primary w-full">{t('contactForm.buttons.next') || 'Suivant →'}</button>
-                </motion.div>
+              {stepError && (
+                <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg text-sm flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  {stepError}
+                </div>
               )}
 
-              {step === 2 && (
-                <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
-                  <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.1') || 'Qui recevra la surprise ?'}</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.recipientName') || 'Nom du destinataire'} <span className="text-red-500">*</span></label>
-                    <input type="text" value={formData.destName} onChange={(e) => setFormData({...formData, destName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.recipientName') || 'Nom de la personne'} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.recipientPhone') || 'Téléphone'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
-                    <input type="tel" value={formData.destPhone} onChange={(e) => setFormData({...formData, destPhone: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.recipientPhone') || '+250 7XX XXX XXX'} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.deliveryAddress') || 'Adresse de livraison'} <span className="text-red-500">*</span></label>
-                    <input type="text" value={formData.destAddress} onChange={(e) => setFormData({...formData, destAddress: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.deliveryAddress') || 'Rue, quartier, ville'} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.age') || 'Âge'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
-                    <input type="text" value={formData.destAge} onChange={(e) => setFormData({...formData, destAge: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.age') || 'Ex: 25 ans'} />
-                  </div>
-                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">{t('contactForm.buttons.back') || 'Retour'}</button><button type="button" onClick={nextStep} className="btn-primary flex-1">{t('contactForm.buttons.next') || 'Suivant →'}</button></div>
-                </motion.div>
-              )}
+              <form onSubmit={handleSubmit}>
+                <AnimatePresence mode="wait">
+                  {step === 1 && (
+                    <motion.div key="step1" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                      <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.0') || 'Qui êtes-vous ?'}</h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.fullName') || 'Nom complet'} <span className="text-red-500">*</span></label>
+                        <input type="text" value={formData.clientName} onChange={(e) => setFormData({...formData, clientName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary" placeholder={t('contactForm.placeholders.fullName') || 'Votre nom'} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.phone') || 'Téléphone WhatsApp'} <span className="text-red-500">*</span></label>
+                        <input type="tel" value={formData.clientPhone} onChange={(e) => setFormData({...formData, clientPhone: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.phone') || '+250 7XX XXX XXX'} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.email') || 'Email'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
+                        <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.email') || 'exemple@email.com'} />
+                      </div>
+                      <button type="button" onClick={nextStep} className="btn-primary w-full">{t('contactForm.buttons.next') || 'Suivant →'}</button>
+                    </motion.div>
+                  )}
 
-              {step === 3 && (
-                <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
-                  <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.2') || 'Quel événement ?'}</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventType') || 'Type'} <span className="text-red-500">*</span></label>
-                    <select value={formData.eventType} onChange={(e) => setFormData({...formData, eventType: e.target.value})} className="w-full px-4 py-3 border rounded-lg">
-                      {eventTypes.map((type: string) => <option key={type}>{type}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventDate') || 'Date'} <span className="text-red-500">*</span></label>
-                    <input type="date" value={formData.eventDate} onChange={(e) => setFormData({...formData, eventDate: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventTime') || 'Heure'} <span className="text-red-500">*</span></label>
-                    <input type="time" value={formData.eventTime} onChange={(e) => setFormData({...formData, eventTime: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventLocation') || 'Lieu exact'} <span className="text-red-500">*</span></label>
-                    <input type="text" value={formData.eventLocation} onChange={(e) => setFormData({...formData, eventLocation: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.eventLocation') || 'Nom du lieu, adresse précise'} />
-                  </div>
-                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">{t('contactForm.buttons.back') || 'Retour'}</button><button type="button" onClick={nextStep} className="btn-primary flex-1">{t('contactForm.buttons.next') || 'Suivant →'}</button></div>
-                </motion.div>
-              )}
+                  {step === 2 && (
+                    <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                      <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.1') || 'Qui recevra la surprise ?'}</h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.recipientName') || 'Nom du destinataire'} <span className="text-red-500">*</span></label>
+                        <input type="text" value={formData.destName} onChange={(e) => setFormData({...formData, destName: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.recipientName') || 'Nom de la personne'} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.recipientPhone') || 'Téléphone'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
+                        <input type="tel" value={formData.destPhone} onChange={(e) => setFormData({...formData, destPhone: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.recipientPhone') || '+250 7XX XXX XXX'} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.deliveryAddress') || 'Adresse de livraison'} <span className="text-red-500">*</span></label>
+                        <input type="text" value={formData.destAddress} onChange={(e) => setFormData({...formData, destAddress: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.deliveryAddress') || 'Rue, quartier, ville'} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.age') || 'Âge'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
+                        <input type="text" value={formData.destAge} onChange={(e) => setFormData({...formData, destAge: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.age') || 'Ex: 25 ans'} />
+                      </div>
+                      <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">{t('contactForm.buttons.back') || 'Retour'}</button><button type="button" onClick={nextStep} className="btn-primary flex-1">{t('contactForm.buttons.next') || 'Suivant →'}</button></div>
+                    </motion.div>
+                  )}
 
-              {step === 4 && (
-                <motion.div key="step4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
-                  <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.3') || 'Que souhaitez-vous commander ?'}</h3>
-                  
-                  {/* Party Decoration - avec packs dynamiques */}
-                  <div className="border rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3"><PartyPopper size={18} className="text-primary" /><h4 className="font-semibold text-dark">{t('services.party.title') || 'Party Decoration'}</h4></div>
-                    <div className="space-y-2">
-                      {packs.map((pack: Pack) => (
-                        <label key={pack.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition ${formData.selectedPacks.includes(pack.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                          <input type="checkbox" checked={formData.selectedPacks.includes(pack.id)} onChange={() => handlePackToggle(pack.id)} className="w-4 h-4 text-primary rounded" />
-                          <div className="flex-1"><span className="font-medium">{pack.name}</span><p className="text-xs text-gray-500">{pack.desc}</p></div>
-                          <span className="text-primary font-bold">{pack.price.toLocaleString()} RWF</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
+                  {step === 3 && (
+                    <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                      <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.2') || 'Quel événement ?'}</h3>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventType') || 'Type'} <span className="text-red-500">*</span></label>
+                        <select value={formData.eventType} onChange={(e) => setFormData({...formData, eventType: e.target.value})} className="w-full px-4 py-3 border rounded-lg">
+                          {eventTypes.map((type: string) => <option key={type}>{type}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventDate') || 'Date'} <span className="text-red-500">*</span></label>
+                        <input type="date" value={formData.eventDate} onChange={(e) => setFormData({...formData, eventDate: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventTime') || 'Heure'} <span className="text-red-500">*</span></label>
+                        <input type="time" value={formData.eventTime} onChange={(e) => setFormData({...formData, eventTime: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventLocation') || 'Lieu exact'} <span className="text-red-500">*</span></label>
+                        <input type="text" value={formData.eventLocation} onChange={(e) => setFormData({...formData, eventLocation: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.eventLocation') || 'Nom du lieu, adresse précise'} />
+                      </div>
+                      <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">{t('contactForm.buttons.back') || 'Retour'}</button><button type="button" onClick={nextStep} className="btn-primary flex-1">{t('contactForm.buttons.next') || 'Suivant →'}</button></div>
+                    </motion.div>
+                  )}
 
-                  {/* Surprise Planner */}
-                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(2) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3"><Sparkles size={18} className="text-primary" /><div><span className="font-medium">{t('services.surprise.title') || 'Surprise Planner'}</span><p className="text-xs text-gray-500">{t('services.surprise.description') || 'Planification complète + coordination sur place'}</p></div></div>
-                    <div className="flex items-center gap-4"><span className="text-primary font-bold">200 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(2)} onChange={() => handleServiceToggle(2)} className="w-4 h-4 text-primary rounded" /></div>
-                  </label>
-
-                  {/* Custom Website */}
-                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(3) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3"><Globe size={18} className="text-primary" /><div><span className="font-medium">{t('services.custom.title') || 'Custom Website'}</span><p className="text-xs text-gray-500">{t('services.custom.description') || 'Site personnalisé pour votre événement'}</p></div></div>
-                    <div className="flex items-center gap-4"><span className="text-primary font-bold">25 000 - 45 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(3)} onChange={() => handleServiceToggle(3)} className="w-4 h-4 text-primary rounded" /></div>
-                  </label>
-
-                  {/* Flower Bouquet */}
-                  <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(4) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                    <div className="flex items-center gap-3"><Flower2 size={18} className="text-primary" /><div><span className="font-medium">{t('services.flower.title') || 'Flower Bouquet'}</span><p className="text-xs text-gray-500">{t('services.flower.description') || 'Bouquet de fleurs fraîches'}</p></div></div>
-                    <div className="flex items-center gap-4"><span className="text-primary font-bold">15 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(4)} onChange={() => handleServiceToggle(4)} className="w-4 h-4 text-primary rounded" /></div>
-                  </label>
-
-                  {/* Gift Baskets - avec noms traduits */}
-                  <div className="border rounded-xl p-4">
-                    <div className="flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" /><h4 className="font-semibold text-dark">{t('giftbaskets.title') || 'Gift Baskets'}</h4></div>
-                    <div className="space-y-3">
-                      {basketsData.map((basket: StaticBasket & { name?: string; desc?: string }) => (
-                        <div key={basket.id} className={`p-3 rounded-lg border transition ${formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                              <basket.icon size={16} className="text-primary" />
-                              <span className="font-medium">{t(`giftbaskets.${basket.nameKey.toLowerCase()}`) || basket.name}</span>
-                            </div>
-                            <input type="checkbox" checked={formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id)} onChange={() => handleBasketToggle(basket.id, 'standard')} className="w-4 h-4 text-primary rounded" />
-                          </div>
-                          {formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id) && (
-                            <div className="flex gap-3 ml-6 mt-2">
-                              <label className="flex items-center gap-2">
-                                <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b: { id: number }) => b.id === basket.id)?.version === 'standard'} onChange={() => updateBasketVersion(basket.id, 'standard')} className="w-4 h-4 text-primary" />
-                                <span className="text-sm">{t('giftbaskets.standard') || 'Standard'}: {basket.standard.toLocaleString()} RWF</span>
-                              </label>
-                              <label className="flex items-center gap-2">
-                                <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b: { id: number }) => b.id === basket.id)?.version === 'premium'} onChange={() => updateBasketVersion(basket.id, 'premium')} className="w-4 h-4 text-primary" />
-                                <span className="text-sm">{t('giftbaskets.premium') || 'Premium'}: {basket.premium.toLocaleString()} RWF</span>
-                              </label>
-                            </div>
-                          )}
-                          <p className="text-xs text-gray-500 ml-6 mt-1">{t(`giftbaskets.${basket.nameKey}Desc`) || basket.desc}</p>
+                  {step === 4 && (
+                    <motion.div key="step4" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                      <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.3') || 'Que souhaitez-vous commander ?'}</h3>
+                      
+                      {/* Party Decoration - avec packs dynamiques */}
+                      <div className="border rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-3"><PartyPopper size={18} className="text-primary" /><h4 className="font-semibold text-dark">{t('services.party.title') || 'Party Decoration'}</h4></div>
+                        <div className="space-y-2">
+                          {packs.map((pack: Pack) => (
+                            <label key={pack.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition ${formData.selectedPacks.includes(pack.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                              <input type="checkbox" checked={formData.selectedPacks.includes(pack.id)} onChange={() => handlePackToggle(pack.id)} className="w-4 h-4 text-primary rounded" />
+                              <div className="flex-1"><span className="font-medium">{pack.name}</span><p className="text-xs text-gray-500">{pack.desc}</p></div>
+                              <span className="text-primary font-bold">{pack.price.toLocaleString()} RWF</span>
+                            </label>
+                          ))}
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.message') || 'Message sur la carte'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
-                    <textarea value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.message') || 'Joyeux anniversaire ! Je t\'aime'} />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.specialInstructions') || 'Instructions spéciales'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
-                    <textarea value={formData.specialInstructions} onChange={(e) => setFormData({...formData, specialInstructions: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.specialInstructions') || 'Thème, couleurs, préférences...'} />
-                  </div>
-
-                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">{t('contactForm.buttons.back') || 'Retour'}</button><button type="button" onClick={nextStep} className="btn-primary flex-1">{t('contactForm.buttons.next') || 'Suivant →'}</button></div>
-                </motion.div>
-              )}
-
-              {step === 5 && (
-                <motion.div key="step5" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
-                  <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.4') || 'Livraison & Budget'}</h3>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.deliveryMethod') || 'Mode de livraison'}</label>
-                    <div className="grid grid-cols-2 gap-4">
-                      <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'delivery' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                        <input type="radio" name="deliveryMethod" value="delivery" checked={formData.deliveryMethod === 'delivery'} onChange={() => setFormData({...formData, deliveryMethod: 'delivery'})} className="w-4 h-4 text-primary" />
-                        <div><span className="font-semibold block">{t('contactForm.deliveryMethods.delivery') || 'Livraison à domicile'}</span><span className="text-xs text-gray-500">+5 000 RWF</span></div>
+                      {/* Surprise Planner */}
+                      <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(2) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                        <div className="flex items-center gap-3"><Sparkles size={18} className="text-primary" /><div><span className="font-medium">{t('services.surprise.title') || 'Surprise Planner'}</span><p className="text-xs text-gray-500">{t('services.surprise.description') || 'Planification complète + coordination sur place'}</p></div></div>
+                        <div className="flex items-center gap-4"><span className="text-primary font-bold">200 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(2)} onChange={() => handleServiceToggle(2)} className="w-4 h-4 text-primary rounded" /></div>
                       </label>
-                      <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'pickup' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                        <input type="radio" name="deliveryMethod" value="pickup" checked={formData.deliveryMethod === 'pickup'} onChange={() => setFormData({...formData, deliveryMethod: 'pickup'})} className="w-4 h-4 text-primary" />
-                        <div><span className="font-semibold block">{t('contactForm.deliveryMethods.pickup') || 'Retrait au bureau'}</span><span className="text-xs text-gray-500">{t('contactForm.deliveryMethods.pickupFree') || 'Gratuit'}</span></div>
+
+                      {/* Custom Website */}
+                      <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(3) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                        <div className="flex items-center gap-3"><Globe size={18} className="text-primary" /><div><span className="font-medium">{t('services.custom.title') || 'Custom Website'}</span><p className="text-xs text-gray-500">{t('services.custom.description') || 'Site personnalisé pour votre événement'}</p></div></div>
+                        <div className="flex items-center gap-4"><span className="text-primary font-bold">25 000 - 45 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(3)} onChange={() => handleServiceToggle(3)} className="w-4 h-4 text-primary rounded" /></div>
                       </label>
-                    </div>
-                  </div>
 
-                  <div className="bg-primaryLight rounded-xl p-5">
-                    <h4 className="font-semibold text-dark mb-3">{t('contactForm.review.services') || 'Récapitulatif des services'}</h4>
-                    <div className="space-y-2 text-sm">
-                      {formData.selectedPacks.map((packId: number) => {
-                        const pack = packs.find((p: Pack) => p.id === packId)
-                        return <div key={packId} className="flex justify-between"><span>{pack?.name}</span><span className="font-bold">{pack?.price.toLocaleString()} RWF</span></div>
-                      })}
-                      {formData.selectedServices.includes(2) && <div className="flex justify-between"><span>{t('services.surprise.title') || 'Surprise Planner'}</span><span className="font-bold">200 000 RWF</span></div>}
-                      {formData.selectedServices.includes(3) && <div className="flex justify-between"><span>{t('services.custom.title') || 'Custom Website'}</span><span className="font-bold">~35 000 RWF</span></div>}
-                      {formData.selectedServices.includes(4) && <div className="flex justify-between"><span>{t('services.flower.title') || 'Flower Bouquet'}</span><span className="font-bold">15 000 RWF</span></div>}
-                      {formData.selectedBaskets.map((b: { id: number; version: 'standard' | 'premium' }) => {
-                        const basket = STATIC_BASKETS.find((bk: StaticBasket) => bk.id === b.id)
-                        const basketName = basketsDataFromCMS?.find((bk: any) => bk.id === b.id)?.name || basket?.nameKey
-                        return <div key={b.id} className="flex justify-between"><span>{basketName} ({b.version})</span><span className="font-bold">{b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</span></div>
-                      })}
-                      {formData.deliveryMethod === 'delivery' && <div className="flex justify-between"><span>{t('contactForm.deliveryMethods.delivery') || 'Livraison'}</span><span className="font-bold">+5 000 RWF</span></div>}
-                      <div className="border-t pt-2 mt-2 flex justify-between"><span className="font-bold">{t('contactForm.review.total') || 'Total'} :</span><span className="font-bold text-primary text-lg">{totalPrice.toLocaleString()} RWF</span></div>
-                    </div>
-                  </div>
+                      {/* Flower Bouquet */}
+                      <label className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition ${formData.selectedServices.includes(4) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                        <div className="flex items-center gap-3"><Flower2 size={18} className="text-primary" /><div><span className="font-medium">{t('services.flower.title') || 'Flower Bouquet'}</span><p className="text-xs text-gray-500">{t('services.flower.description') || 'Bouquet de fleurs fraîches'}</p></div></div>
+                        <div className="flex items-center gap-4"><span className="text-primary font-bold">15 000 RWF</span><input type="checkbox" checked={formData.selectedServices.includes(4)} onChange={() => handleServiceToggle(4)} className="w-4 h-4 text-primary rounded" /></div>
+                      </label>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.budget') || 'Votre budget'} (RWF) <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'} - {t('contactForm.budgetHint') || 'laisse vide pour utiliser le total'})</span></label>
-                    <input type="number" value={formData.budget || ''} onChange={handleBudgetChange} className="w-full px-4 py-3 border rounded-lg" placeholder={totalPrice.toString()} />
-                    {budgetError && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{budgetError}</p>}
-                    <p className="text-xs text-gray-400 mt-1">{t('contactForm.budgetSuggestion') || 'Budget minimum suggéré'} : {totalPrice.toLocaleString()} RWF</p>
-                  </div>
+                      {/* Gift Baskets - avec noms traduits */}
+                      <div className="border rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" /><h4 className="font-semibold text-dark">{t('giftbaskets.title') || 'Gift Baskets'}</h4></div>
+                        <div className="space-y-3">
+                          {basketsData.map((basket: StaticBasket & { name?: string; desc?: string }) => (
+                            <div key={basket.id} className={`p-3 rounded-lg border transition ${formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <basket.icon size={16} className="text-primary" />
+                                  <span className="font-medium">{t(`giftbaskets.${basket.nameKey.toLowerCase()}`) || basket.name}</span>
+                                </div>
+                                <input type="checkbox" checked={formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id)} onChange={() => handleBasketToggle(basket.id, 'standard')} className="w-4 h-4 text-primary rounded" />
+                              </div>
+                              {formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id) && (
+                                <div className="flex gap-3 ml-6 mt-2">
+                                  <label className="flex items-center gap-2">
+                                    <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b: { id: number }) => b.id === basket.id)?.version === 'standard'} onChange={() => updateBasketVersion(basket.id, 'standard')} className="w-4 h-4 text-primary" />
+                                    <span className="text-sm">{t('giftbaskets.standard') || 'Standard'}: {basket.standard.toLocaleString()} RWF</span>
+                                  </label>
+                                  <label className="flex items-center gap-2">
+                                    <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b: { id: number }) => b.id === basket.id)?.version === 'premium'} onChange={() => updateBasketVersion(basket.id, 'premium')} className="w-4 h-4 text-primary" />
+                                    <span className="text-sm">{t('giftbaskets.premium') || 'Premium'}: {basket.premium.toLocaleString()} RWF</span>
+                                  </label>
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-500 ml-6 mt-1">{t(`giftbaskets.${basket.nameKey}Desc`) || basket.desc}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
 
-                  <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">{t('contactForm.buttons.back') || 'Retour'}</button><button type="button" onClick={nextStep} className="btn-primary flex-1">{t('contactForm.buttons.next') || 'Suivant →'}</button></div>
-                </motion.div>
-              )}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.message') || 'Message sur la carte'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
+                        <textarea value={formData.message} onChange={(e) => setFormData({...formData, message: e.target.value})} rows={3} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.message') || 'Joyeux anniversaire ! Je t\'aime'} />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.specialInstructions') || 'Instructions spéciales'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
+                        <textarea value={formData.specialInstructions} onChange={(e) => setFormData({...formData, specialInstructions: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.specialInstructions') || 'Thème, couleurs, préférences...'} />
+                      </div>
 
-              {step === 6 && (
-                <motion.div key="step6" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
-                  <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.5') || 'Vérification'}</h3>
-                  
-                  <ReviewContent />
-                  
-                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight">
-                    <input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5 text-primary rounded" />
-                    <span>{t('contactForm.options.discreet') || 'Surprise discrète (ne pas révéler l\'expéditeur)'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></span>
-                  </label>
-                  <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight">
-                    <input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5 text-primary rounded" />
-                    <span>{t('contactForm.options.needsPersonPresent') || 'Le destinataire doit être présent lors de la livraison'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></span>
-                  </label>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.additionalNotes') || 'Notes supplémentaires'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
-                    <textarea value={formData.additionalNotes} onChange={(e) => setFormData({...formData, additionalNotes: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.additionalNotes') || 'Information importante...'} />
-                  </div>
+                      <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">{t('contactForm.buttons.back') || 'Retour'}</button><button type="button" onClick={nextStep} className="btn-primary flex-1">{t('contactForm.buttons.next') || 'Suivant →'}</button></div>
+                    </motion.div>
+                  )}
 
-                  <div className="flex flex-col gap-3">
-                    <div className="flex gap-4">
-                      <button type="button" onClick={() => goToStep(1)} className="btn-secondary flex-1">{t('contactForm.buttons.modify') || 'Modifier'}</button>
-                      <button type="button" onClick={downloadPDF} className="bg-gray-100 text-gray-700 px-4 py-3 rounded-full font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2 flex-1"><Download size={18} /> {t('contactForm.buttons.downloadPDF') || 'Télécharger PDF'}</button>
-                    </div>
-                    <button type="submit" disabled={isSubmitting || (!hasValidSelection) || (formData.budget > 0 && formData.budget < totalPrice)} className="btn-primary w-full">{isSubmitting ? (t('common.loading') || 'Envoi...') : (t('contactForm.buttons.confirm') || 'Confirmer et envoyer')}</button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </form>
+                  {step === 5 && (
+                    <motion.div key="step5" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                      <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.4') || 'Livraison & Budget'}</h3>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.deliveryMethod') || 'Mode de livraison'}</label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'delivery' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                            <input type="radio" name="deliveryMethod" value="delivery" checked={formData.deliveryMethod === 'delivery'} onChange={() => setFormData({...formData, deliveryMethod: 'delivery'})} className="w-4 h-4 text-primary" />
+                            <div><span className="font-semibold block">{t('contactForm.deliveryMethods.delivery') || 'Livraison à domicile'}</span><span className="text-xs text-gray-500">+5 000 RWF</span></div>
+                          </label>
+                          <label className={`flex items-center gap-3 p-4 border rounded-lg cursor-pointer ${formData.deliveryMethod === 'pickup' ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                            <input type="radio" name="deliveryMethod" value="pickup" checked={formData.deliveryMethod === 'pickup'} onChange={() => setFormData({...formData, deliveryMethod: 'pickup'})} className="w-4 h-4 text-primary" />
+                            <div><span className="font-semibold block">{t('contactForm.deliveryMethods.pickup') || 'Retrait au bureau'}</span><span className="text-xs text-gray-500">{t('contactForm.deliveryMethods.pickupFree') || 'Gratuit'}</span></div>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="bg-primaryLight rounded-xl p-5">
+                        <h4 className="font-semibold text-dark mb-3">{t('contactForm.review.services') || 'Récapitulatif des services'}</h4>
+                        <div className="space-y-2 text-sm">
+                          {formData.selectedPacks.map((packId: number) => {
+                            const pack = packs.find((p: Pack) => p.id === packId)
+                            return <div key={packId} className="flex justify-between"><span>{pack?.name}</span><span className="font-bold">{pack?.price.toLocaleString()} RWF</span></div>
+                          })}
+                          {formData.selectedServices.includes(2) && <div className="flex justify-between"><span>{t('services.surprise.title') || 'Surprise Planner'}</span><span className="font-bold">200 000 RWF</span></div>}
+                          {formData.selectedServices.includes(3) && <div className="flex justify-between"><span>{t('services.custom.title') || 'Custom Website'}</span><span className="font-bold">~35 000 RWF</span></div>}
+                          {formData.selectedServices.includes(4) && <div className="flex justify-between"><span>{t('services.flower.title') || 'Flower Bouquet'}</span><span className="font-bold">15 000 RWF</span></div>}
+                          {formData.selectedBaskets.map((b: { id: number; version: 'standard' | 'premium' }) => {
+                            const basket = STATIC_BASKETS.find((bk: StaticBasket) => bk.id === b.id)
+                            const basketName = basketsDataFromCMS?.find((bk: any) => bk.id === b.id)?.name || basket?.nameKey
+                            return <div key={b.id} className="flex justify-between"><span>{basketName} ({b.version})</span><span className="font-bold">{b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</span></div>
+                          })}
+                          {formData.deliveryMethod === 'delivery' && <div className="flex justify-between"><span>{t('contactForm.deliveryMethods.delivery') || 'Livraison'}</span><span className="font-bold">+5 000 RWF</span></div>}
+                          <div className="border-t pt-2 mt-2 flex justify-between"><span className="font-bold">{t('contactForm.review.total') || 'Total'} :</span><span className="font-bold text-primary text-lg">{totalPrice.toLocaleString()} RWF</span></div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.budget') || 'Votre budget'} (RWF) <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'} - {t('contactForm.budgetHint') || 'laisse vide pour utiliser le total'})</span></label>
+                        <input type="number" value={formData.budget || ''} onChange={handleBudgetChange} className="w-full px-4 py-3 border rounded-lg" placeholder={totalPrice.toString()} />
+                        {budgetError && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{budgetError}</p>}
+                        <p className="text-xs text-gray-400 mt-1">{t('contactForm.budgetSuggestion') || 'Budget minimum suggéré'} : {totalPrice.toLocaleString()} RWF</p>
+                      </div>
+
+                      <div className="flex gap-4"><button type="button" onClick={prevStep} className="btn-secondary flex-1">{t('contactForm.buttons.back') || 'Retour'}</button><button type="button" onClick={nextStep} className="btn-primary flex-1">{t('contactForm.buttons.next') || 'Suivant →'}</button></div>
+                    </motion.div>
+                  )}
+
+                  {step === 6 && (
+                    <motion.div key="step6" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
+                      <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.5') || 'Vérification'}</h3>
+                      
+                      <ReviewContent />
+                      
+                      <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight">
+                        <input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5 text-primary rounded" />
+                        <span>{t('contactForm.options.discreet') || 'Surprise discrète (ne pas révéler l\'expéditeur)'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></span>
+                      </label>
+                      <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight">
+                        <input type="checkbox" checked={formData.needsPersonPresent} onChange={(e) => setFormData({...formData, needsPersonPresent: e.target.checked})} className="w-5 h-5 text-primary rounded" />
+                        <span>{t('contactForm.options.needsPersonPresent') || 'Le destinataire doit être présent lors de la livraison'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></span>
+                      </label>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.additionalNotes') || 'Notes supplémentaires'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
+                        <textarea value={formData.additionalNotes} onChange={(e) => setFormData({...formData, additionalNotes: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.additionalNotes') || 'Information importante...'} />
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+                        <div className="flex gap-4">
+                          <button type="button" onClick={() => goToStep(1)} className="btn-secondary flex-1">{t('contactForm.buttons.modify') || 'Modifier'}</button>
+                          <button type="button" onClick={downloadPDF} className="bg-gray-100 text-gray-700 px-4 py-3 rounded-full font-semibold hover:bg-gray-200 transition flex items-center justify-center gap-2 flex-1"><Download size={18} /> {t('contactForm.buttons.downloadPDF') || 'Télécharger PDF'}</button>
+                        </div>
+                        <button type="submit" disabled={isSubmitting || (!hasValidSelection) || (formData.budget > 0 && formData.budget < totalPrice)} className="btn-primary w-full">{isSubmitting ? (t('common.loading') || 'Envoi...') : (t('contactForm.buttons.confirm') || 'Confirmer et envoyer')}</button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </section>
