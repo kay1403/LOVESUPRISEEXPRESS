@@ -19,7 +19,6 @@ const nextConfig = {
     unoptimized: process.env.NODE_ENV === 'development',
     formats: ['image/avif', 'image/webp'],
   },
-  // output: 'standalone', ← SUPPRIMÉ (problème sur Netlify)
   swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
@@ -42,4 +41,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig
+module.exports = nextConfig;

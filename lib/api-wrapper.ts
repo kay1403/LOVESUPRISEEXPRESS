@@ -181,20 +181,20 @@ export function useAboutImagesSafe() {
 export function useMaintenanceSafe() {
   const [maintenance, setMaintenance] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     fetch('/data/maintenance/config.json', { cache: 'no-store' })
       .then(res => {
-        if (!res.ok) throw new Error('Fichier maintenance non trouvé');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
       .then(data => setMaintenance(data))
       .catch(err => {
         console.error('Erreur chargement maintenance:', err);
-        setMaintenance({ enabled: false });
+        setMaintenance({ enabled: false }); // mode normal par défaut
       })
       .finally(() => setLoading(false));
   }, []);
-  
+
   return { maintenance, loading };
 }
