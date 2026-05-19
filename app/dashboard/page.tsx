@@ -304,6 +304,28 @@ export default function DashboardPage() {
     }
   };
 
+  // NOUVELLE FONCTION : suppression d'une commande
+  const deleteOrder = async (id: string) => {
+    if (confirm('⚠️ Attention : Cette action est IRRÉVERSIBLE. Voulez-vous vraiment supprimer définitivement cette commande ?')) {
+      try {
+        const res = await authFetch('/functions/delete-order', {
+          method: 'DELETE',
+          body: JSON.stringify({ id })
+        });
+        if (res.ok) {
+          await fetchData();
+          alert('Commande supprimée définitivement');
+        } else {
+          const error = await res.json();
+          alert(`Erreur : ${error.error || 'Suppression impossible'}`);
+        }
+      } catch (error) {
+        console.error('Erreur suppression commande:', error);
+        alert('Erreur lors de la suppression');
+      }
+    }
+  };
+
   const moderateTestimonial = async (id: string, status: string) => {
     try {
       const res = await authFetch('/functions/moderate-testimonial', {
@@ -905,6 +927,13 @@ export default function DashboardPage() {
                           <option value="delivered">🚚 Livrée</option>
                           <option value="cancelled">❌ Annulée</option>
                         </select>
+                        {/* Bouton Supprimer */}
+                        <button
+                          onClick={() => deleteOrder(order.id)}
+                          className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs md:text-sm hover:bg-red-700 transition flex items-center gap-1"
+                        >
+                          <Trash2 size={14} /> Supprimer
+                        </button>
                       </div>
                     </div>
                   </div>

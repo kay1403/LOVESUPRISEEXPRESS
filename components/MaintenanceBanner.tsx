@@ -87,7 +87,7 @@ export default function MaintenanceBanner({
             
             <a
               href="tel:+250799366007"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-black rounded-lg hover:bg-primary/90 transition"
             >
               <Phone size={18} />
               {t('maintenance.callUs') || 'Nous appeler'}
