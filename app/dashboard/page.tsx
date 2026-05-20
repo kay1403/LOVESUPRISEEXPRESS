@@ -377,10 +377,14 @@ export default function DashboardPage() {
     pendingTestimonials: filteredTestimonials.filter(t => t.status === 'pending').length,
     publishedTestimonials: filteredTestimonials.filter(t => t.status === 'published').length,
     rejectedTestimonials: filteredTestimonials.filter(t => t.status === 'rejected').length,
+    // ✅ MODIFICATION : ne calculer le CA que sur les commandes confirmées
     totalRevenue: filteredOrders.reduce((sum, o) => {
-      if (o.status === 'confirmed' && o.confirmedAmount) return sum + (Number(o.confirmedAmount) || 0);
-      if (o.status === 'cancelled') return sum;
-      return sum + (Number(o.budget) || 0);
+      if (o.status === 'confirmed') {
+        // Utiliser le montant confirmé s'il existe, sinon le budget initial
+        const amount = o.confirmedAmount ? Number(o.confirmedAmount) : Number(o.budget);
+        return sum + (isNaN(amount) ? 0 : amount);
+      }
+      return sum;
     }, 0)
   }), [filteredOrders, filteredTestimonials]);
 
@@ -805,7 +809,7 @@ export default function DashboardPage() {
         </div>
         <div className="bg-white rounded-xl p-3 md:p-4 shadow-sm">
           <p className="text-xl md:text-2xl font-bold text-green-600">{stats.totalRevenue.toLocaleString()} RWF</p>
-          <p className="text-gray-500 text-xs md:text-sm">CA total</p>
+          <p className="text-gray-500 text-xs md:text-sm">CA total (commandes confirmées)</p>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ const { saveCommand } = require('../../lib/utils/netlify-blobs.js');
 
 // Fonctions de formatage des emails
 function formatAdminEmail(commande) {
-  const subject = `Nouvelle commande LoveExpress - ${commande.id}`;
+  const subject = `Nouvelle commande LoveSurpriseExpress - ${commande.id}`;
   const html = `
     <h2>Nouvelle commande reçue</h2>
     <p><strong>Client :</strong> ${commande.clientName}</p>
@@ -21,7 +21,7 @@ function formatAdminEmail(commande) {
 }
 
 function formatClientEmail(commande) {
-  const subject = `LoveExpress - Confirmation de votre commande (${commande.id})`;
+  const subject = `LoveSurpriseExpress - Confirmation de votre commande (${commande.id})`;
   const html = `
     <h2>Merci pour votre commande, ${commande.clientName} !</h2>
     <p>Nous avons bien reçu votre demande et reviendrons vers vous dans les 30 minutes.</p>

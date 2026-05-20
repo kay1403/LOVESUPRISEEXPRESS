@@ -1,4 +1,4 @@
-// components/ContactForm.tsx (VERSION FINALE CORRIGÉE - SANS RETURN CONDITIONNEL)
+// components/ContactForm.tsx (VERSION FINALE - EMAIL OBLIGATOIRE + VALIDATION TÉLÉPHONE)
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
@@ -85,6 +85,17 @@ const STATIC_BASKETS: StaticBasket[] = [
 
 const eventTypes: string[] = ['Birthday', 'Proposal', 'Anniversary', 'Baby Shower', 'Bridal Shower', 'Welcome Back Party', 'Other']
 
+// Fonctions de validation
+const isValidEmail = (email: string) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+const isValidPhone = (phone: string) => {
+  const digits = phone.replace(/[^0-9]/g, '')
+  return digits.length >= 9 && digits.length <= 15 // accepte les formats internationaux et locaux
+}
+
 export default function ContactForm() {
   const { t } = useTranslation()
   const { data: servicesData } = useServicesSafe()
@@ -132,12 +143,27 @@ export default function ContactForm() {
     
     switch(stepToValidate) {
       case 1:
+        // Nom complet
         if (!formData.clientName.trim()) {
           setStepError(t('contactForm.validation.nameRequired') || 'Veuillez entrer votre nom complet')
           return false
         }
+        // Téléphone WhatsApp
         if (!formData.clientPhone.trim()) {
           setStepError(t('contactForm.validation.phoneRequired') || 'Veuillez entrer votre numéro de téléphone WhatsApp')
+          return false
+        }
+        if (!isValidPhone(formData.clientPhone)) {
+          setStepError('Numéro de téléphone invalide. Utilisez un format comme +2507XXXXXXXX ou 07XXXXXXXX')
+          return false
+        }
+        // Email (obligatoire et valide)
+        if (!formData.clientEmail.trim()) {
+          setStepError('Veuillez entrer votre adresse email (indispensable pour recevoir votre confirmation)')
+          return false
+        }
+        if (!isValidEmail(formData.clientEmail)) {
+          setStepError('Veuillez entrer une adresse email valide, par exemple nom@domaine.com')
           return false
         }
         return true
@@ -356,7 +382,7 @@ export default function ContactForm() {
       <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">{t('contactForm.review.delivery') || 'Livraison'}</h3><p className="text-sm">{formData.deliveryMethod === 'delivery' ? (t('contactForm.deliveryMethods.delivery') || 'Livraison à domicile') + ' (+5 000 RWF)' : (t('contactForm.deliveryMethods.pickup') || 'Retrait au bureau')}</p></div>
       <div className="border-t pt-3"><div className="flex justify-between"><span className="font-semibold">{t('contactForm.review.total') || 'Total'} :</span><span className="font-bold text-primary text-lg">{totalPrice.toLocaleString()} RWF</span></div></div>
       {formData.message && (<div className="bg-primaryLight p-3 rounded-lg"><p className="text-sm italic">"{formData.message}"</p></div>)}
-      <div className="text-center text-xs text-gray-400 pt-4 border-t"><p>LoveExpress - {t('footer.tagline') || 'We deliver love and kindness'}</p><p>Tel: +250 799 366 007</p></div>
+      <div className="text-center text-xs text-gray-400 pt-4 border-t"><p>LoveSurpriseExpress - {t('footer.tagline') || 'We deliver love and kindness'}</p><p>Tel: +250 799 366 007</p></div>
     </div>
   )
 
@@ -426,13 +452,15 @@ export default function ContactForm() {
                         <input type="tel" value={formData.clientPhone} onChange={(e) => setFormData({...formData, clientPhone: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.phone') || '+250 7XX XXX XXX'} />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.email') || 'Email'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
-                        <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.email') || 'exemple@email.com'} />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.email') || 'Email'} <span className="text-red-500">*</span></label>
+                        <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.email') || 'exemple@email.com'} />
+                        <p className="text-xs text-gray-400 mt-1">📧 Votre email est essentiel pour recevoir votre confirmation de commande.</p>
                       </div>
                       <button type="button" onClick={nextStep} className="btn-primary w-full">{t('contactForm.buttons.next') || 'Suivant →'}</button>
                     </motion.div>
                   )}
 
+                  {/* Les étapes suivantes (2 à 6) sont strictement identiques à la version originale */}
                   {step === 2 && (
                     <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                       <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.1') || 'Qui recevra la surprise ?'}</h3>
