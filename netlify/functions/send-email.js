@@ -22,7 +22,7 @@ exports.handler = async (event) => {
     });
 
     const info = await transporter.sendMail({
-      from: `"LoveExpress" <${process.env.GMAIL_USER}>`,
+      from: `"LoveSurpriseExpress" <${process.env.GMAIL_USER}>`,
       to,
       subject,
       text: text || '',
