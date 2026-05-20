@@ -250,7 +250,9 @@ const fr = {
       hoursDetail: 'Lundi - Samedi: 9h - 19h',
       sunday: 'Dimanche: Sur rendez-vous',
       delivery247: 'Livraison 24/24 sur demande',
-      rights: 'Tous droits réservés'
+      rights: 'Tous droits réservés',
+      developedBy: "Développé par"
+
     },
     maintenance: {
       title: 'Formulaire temporairement indisponible',
@@ -509,7 +511,9 @@ const en = {
       hoursDetail: 'Monday - Saturday: 9am - 7pm',
       sunday: 'Sunday: By appointment',
       delivery247: '24/7 delivery on request',
-      rights: 'All rights reserved'
+      rights: 'All rights reserved',
+      developedBy: "Developed by"
+
     },
     maintenance: {
       title: 'Contact form temporarily unavailable',
@@ -768,7 +772,9 @@ const rw = {
       hoursDetail: 'Kuwa mbere - Kuwa gatandatu: 9h - 19h',
       sunday: 'Ku cyumweru: Ku gahunda',
       delivery247: 'Iboneza buri gihe',
-      rights: 'Uburenganzira bwose burakumwe'
+      rights: 'Uburenganzira bwose burakumwe',
+      developedBy: "Yakozwe na"
+
     },
     maintenance: {
       title: 'Furu ya gukoresha igerageza ntiboneka',

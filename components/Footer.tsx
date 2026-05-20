@@ -53,6 +53,18 @@ export default function Footer() {
         </div>
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
           <p>&copy; {footer.year || new Date().getFullYear()} {footer.companyName}. {footer.copyright}</p>
+          {/* Lien développé par AK */}
+          <p className="mt-2">
+            {t('footer.developedBy')}{' '}
+            <a 
+              href="https://angekoumbaportfolio.netlify.app" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-primary transition-colors"
+            >
+              AK
+            </a>
+          </p>
         </div>
       </div>
     </footer>
