@@ -1,4 +1,4 @@
-// components/ContactForm.tsx (VERSION FINALE - PACKS CORRIGÉS)
+// components/ContactForm.tsx (VERSION FINALE - INTERFACE STATICBASKET CORRIGÉE)
 'use client'
 
 import { useState, useRef, useEffect, useMemo } from 'react'
@@ -50,6 +50,9 @@ interface StaticBasket {
   standard: number
   premium: number
   descKey: string
+  // ✅ Ajout des propriétés utilisées dans le code
+  name?: string      // Nom traduit (fusionné avec CMS)
+  desc?: string      // Description traduite (fusionnée avec CMS)
 }
 
 interface Pack {
@@ -93,7 +96,7 @@ const isValidEmail = (email: string) => {
 
 const isValidPhone = (phone: string) => {
   const digits = phone.replace(/[^0-9]/g, '')
-  return digits.length >= 9 && digits.length <= 15
+  return digits.length >= 9 && digits.length <= 15 // accepte les formats internationaux et locaux
 }
 
 export default function ContactForm() {
@@ -140,6 +143,7 @@ export default function ContactForm() {
 
   const validateStep = (stepToValidate: number): boolean => {
     setStepError('')
+    
     switch(stepToValidate) {
       case 1:
         if (!formData.clientName.trim()) {
@@ -163,6 +167,7 @@ export default function ContactForm() {
           return false
         }
         return true
+        
       case 2:
         if (!formData.destName.trim()) {
           setStepError(t('contactForm.validation.recipientNameRequired') || 'Veuillez entrer le nom du destinataire')
@@ -173,6 +178,7 @@ export default function ContactForm() {
           return false
         }
         return true
+        
       case 3:
         if (!formData.eventDate) {
           setStepError(t('contactForm.validation.dateRequired') || 'Veuillez sélectionner une date')
@@ -187,6 +193,7 @@ export default function ContactForm() {
           return false
         }
         return true
+        
       case 4:
         const hasService = formData.selectedServices.length > 0
         const hasPack = formData.selectedPacks.length > 0
@@ -196,8 +203,10 @@ export default function ContactForm() {
           return false
         }
         return true
+        
       case 5:
         return true
+        
       default:
         return true
     }
@@ -205,18 +214,26 @@ export default function ContactForm() {
 
   const calculateTotalPrice = useMemo(() => {
     let total = 0
+
+    // Prix des packs Party Decoration
     formData.selectedPacks.forEach((packId: number) => {
       const pack = packs.find((p: Pack) => p.id === packId)
       if (pack) total += pack.price
     })
+
+    // Prix des services
     if (formData.selectedServices.includes(2)) total += 200000
     if (formData.selectedServices.includes(3)) total += 35000
     if (formData.selectedServices.includes(4)) total += 15000
-    formData.selectedBaskets.forEach((basket) => {
-      const b = STATIC_BASKETS.find((bk) => bk.id === basket.id)
+
+    // Prix des baskets
+    formData.selectedBaskets.forEach((basket: { id: number; version: 'standard' | 'premium' }) => {
+      const b = STATIC_BASKETS.find((bk: StaticBasket) => bk.id === basket.id)
       if (b) total += basket.version === 'standard' ? b.standard : b.premium
     })
+
     if (formData.deliveryMethod === 'delivery') total += 5000
+
     return total
   }, [formData.selectedPacks, formData.selectedServices, formData.selectedBaskets, formData.deliveryMethod, packs])
 
@@ -227,7 +244,7 @@ export default function ContactForm() {
     setFormData(prev => ({
       ...prev,
       selectedPacks: prev.selectedPacks.includes(packId)
-        ? prev.selectedPacks.filter(id => id !== packId)
+        ? prev.selectedPacks.filter((id: number) => id !== packId)
         : [...prev.selectedPacks, packId]
     }))
   }
@@ -236,16 +253,16 @@ export default function ContactForm() {
     setFormData(prev => ({
       ...prev,
       selectedServices: prev.selectedServices.includes(serviceId)
-        ? prev.selectedServices.filter(id => id !== serviceId)
+        ? prev.selectedServices.filter((id: number) => id !== serviceId)
         : [...prev.selectedServices, serviceId]
     }))
   }
 
   const handleBasketToggle = (basketId: number, version: 'standard' | 'premium') => {
     setFormData(prev => {
-      const exists = prev.selectedBaskets.find(b => b.id === basketId)
+      const exists = prev.selectedBaskets.find((b: { id: number }) => b.id === basketId)
       if (exists) {
-        return { ...prev, selectedBaskets: prev.selectedBaskets.filter(b => b.id !== basketId) }
+        return { ...prev, selectedBaskets: prev.selectedBaskets.filter((b: { id: number }) => b.id !== basketId) }
       } else {
         return { ...prev, selectedBaskets: [...prev.selectedBaskets, { id: basketId, version }] }
       }
@@ -255,7 +272,9 @@ export default function ContactForm() {
   const updateBasketVersion = (basketId: number, version: 'standard' | 'premium') => {
     setFormData(prev => ({
       ...prev,
-      selectedBaskets: prev.selectedBaskets.map(b => b.id === basketId ? { ...b, version } : b)
+      selectedBaskets: prev.selectedBaskets.map((b: { id: number; version: 'standard' | 'premium' }) => 
+        b.id === basketId ? { ...b, version } : b
+      )
     }))
   }
 
@@ -287,6 +306,7 @@ export default function ContactForm() {
     e.preventDefault()
     if (!hasValidSelection) { alert(t('contactForm.validation.selectService') || 'Veuillez sélectionner au moins un service ou un panier cadeau'); return }
     if (formData.budget > 0 && formData.budget < totalPrice) { alert(`${t('contactForm.validation.budgetRequired') || 'Le budget minimum est de'} ${totalPrice.toLocaleString()} RWF`); return }
+    
     setIsSubmitting(true)
     try {
       const response = await fetch('/functions/submit-order', { 
@@ -314,8 +334,11 @@ export default function ContactForm() {
   }
 
   const nextStep = () => {
-    if (validateStep(step)) setStep(step + 1)
+    if (validateStep(step)) {
+      setStep(step + 1)
+    }
   }
+  
   const prevStep = () => setStep(step - 1)
   const goToStep = (targetStep: number) => setStep(targetStep)
 
@@ -342,15 +365,15 @@ export default function ContactForm() {
       <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">{t('contactForm.review.eventInfo') || 'Informations événement'}</h3><div className="grid grid-cols-2 gap-2 text-sm"><p><span className="text-gray-500">{t('contactForm.fields.eventType') || 'Type'}:</span> {formData.eventType}</p><p><span className="text-gray-500">{t('contactForm.fields.eventDate') || 'Date'}:</span> {formData.eventDate || t('common.notSpecified') || 'Non renseignée'}</p></div></div>
       <div><h3 className="font-semibold text-dark border-l-4 border-primary pl-3 mb-3">{t('contactForm.review.services') || 'Services & Packs'}</h3>
         <ul className="text-sm space-y-1">
-          {formData.selectedPacks.map((packId) => {
-            const pack = packs.find(p => p.id === packId)
+          {formData.selectedPacks.map((packId: number) => {
+            const pack = packs.find((p: Pack) => p.id === packId)
             return <li key={packId}>• {pack?.name} : {pack?.price.toLocaleString()} RWF</li>
           })}
           {formData.selectedServices.includes(2) && <li>• {t('services.surprise.title') || 'Surprise Planner'} : 200 000 RWF</li>}
           {formData.selectedServices.includes(3) && <li>• {t('services.custom.title') || 'Custom Website'} : 35 000 RWF ({t('common.estimate') || 'estimation'})</li>}
           {formData.selectedServices.includes(4) && <li>• {t('services.flower.title') || 'Flower Bouquet'} : 15 000 RWF</li>}
-          {formData.selectedBaskets.map((b) => {
-            const basket = STATIC_BASKETS.find(bk => bk.id === b.id)
+          {formData.selectedBaskets.map((b: { id: number; version: 'standard' | 'premium' }) => {
+            const basket = STATIC_BASKETS.find((bk: StaticBasket) => bk.id === b.id)
             const basketName = basketsDataFromCMS?.find((bk: any) => bk.id === b.id)?.name || basket?.nameKey
             return <li key={b.id}>• {basketName} ({b.version}) : {b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</li>
           })}
@@ -363,6 +386,7 @@ export default function ContactForm() {
     </div>
   )
 
+  // Rendu conditionnel via la variable showMaintenance (pas de return conditionnel avant les hooks)
   const showMaintenance = !maintenanceLoading && maintenance.enabled === true
 
   return (
@@ -465,7 +489,7 @@ export default function ContactForm() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.eventType') || 'Type'} <span className="text-red-500">*</span></label>
                         <select value={formData.eventType} onChange={(e) => setFormData({...formData, eventType: e.target.value})} className="w-full px-4 py-3 border rounded-lg">
-                          {eventTypes.map((type) => <option key={type}>{type}</option>)}
+                          {eventTypes.map((type: string) => <option key={type}>{type}</option>)}
                         </select>
                       </div>
                       <div>
@@ -492,18 +516,10 @@ export default function ContactForm() {
                       <div className="border rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3"><PartyPopper size={18} className="text-primary" /><h4 className="font-semibold text-dark">{t('services.party.title') || 'Party Decoration'}</h4></div>
                         <div className="space-y-2">
-                          {packs.map((pack) => (
+                          {packs.map((pack: Pack) => (
                             <label key={pack.id} className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer border transition ${formData.selectedPacks.includes(pack.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
-                              <input 
-                                type="checkbox" 
-                                checked={formData.selectedPacks.includes(pack.id)} 
-                                onChange={() => handlePackToggle(pack.id)} 
-                                className="w-4 h-4 text-primary rounded" 
-                              />
-                              <div className="flex-1">
-                                <span className="font-medium">{pack.name}</span>
-                                <p className="text-xs text-gray-500">{pack.desc}</p>
-                              </div>
+                              <input type="checkbox" checked={formData.selectedPacks.includes(pack.id)} onChange={() => handlePackToggle(pack.id)} className="w-4 h-4 text-primary rounded" />
+                              <div className="flex-1"><span className="font-medium">{pack.name}</span><p className="text-xs text-gray-500">{pack.desc}</p></div>
                               <span className="text-primary font-bold">{pack.price.toLocaleString()} RWF</span>
                             </label>
                           ))}
@@ -532,23 +548,23 @@ export default function ContactForm() {
                       <div className="border rounded-xl p-4">
                         <div className="flex items-center gap-2 mb-3"><Gift size={18} className="text-primary" /><h4 className="font-semibold text-dark">{t('giftbaskets.title') || 'Gift Baskets'}</h4></div>
                         <div className="space-y-3">
-                          {basketsData.map((basket) => (
-                            <div key={basket.id} className={`p-3 rounded-lg border transition ${formData.selectedBaskets.some((b) => b.id === basket.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
+                          {basketsData.map((basket: StaticBasket & { name?: string; desc?: string }) => (
+                            <div key={basket.id} className={`p-3 rounded-lg border transition ${formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id) ? 'border-primary bg-primaryLight' : 'border-gray-200'}`}>
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-3">
                                   <basket.icon size={16} className="text-primary" />
                                   <span className="font-medium">{t(`giftbaskets.${basket.nameKey.toLowerCase()}`) || basket.name}</span>
                                 </div>
-                                <input type="checkbox" checked={formData.selectedBaskets.some((b) => b.id === basket.id)} onChange={() => handleBasketToggle(basket.id, 'standard')} className="w-4 h-4 text-primary rounded" />
+                                <input type="checkbox" checked={formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id)} onChange={() => handleBasketToggle(basket.id, 'standard')} className="w-4 h-4 text-primary rounded" />
                               </div>
-                              {formData.selectedBaskets.some((b) => b.id === basket.id) && (
+                              {formData.selectedBaskets.some((b: { id: number }) => b.id === basket.id) && (
                                 <div className="flex gap-3 ml-6 mt-2">
                                   <label className="flex items-center gap-2">
-                                    <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b) => b.id === basket.id)?.version === 'standard'} onChange={() => updateBasketVersion(basket.id, 'standard')} className="w-4 h-4 text-primary" />
+                                    <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b: { id: number }) => b.id === basket.id)?.version === 'standard'} onChange={() => updateBasketVersion(basket.id, 'standard')} className="w-4 h-4 text-primary" />
                                     <span className="text-sm">{t('giftbaskets.standard') || 'Standard'}: {basket.standard.toLocaleString()} RWF</span>
                                   </label>
                                   <label className="flex items-center gap-2">
-                                    <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b) => b.id === basket.id)?.version === 'premium'} onChange={() => updateBasketVersion(basket.id, 'premium')} className="w-4 h-4 text-primary" />
+                                    <input type="radio" name={`version-${basket.id}`} checked={formData.selectedBaskets.find((b: { id: number }) => b.id === basket.id)?.version === 'premium'} onChange={() => updateBasketVersion(basket.id, 'premium')} className="w-4 h-4 text-primary" />
                                     <span className="text-sm">{t('giftbaskets.premium') || 'Premium'}: {basket.premium.toLocaleString()} RWF</span>
                                   </label>
                                 </div>
@@ -575,6 +591,7 @@ export default function ContactForm() {
                   {step === 5 && (
                     <motion.div key="step5" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                       <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.4') || 'Livraison & Budget'}</h3>
+                      
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.deliveryMethod') || 'Mode de livraison'}</label>
                         <div className="grid grid-cols-2 gap-4">
@@ -592,15 +609,15 @@ export default function ContactForm() {
                       <div className="bg-primaryLight rounded-xl p-5">
                         <h4 className="font-semibold text-dark mb-3">{t('contactForm.review.services') || 'Récapitulatif des services'}</h4>
                         <div className="space-y-2 text-sm">
-                          {formData.selectedPacks.map((packId) => {
-                            const pack = packs.find(p => p.id === packId)
+                          {formData.selectedPacks.map((packId: number) => {
+                            const pack = packs.find((p: Pack) => p.id === packId)
                             return <div key={packId} className="flex justify-between"><span>{pack?.name}</span><span className="font-bold">{pack?.price.toLocaleString()} RWF</span></div>
                           })}
                           {formData.selectedServices.includes(2) && <div className="flex justify-between"><span>{t('services.surprise.title') || 'Surprise Planner'}</span><span className="font-bold">200 000 RWF</span></div>}
                           {formData.selectedServices.includes(3) && <div className="flex justify-between"><span>{t('services.custom.title') || 'Custom Website'}</span><span className="font-bold">~35 000 RWF</span></div>}
                           {formData.selectedServices.includes(4) && <div className="flex justify-between"><span>{t('services.flower.title') || 'Flower Bouquet'}</span><span className="font-bold">15 000 RWF</span></div>}
-                          {formData.selectedBaskets.map((b) => {
-                            const basket = STATIC_BASKETS.find(bk => bk.id === b.id)
+                          {formData.selectedBaskets.map((b: { id: number; version: 'standard' | 'premium' }) => {
+                            const basket = STATIC_BASKETS.find((bk: StaticBasket) => bk.id === b.id)
                             const basketName = basketsDataFromCMS?.find((bk: any) => bk.id === b.id)?.name || basket?.nameKey
                             return <div key={b.id} className="flex justify-between"><span>{basketName} ({b.version})</span><span className="font-bold">{b.version === 'standard' ? basket?.standard.toLocaleString() : basket?.premium.toLocaleString()} RWF</span></div>
                           })}
@@ -623,7 +640,9 @@ export default function ContactForm() {
                   {step === 6 && (
                     <motion.div key="step6" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                       <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.5') || 'Vérification'}</h3>
+                      
                       <ReviewContent />
+                      
                       <label className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-primaryLight">
                         <input type="checkbox" checked={formData.isDiscreet} onChange={(e) => setFormData({...formData, isDiscreet: e.target.checked})} className="w-5 h-5 text-primary rounded" />
                         <span>{t('contactForm.options.discreet') || 'Surprise discrète (ne pas révéler l\'expéditeur)'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></span>
@@ -636,6 +655,7 @@ export default function ContactForm() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.additionalNotes') || 'Notes supplémentaires'} <span className="text-gray-400 text-xs">({t('common.optional') || 'optionnel'})</span></label>
                         <textarea value={formData.additionalNotes} onChange={(e) => setFormData({...formData, additionalNotes: e.target.value})} rows={2} className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.additionalNotes') || 'Information importante...'} />
                       </div>
+
                       <div className="flex flex-col gap-3">
                         <div className="flex gap-4">
                           <button type="button" onClick={() => goToStep(1)} className="btn-secondary flex-1">{t('contactForm.buttons.modify') || 'Modifier'}</button>
