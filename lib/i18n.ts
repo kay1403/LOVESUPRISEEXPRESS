@@ -224,7 +224,11 @@ const fr = {
         timeRequired: 'Veuillez sélectionner une heure',
         locationRequired: 'Veuillez entrer le lieu de l\'événement',
         selectService: 'Veuillez sélectionner au moins un service, pack ou panier cadeau',
-        budgetRequired: 'Budget minimum requis :'
+        budgetRequired: 'Budget minimum requis :',
+         invalidPhone: 'Numéro de téléphone invalide. Utilisez un format comme +2507XXXXXXXX ou 07XXXXXXXX',
+  emailRequired: 'Veuillez entrer votre adresse email (indispensable pour recevoir votre confirmation)',
+  invalidEmail: 'Veuillez entrer une adresse email valide, par exemple nom@domaine.com'
+
       },
       review: {
         title: 'Récapitulatif de votre commande',
@@ -485,7 +489,11 @@ const en = {
         timeRequired: 'Please select a time',
         locationRequired: 'Please enter the event location',
         selectService: 'Please select at least one service, pack or gift basket',
-        budgetRequired: 'Minimum budget required:'
+        budgetRequired: 'Minimum budget required:',
+        invalidPhone: 'Invalid phone number. Use a format like +2507XXXXXXXX or 07XXXXXXXX',
+  emailRequired: 'Please enter your email address (required to receive your confirmation)',
+  invalidEmail: 'Please enter a valid email address, e.g. name@domain.com'
+
       },
       review: {
         title: 'Order summary',
@@ -746,7 +754,10 @@ const rw = {
         timeRequired: 'Hitamo isaha',
         locationRequired: 'Andika aho birori bizabera',
         selectService: 'Hitamo serivisi, pakiti cyangwa ikapu',
-        budgetRequired: 'Ingengo y\'inguzanyo nkeya:'
+        budgetRequired: 'Ingengo y\'inguzanyo nkeya:',
+         invalidPhone: 'Nimero ya telefoni ntabwo ari yo. Koresha uburyo nka +2507XXXXXXXX cyangwa 07XXXXXXXX',
+  emailRequired: 'Nyamuneka wandike aderesi ya email (irakenewe kugira ngo ubone icyemezo)',
+  invalidEmail: 'Nyamuneka wandike aderesi ya email ifite agaciro, urugero izina@domaine.com'
       },
       review: {
         title: 'Ibyo wanditse',
