@@ -160,6 +160,7 @@ const fr = {
       step: 'Étape',
       budgetHint: 'laisse vide pour utiliser le total',
       budgetSuggestion: 'Budget minimum suggéré',
+      emailHint: '📧 Votre email est essentiel pour recevoir votre confirmation de commande.',
       steps: {
         0: 'Qui êtes-vous ?',
         1: 'Qui recevra la surprise ?',
@@ -425,6 +426,7 @@ const en = {
       step: 'Step',
       budgetHint: 'leave empty to use total',
       budgetSuggestion: 'Minimum suggested budget',
+      emailHint: '📧 Your email is essential to receive your order confirmation.',
       steps: {
         0: 'Who are you?',
         1: 'Who will receive the surprise?',
@@ -690,6 +692,7 @@ const rw = {
       step: 'Intambwe',
       budgetHint: 'reka birushe kugira ngo ukoreshe total',
       budgetSuggestion: 'Ingengo y\'inguzanyo nkeya',
+      emailHint: '📧 Aderesi yawe ya email ni ngombwa kugira ngo ubone icyemezo cya oda yawe.',
       steps: {
         0: 'Uri nde?',
         1: 'Uzakira igitangaza?',
