@@ -458,13 +458,12 @@ export default function ContactForm() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">{t('contactForm.fields.email')} <span className="text-red-500">*</span></label>
                         <input type="email" value={formData.clientEmail} onChange={(e) => setFormData({...formData, clientEmail: e.target.value})} required className="w-full px-4 py-3 border rounded-lg" placeholder={t('contactForm.placeholders.email')} />
-                        <p className="text-xs text-gray-400 mt-1">📧 {t('contactForm.emailHint') || 'Votre email est essentiel pour recevoir votre confirmation de commande.'}</p>
+                        <p className="text-xs text-gray-400 mt-1">📧 {t('contactForm.emailHint', { defaultValue: 'Votre email est essentiel pour recevoir votre confirmation de commande.' })}</p>
                       </div>
                       <button type="button" onClick={nextStep} className="btn-primary w-full">{t('contactForm.buttons.next')}</button>
                     </motion.div>
                   )}
 
-                  {/* Les autres étapes restent identiques car elles utilisent déjà t() */}
                   {step === 2 && (
                     <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                       <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.1')}</h3>
@@ -488,7 +487,6 @@ export default function ContactForm() {
                     </motion.div>
                   )}
 
-                  {/* step 3 à 6 : inchangées car elles utilisent déjà t() */}
                   {step === 3 && (
                     <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="space-y-6">
                       <h3 className="text-2xl font-bold text-dark mb-6">{t('contactForm.steps.2')}</h3>
