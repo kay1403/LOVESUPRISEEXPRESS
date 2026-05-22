@@ -4,13 +4,13 @@ import { Providers } from './providers'
 import IdentityProvider from '@/components/IdentityProvider'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://loveexpress.rw'),
+  metadataBase: new URL('https://lovesurpriseexpress.com'),
   title: 'LoveExpress | Organisation de surprises à Kigali',
-  description: 'LoveExpress crée des moments de surprise inoubliables : anniversaires, demandes en mariage, baby showers.',
+  description: 'LoveSurpriseExpress crée des moments de surprise inoubliables : anniversaires, demandes en mariage, baby showers.',
   keywords: 'surprise kigali, organisation anniversaire, demande mariage surprise, gift basket rwanda, décoration fête kigali',
-  authors: [{ name: 'LoveExpress' }],
+  authors: [{ name: 'LoveSurpriseExpress' }],
   openGraph: {
-    title: 'LoveExpress - Créez des moments de surprise inoubliables',
+    title: 'LoveSurpriseExpress - Créez des moments de surprise inoubliables',
     description: 'Organisation de surprises à Kigali : anniversaires, demandes en mariage, baby showers.',
     type: 'website',
     locale: 'fr_RW',
