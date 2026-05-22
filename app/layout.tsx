@@ -5,7 +5,7 @@ import IdentityProvider from '@/components/IdentityProvider'
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://lovesurpriseexpress.com'),
-  title: 'LoveExpress | Organisation de surprises à Kigali',
+  title: 'LoveSurpriseExpress | Organisation de surprises à Kigali',
   description: 'LoveSurpriseExpress crée des moments de surprise inoubliables : anniversaires, demandes en mariage, baby showers.',
   keywords: 'surprise kigali, organisation anniversaire, demande mariage surprise, gift basket rwanda, décoration fête kigali',
   authors: [{ name: 'LoveSurpriseExpress' }],
