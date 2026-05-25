@@ -146,7 +146,7 @@ const fr = {
       submitError: 'Erreur lors de l\'envoi. Veuillez réessayer.',
       submit: 'Envoyer mon témoignage',
       footerNote: 'Votre témoignage sera publié après validation par notre équipe',
-      testimonialPlaceholder: "J'ai adoré ma surprise, tout était parfait ! Merci LoveExpress ❤️",
+      testimonialPlaceholder: "J'ai adoré ma surprise, tout était parfait ! Merci LoveSurpriseExpress ❤️",
       namePlaceholder: 'Marie, Jean, ...',
       success: {
         title: 'Merci pour votre témoignage !',
@@ -412,7 +412,7 @@ const en = {
       submitError: 'Error sending. Please try again.',
       submit: 'Send my testimonial',
       footerNote: 'Your review will be published after validation by our team',
-      testimonialPlaceholder: "I loved my surprise, everything was perfect! Thank you LoveExpress ❤️",
+      testimonialPlaceholder: "I loved my surprise, everything was perfect! Thank you LoveSurpriseExpress ❤️",
       namePlaceholder: 'Marie, John, ...',
       success: {
         title: 'Thank you for your testimonial!',
@@ -678,7 +678,7 @@ const rw = {
       submitError: 'Habaye ikibazo. Ongera ugerageze.',
       submit: 'Ohereza ubuhamya bwanjye',
       footerNote: 'Igitekerezo cyawe kizashyirwaho nyuma yo kwemeza n\'itsinda ryacu',
-      testimonialPlaceholder: "Nakunze igitangaza cyanjye, byose byari byiza! Urakoze LoveExpress ❤️",
+      testimonialPlaceholder: "Nakunze igitangaza cyanjye, byose byari byiza! Urakoze LoveSurpriseExpress ❤️",
       namePlaceholder: 'Marie, Jean, ...',
       success: {
         title: 'Murakoze kub ubuhamya bwawe!',
