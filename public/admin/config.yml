@@ -74,7 +74,7 @@ collections:
     label: "📸 Réalisations"
     folder: "content/realisations"
     create: true
-    slug: "{{slug}}"
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
     format: "json"
     extension: "json"
     fields:
