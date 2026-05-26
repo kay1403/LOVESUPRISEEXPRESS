@@ -96,6 +96,60 @@ collections:
         widget: "image"
         required: false
         hint: "Pour les images OU comme miniature pour les vidéos"
+        # media_folder supprimé → utilise le global "public/images/uploads"
+      
+      # Section VIDÉO (visible uniquement si mediaType = video)
+      - label: "Options Vidéo"
+        name: "video_options"
+        widget: "object"
+        required: false
+        hint: "Soit uploader un fichier, soit mettre un lien"
+        fields:
+          - label: "Uploader une vidéo"
+            name: "upload"
+            widget: "file"
+            required: false
+            # media_folder supprimé → utilise le dossier vidéo dédié (à définir globalement ?)
+            accept: [".mp4", ".webm", ".ogg"]
+            hint: "Formats supportés: MP4, WebM, OGG"
+          
+          - label: "Ou lien YouTube/Vimeo"
+            name: "link"
+            widget: "string"
+            required: false
+            hint: "https://youtube.com/watch?v=... ou https://vimeo.com/..."
+      
+      # Miniature optionnelle
+      - label: "Miniature personnalisée (optionnelle)"
+        name: "thumbnail"
+        widget: "image"
+        required: false
+        hint: "Image d'aperçu pour la vidéo (laissez vide pour utiliser l'image principale)"
+        # media_folder supprimé → utilise le global    label: "📸 Réalisations"
+    folder: "content/realisations"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    format: "json"
+    extension: "json"
+    fields:
+      - { label: "ID", name: "id", widget: "number" }
+      - { label: "Titre", name: "title", widget: "string" }
+      - { label: "Catégorie", name: "category", widget: "string" }
+      
+      - label: "Type de média"
+        name: "mediaType"
+        widget: "select"
+        options:
+          - { label: "Image seule", value: "image" }
+          - { label: "Vidéo (upload ou lien)", value: "video" }
+        default: "image"
+      
+      # Section IMAGE (visible pour les deux types)
+      - label: "Image principale"
+        name: "image"
+        widget: "image"
+        required: false
+        hint: "Pour les images OU comme miniature pour les vidéos"
         media_folder: "public/images/uploads"
         public_folder: "/images/uploads"
       
