@@ -1,0 +1,11 @@
+{
+  "mediaType": "video",
+  "id": -1,
+  "image": "/images/uploads/panier.jpeg",
+  "video_options": {
+    "upload": "/videos/uploads/vdo.mp4"
+  },
+  "thumbnail": "/images/uploads/lse1.jpeg",
+  "title": "Panier surprise",
+  "category": "forgive"
+}
