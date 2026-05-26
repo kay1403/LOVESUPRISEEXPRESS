@@ -69,7 +69,6 @@ collections:
         widget: "list"
         field: { label: "Item", name: "item", widget: "string" }
 
-# public/admin/config.yml - Version améliorée avec conditionnal display
   - name: "realisations"
     label: "📸 Réalisations"
     folder: "content/realisations"
@@ -121,118 +120,7 @@ collections:
         name: "thumbnail"
         widget: "image"
         required: false
-        hint: "Image d'aperçu pour la vidéo (laissez vide pour utiliser l'image principale)"    label: "📸 Réalisations"
-    folder: "content/realisations"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    format: "json"
-    extension: "json"
-    fields:
-      - { label: "ID", name: "id", widget: "number" }
-      - { label: "Titre", name: "title", widget: "string" }
-      - { label: "Catégorie", name: "category", widget: "string" }
-      
-      - label: "Type de média"
-        name: "mediaType"
-        widget: "select"
-        options:
-          - { label: "Image seule", value: "image" }
-          - { label: "Vidéo (upload ou lien)", value: "video" }
-        default: "image"
-      
-      # Section IMAGE (visible pour les deux types)
-      - label: "Image principale"
-        name: "image"
-        widget: "image"
-        required: false
-        hint: "Pour les images OU comme miniature pour les vidéos"
-        # media_folder supprimé → utilise le global "public/images/uploads"
-      
-      # Section VIDÉO (visible uniquement si mediaType = video)
-      - label: "Options Vidéo"
-        name: "video_options"
-        widget: "object"
-        required: false
-        hint: "Soit uploader un fichier, soit mettre un lien"
-        fields:
-          - label: "Uploader une vidéo"
-            name: "upload"
-            widget: "file"
-            required: false
-            # media_folder supprimé → utilise le dossier vidéo dédié (à définir globalement ?)
-            accept: [".mp4", ".webm", ".ogg"]
-            hint: "Formats supportés: MP4, WebM, OGG"
-          
-          - label: "Ou lien YouTube/Vimeo"
-            name: "link"
-            widget: "string"
-            required: false
-            hint: "https://youtube.com/watch?v=... ou https://vimeo.com/..."
-      
-      # Miniature optionnelle
-      - label: "Miniature personnalisée (optionnelle)"
-        name: "thumbnail"
-        widget: "image"
-        required: false
         hint: "Image d'aperçu pour la vidéo (laissez vide pour utiliser l'image principale)"
-        # media_folder supprimé → utilise le global    label: "📸 Réalisations"
-    folder: "content/realisations"
-    create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    format: "json"
-    extension: "json"
-    fields:
-      - { label: "ID", name: "id", widget: "number" }
-      - { label: "Titre", name: "title", widget: "string" }
-      - { label: "Catégorie", name: "category", widget: "string" }
-      
-      - label: "Type de média"
-        name: "mediaType"
-        widget: "select"
-        options:
-          - { label: "Image seule", value: "image" }
-          - { label: "Vidéo (upload ou lien)", value: "video" }
-        default: "image"
-      
-      # Section IMAGE (visible pour les deux types)
-      - label: "Image principale"
-        name: "image"
-        widget: "image"
-        required: false
-        hint: "Pour les images OU comme miniature pour les vidéos"
-        media_folder: "public/images/uploads"
-        public_folder: "/images/uploads"
-      
-      # Section VIDÉO (visible uniquement si mediaType = video)
-      - label: "Options Vidéo"
-        name: "video_options"
-        widget: "object"
-        required: false
-        hint: "Soit uploader un fichier, soit mettre un lien"
-        fields:
-          - label: "Uploader une vidéo"
-            name: "upload"
-            widget: "file"
-            required: false
-            media_folder: "public/videos/uploads"
-            public_folder: "/videos/uploads"
-            accept: [".mp4", ".webm", ".ogg"]
-            hint: "Formats supportés: MP4, WebM, OGG"
-          
-          - label: "Ou lien YouTube/Vimeo"
-            name: "link"
-            widget: "string"
-            required: false
-            hint: "https://youtube.com/watch?v=... ou https://vimeo.com/..."
-      
-      # Miniature optionnelle
-      - label: "Miniature personnalisée (optionnelle)"
-        name: "thumbnail"
-        widget: "image"
-        required: false
-        hint: "Image d'aperçu pour la vidéo (laissez vide pour utiliser l'image principale)"
-        media_folder: "public/images/uploads"
-        public_folder: "/images/uploads"
 
   - name: "hero_slides"
     label: "🎬 Hero Slides"
@@ -306,8 +194,8 @@ collections:
     format: "json"
     extension: "json"
     fields:
-    - { label: "Activer le mode maintenance", name: "enabled", widget: "boolean", default: false }
-    - { label: "Message d'information", name: "message", widget: "text", required: false }
-    - { label: "Date de fin estimée", name: "endDate", widget: "string", required: false }
-    - { label: "Email de contact alternatif", name: "contactEmail", widget: "string", required: false }
-    - { label: "Afficher le bouton WhatsApp", name: "showWhatsApp", widget: "boolean", default: true }
+      - { label: "Activer le mode maintenance", name: "enabled", widget: "boolean", default: false }
+      - { label: "Message d'information", name: "message", widget: "text", required: false }
+      - { label: "Date de fin estimée", name: "endDate", widget: "string", required: false }
+      - { label: "Email de contact alternatif", name: "contactEmail", widget: "string", required: false }
+      - { label: "Afficher le bouton WhatsApp", name: "showWhatsApp", widget: "boolean", default: true }
